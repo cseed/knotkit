@@ -1,0 +1,26 @@
+in knotkit/
+ - twisted theory over U
+ - add homology orientations for odd Khovanov homology and spectral
+   sequence over Z
+ - unify smoothing, resolution_diagram wiring (and knot_diagram?)
+ - speed up construction of chain maps in chain_complex_simplifer
+ - move chain_complex_simplifier to algebra/
+ - unify chain_complex_simplifer and build_sseq
+ - remove hardcoded limits (max_...)
+ - revive testlib
+
+in lib/
+ - add hashset
+ - between interoperation between sets that require bounds (bitset,
+   ullmanset) and those that don't (set, hashset)
+ - add make_pair, etc.
+
+in algebra/
+ - Q should use gmp
+ - laurentpoly interface needs to be cleand up
+ - add Zp
+ - linear_combnation can be more efficient (eg no searching when
+   coefficients die)
+ - monomial ideals and maybe groebner bases
+ - cleaner interface for gcd, etc. in fraction_field
+ - support kernel, cokernel of torsion modules
