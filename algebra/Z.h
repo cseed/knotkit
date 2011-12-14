@@ -2,8 +2,8 @@
 class Z
 {
  public:
-  typedef linear_combination<Z> linear_combination;
-  typedef linear_combination_const_iter<Z> linear_combination_const_iter;
+  typedef ::linear_combination<Z> linear_combination;
+  typedef ::linear_combination_const_iter<Z> linear_combination_const_iter;
   
   enum steal { STEAL };
   
@@ -150,7 +150,9 @@ class Z
   triple<Z, Z, Z> extended_gcd (const Z &z) const
   {
     mpz_t d, s, t;
-    mpz_inits (d, s, t, 0);
+    mpz_init (d);
+    mpz_init (s);
+    mpz_init (t);
     mpz_gcdext (d, s, t, impl->x, z.impl->x);
     return triple<Z, Z, Z> (Z (STEAL, d),
 			    Z (STEAL, s),

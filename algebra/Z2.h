@@ -1,9 +1,9 @@
 class Z2
 {
  public:
-  typedef linear_combination<Z2> linear_combination;
+  typedef ::linear_combination<Z2> linear_combination;
   // typedef linear_combination_iter<Z2> linear_combination_iter;
-  typedef linear_combination_const_iter<Z2> linear_combination_const_iter;
+  typedef ::linear_combination_const_iter<Z2> linear_combination_const_iter;
   
  private:
   bool v;

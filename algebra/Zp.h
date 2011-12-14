@@ -3,8 +3,8 @@ template<unsigned p>
 class Zp
 {
  public:
-  typedef linear_combination<Zp<p> > linear_combination;
-  typedef linear_combination_const_iter<Zp<p> > linear_combination_const_iter;
+  typedef ::linear_combination<Zp<p> > linear_combination;
+  typedef ::linear_combination_const_iter<Zp<p> > linear_combination_const_iter;
   
  private:
   unsigned v;

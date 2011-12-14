@@ -529,10 +529,10 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
       R rkc = rk(j),
 	rkc2 = rk(j2);
       
-      rk.set (rkc*t.second + rkc2*t.third,
-	      j);
-      rk.set (rkc2*(rc.div (t.first)) - rkc*(rc2.div (t.first)),
-	      j2);
+      rk.set_coeff (rkc*t.second + rkc2*t.third,
+		    j);
+      rk.set_coeff (rkc2*(rc.div (t.first)) - rkc*(rc2.div (t.first)),
+		    j2);
     }
   
   linear_combination g = generators[j],
@@ -560,8 +560,8 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
       R d = ginv(j),
 	d2 = ginv(j2);
       
-      ginv.set (t.second*d + t.third*d2, j);
-      ginv.set (rc.div (t.first) * d2 - rc2.div (t.first) * d, j2);
+      ginv.set_coeff (t.second*d + t.third*d2, j);
+      ginv.set_coeff (rc.div (t.first) * d2 - rc2.div (t.first) * d, j2);
     }
   
 #if 0

@@ -2,8 +2,8 @@
 template<class T> class fraction_field
 {
  public:
-  typedef linear_combination<fraction_field> linear_combination;
-  typedef linear_combination_const_iter<fraction_field> linear_combination_const_iter;
+  typedef ::linear_combination<fraction_field> linear_combination;
+  typedef ::linear_combination_const_iter<fraction_field> linear_combination_const_iter;
   
  private:
   T num;

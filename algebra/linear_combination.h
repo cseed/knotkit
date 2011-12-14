@@ -93,7 +93,7 @@ class linear_combination
   
   R annihilator () const;
   
-  void set (R c, unsigned i)
+  void set_coeff (R c, unsigned i)
   {
     if (c == 0)
       v -= i;
@@ -348,7 +348,7 @@ class linear_combination<Z2>
     return Z2 (operator == (0) ? 1 : 0);
   }
   
-  void set (Z2 c, unsigned i)
+  void set_coeff (Z2 c, unsigned i)
   {
     if (c == 0)
       v -= i;

@@ -2,9 +2,9 @@
 class Q
 {
  public:
-  typedef linear_combination<Q> linear_combination;
+  typedef ::linear_combination<Q> linear_combination;
   // typedef linear_combination_iter<Q> linear_combination_iter;
-  typedef linear_combination_const_iter<Q> linear_combination_const_iter;
+  typedef ::linear_combination_const_iter<Q> linear_combination_const_iter;
   
  private:
   int n;

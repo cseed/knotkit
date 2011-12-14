@@ -134,8 +134,8 @@ template<class T, unsigned n>
 class multivariate_polynomial
 {
  public:
-  typedef linear_combination<multivariate_polynomial<T, n> > linear_combination;
-  typedef linear_combination_const_iter<multivariate_polynomial<T, n> >
+  typedef ::linear_combination<multivariate_polynomial<T, n> > linear_combination;
+  typedef ::linear_combination_const_iter<multivariate_polynomial<T, n> >
     linear_combination_const_iter;
   
 private:
@@ -268,7 +268,7 @@ public:
   pair<multivariate_polynomial, multivariate_polynomial>
     uncommon_factors (multivariate_polynomial b, basedvector<multivariate_polynomial, 1> ds);
   maybe<multivariate_polynomial>
-    divides_exactly (const multivariate_polynomial &n) const;
+    divides_exactly (const multivariate_polynomial &num) const;
   multivariate_polynomial divide_exact (const multivariate_polynomial &d) const;
   
   bool operator | (const multivariate_polynomial &num) const { abort (); }
