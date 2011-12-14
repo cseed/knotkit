@@ -44,6 +44,8 @@ uint64 int64_lcm (int64 a, int64 b);
 // (d, x, y) = gcd (a, b) where x*a + y*b = d
 triple<unsigned, int, int> extended_gcd (int a, int b);
 
+triple<unsigned, int, int> unsigned_extended_gcd (unsigned a, unsigned b);
+
 template<class R> class linear_combination;
 template<class R> class linear_combination_const_iter;
 
@@ -60,6 +62,7 @@ template<class R> class module;
 #include <algebra/linear_combination.h>
 
 #include <algebra/Z.h>
+#include <algebra/Zp.h>
 #include <algebra/Q.h>
 #include <algebra/polynomial.h>
 

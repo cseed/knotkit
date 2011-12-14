@@ -40,7 +40,7 @@ int64_gcd (int64 a, int64 b)
 }
 
 static triple<unsigned, int, int>
-extended_gcd_1 (unsigned a, unsigned b)
+extended_gcd_1 (int a, int b)
 {
   if (b == 0)
     return triple<unsigned, int, int> (a, 1, 0);
@@ -50,16 +50,22 @@ extended_gcd_1 (unsigned a, unsigned b)
     return triple<unsigned, int, int> (b, 0, 1);
   else
     {
-      triple<unsigned, int, int> s = extended_gcd (b, t);
+      triple<unsigned, int, int> s = unsigned_extended_gcd (b, t);
       
       unsigned d = s.first;
       int x = s.third,
 	y = s.second - s.third * (a / b);
       
-      assert ((int)d == (int)a*x + (int)b*y);
+      assert ((int)d == a*x + b*y);
       
       return triple<unsigned, int, int> (d, x, y);
     }
+}
+
+triple<unsigned, int, int>
+unsigned_extended_gcd (unsigned a, unsigned b)
+{
+  return extended_gcd_1 ((int)a, (int)b);
 }
 
 triple<unsigned, int, int>
