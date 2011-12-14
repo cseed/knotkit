@@ -1,8 +1,6 @@
 
 #include <knotkit.h>
 
-#define HOME "/Users/cotton/src/knotkit/"
-
 bool verbose = 0;
 
 static const struct {
@@ -402,7 +400,7 @@ htw_knot (unsigned n, bool alternating, unsigned k)
 	before += htw_alternating[i];
       off = 8 * (before + k - 1);
       
-      file = HOME "alternating";
+      file = HOME "/alternating";
     }
   else
     {
@@ -411,7 +409,7 @@ htw_knot (unsigned n, bool alternating, unsigned k)
 	before += htw_nonalternating[i];
       off = 10 * (before + k - 1);
       
-      file = HOME "nonalternating";
+      file = HOME "/nonalternating";
     }
   FILE *fp = fopen (file, "r");
   if (fp == 0)
@@ -507,7 +505,7 @@ mt_link (unsigned n, bool alternating, unsigned k)
   
   char buf[1000];
   
-  sprintf (buf, HOME "mtlinks/hyperbolic_data_%02d%c", n, alternating ? 'a' : 'n');
+  sprintf (buf, HOME "/mtlinks/hyperbolic_data_%02d%c", n, alternating ? 'a' : 'n');
   FILE *fp = fopen (buf, "r");
   if (fp == 0)
     {
@@ -697,7 +695,7 @@ mutant_knot_groups (unsigned n)
   assert (11 <= n && n <= 15);
   
   char buf[1000];
-  sprintf (buf, HOME "mutant_knot_groups/dat%d", n);
+  sprintf (buf, HOME "/mutant_knot_groups/dat%d", n);
   
   FILE *fp = fopen (buf, "r");
   if (fp == 0)

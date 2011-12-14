@@ -250,6 +250,7 @@ laurentpoly<C, E>::muladdeq (const C &s, const E &e, const laurentpoly &p)
 {
   for (map_const_iter i = p.m; i; i ++)
     addeq (s * i.val (), e * i.key ());
+  return *this;
 }
 
 template<class C, class E> laurentpoly<C, E>
@@ -280,9 +281,9 @@ laurentpoly<C, E>::operator - (const laurentpoly &p) const
 template<class C, class E> laurentpoly<C, E>
 laurentpoly<C, E>::operator * (const laurentpoly &p) const
 {
-  laurentpoly r (*this);
+  laurentpoly r;
   for (map_const_iter i = m; i; i ++)
-    r.muladdeq (i.val (), i.key (), p.m);
+    r.muladdeq (i.val (), i.key (), p);
   return r;
 }
 

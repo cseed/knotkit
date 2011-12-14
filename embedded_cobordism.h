@@ -1,27 +1,15 @@
 
-static inline unsigned
-add_base1_mod4 (unsigned x, unsigned y)
-{
-  assert (between (1, x, 4));
-  assert (between (0, y, 4));
-  
-  return ((x - 1 + y) % 4) + 1;
-}
-
-enum mirror { MIRROR };
-enum connect_sum { CONNECT_SUM };
-
-class knot_diagram
+class marked_vertex_diagram
 {
  public:
   std::string name;
-  
-  unsigned n_crossings;
-  unsigned marked_edge;
-  
+    
   basedvector<basedvector<unsigned, 1>, 1> crossings;
-  basedvector<unsigned, 1> ept_crossing; //the crossing a fixed edgepoint is at
-  basedvector<unsigned, 1> ept_index; //enumerates edgepoints
+  basedvector<basedvector<unsigned, 1>, 1> crossing_type;
+
+    
+  basedvector<unsigned, 1> ept_crossing;
+  basedvector<unsigned, 1> ept_index;
   
   /* true if the smoothing orientation for an edge matches the link
      orientation */

@@ -315,6 +315,7 @@ class mod_map
   
   mod_map induced_map_to (ptr<const quotient_module<R> > new_to);
   mod_map induced_map (ptr<const quotient_module<R> > new_fromto);
+  mod_map induced_map (ptr<const quotient_module<R> > new_from, ptr<const quotient_module<R> > new_to);
   
   void show_self () const;
   void display_self () const;
@@ -886,6 +887,21 @@ mod_map<R>::induced_map (ptr<const quotient_module<R> > new_fromto)
   return r;
 }
 
+template<class R> mod_map<R>
+mod_map<R>::induced_map (ptr<const quotient_module<R> > new_from, ptr<const quotient_module<R> > new_to)
+{
+  assert (from == new_from->parent_module ());
+  assert (to == new_to->parent_module ());
+  
+  // ??? doesn't check induced map is well-defined
+  
+  mod_map r (new_from, new_to);
+  for (unsigned i = 1; i <= new_from->dim (); i ++)
+    r[i] = new_to->project (map (new_from->generator_rep (i)));
+  return r;
+}
+
+
 template<class R> mod_map<R> 
 mod_map<R>::restrict_from (ptr<const free_submodule<R> > new_from) const
 {
@@ -1250,6 +1266,8 @@ mod_map<R>::display_self () const
     {
       printf ("  %d: ", i);
       show (columns[i]);
+      //if(columns[i] != 0)
+      //  show (columns[i].hq());
       newline ();
     }
 }

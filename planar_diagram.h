@@ -25,4 +25,19 @@ public:
 
   void show_self () const { printf ("planar_diagram %s", name.c_str ()); }
   void display_self () const;
+  
+  bool is_oriented();
+  void orient ();
+  void renumber ();
+  void rotate_crossing(int k)
+  {
+    int tmp;
+    tmp = crossings[k][1];
+    crossings[k][1] = crossings[k][3];
+    crossings[k][3] = tmp;
+    
+    tmp = crossings[k][2];
+    crossings[k][2] = crossings[k][4];
+    crossings[k][4] = tmp;
+  }
 };

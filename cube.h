@@ -52,6 +52,9 @@ public:
   mod_map<R> compute_nu () const;
   mod_map<R> compute_X (unsigned p) const;
   
+  mod_map<R> compute_alg_action(unsigned e);  
+  mod_map<R> compute_projector(basedvector<unsigned,1> which_proj);
+    
   void check_reverse_crossings ();
   void check_reverse_orientation ();
   

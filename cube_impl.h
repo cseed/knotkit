@@ -348,6 +348,70 @@ cube<R>::H_i (unsigned c)
   return H_c;
 }
 
+
+template<class R> mod_map<R>
+cube<R>::compute_alg_action (unsigned e)
+{
+  assert(!markedp_only);
+    mod_map<R> A (khC, 0);
+    for (unsigned i = 0; i < n_resolutions; i ++)
+    {
+        
+        //locate the dotted circle in this resolution
+        smoothing s (kd, smallbitset (n_crossings, i));
+        unsigned dotted_circle = s.edge_circle[e];
+        
+        //go thru every monomial, and add its contribution to the map
+        for (unsigned j = 0; j < s.num_monomials(); j++)
+        {
+            linear_combination &v = A[generator(i,j)];
+            if(unsigned_bittest(j,dotted_circle)){
+              v.muladd(1,generator(i,unsigned_bitclear(j,dotted_circle)));
+            }
+        }
+    }
+    A.check_grading (grading (0, -2));
+    
+    return A;
+}
+
+template<class R> mod_map<R>
+cube<R>::compute_projector (basedvector<unsigned,1> which_proj)
+{
+    mod_map<R> A (khC, 0);
+    for (unsigned i = 0; i < n_resolutions; i ++)
+    {
+        smallbitset this_res = smallbitset(n_crossings, i);
+        bool kosher = true;
+        for(unsigned  j=1; j <= n_crossings; j++)
+        {
+          if(which_proj[j]==0 && (unsigned_bittest(i, j)))
+            kosher=false;
+          if(which_proj[j]==1 && (!(unsigned_bittest(i,j))))
+            kosher=false;
+        }
+        if(kosher)
+        {
+          //this_res.show_self();
+          //printf("\n");
+          smoothing s (kd, this_res);
+          //go thru every monomial, and map it to itself
+          for (unsigned j = 0; j < s.num_monomials(); j++)
+          {
+            linear_combination &v = A[generator(i,j)];
+            v.muladd(1,generator(i,j));
+          }
+        }
+    }
+    A.check_grading (grading (0, 0));
+    
+    return A;
+}
+
+
+
+
+
 template<class R> void
 cube<R>::check_reverse_crossings ()
 {
@@ -387,6 +451,8 @@ cube<R>::check_reverse_orientation ()
   // in fact, Szabo's d_2 matches on the nose
   assert (d_2 == n_d_2);
 }
+
+//CONSTRUCTOR from knot diagram
 
 template<class R>
 cube<R>::cube (knot_diagram &kd_, bool markedp_only_)
@@ -474,7 +540,7 @@ cube<R>::compute_kh () const
   
   mod_map<R> d = compute_d (1, 0, 0, 0, 0);
   
-  chain_complex_simplifier<Z> s (khC, d, 1);
+  chain_complex_simplifier<R> s (khC, d, 1, 0);
   // display ("s.new_C:\n", *s.new_C);
   
   return s.new_d.homology ();

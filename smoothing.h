@@ -12,6 +12,7 @@ class smoothing : public refcounted
       : ((unsigned)1) << n_circles;
   }
   
+  //for the i^th edge of the knot diagram, edge_circle[i] is the circle it's part of in the resolution
   basedvector<unsigned, 1> edge_circle;
   
   unsigned crossing_from_circle (const knot_diagram &d, unsigned c) const

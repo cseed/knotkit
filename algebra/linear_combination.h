@@ -292,7 +292,8 @@ linear_combination<R>::show_self () const
       else
 	printf (" + ");
       show (i.val ());
-      printf ("*%d", i.key ());
+      printf ("*");
+      m->show_generator (i.key ());
     }
 }
 
@@ -445,7 +446,8 @@ linear_combination<Z2>::show_self () const
 	first = 0;
       else
 	printf ("+");
-      printf ("%d", i.val ());
+      m->show_generator(i.val ());
+      //printf ("%d", );
     }
 }
 

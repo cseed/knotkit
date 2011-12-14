@@ -54,3 +54,62 @@ planar_diagram::display_self () const
     }
   printf ("\n");
 }
+
+void
+planar_diagram::renumber()
+{
+  //printf("before:\n");
+  //display_bohua();
+
+  set<unsigned> edges_involved;
+  for(unsigned i = 1; i <= crossings.size(); i++)
+  {
+    for(unsigned j = 1; j<= 4; j++)
+    {
+      if(!(edges_involved % crossings[i][j]))
+        edges_involved.push(crossings[i][j]);
+    }
+  }
+  unsigned num_edges = edges_involved.card();
+  map<unsigned,unsigned> new_labels;
+  
+  for(unsigned i = 1; i <= num_edges; i++)
+  {
+    new_labels.push(edges_involved.pop(), i);
+  }
+  
+  for(unsigned i = 1; i <= crossings.size(); i++)
+  {
+    for(unsigned j = 1; j<= 4; j++)
+    {
+      crossings[i][j] = (new_labels.find(crossings[i][j])).first;
+    }
+  }
+  
+  //printf("after:\n");
+  //display_bohua();
+  
+}
+
+
+//the contradiction to avoid is a given edge appearing twice in the lower left corner.
+bool
+planar_diagram::is_oriented()
+{
+  set<int> lower_left_edges;
+  for(unsigned i = 1; i <= crossings.size(); i++)
+  {
+    if(!(lower_left_edges % crossings[i][1]))
+      lower_left_edges.push(crossings[i][1]);
+    else
+      return false;
+  }
+  return true;
+}
+
+void
+planar_diagram::orient()
+{
+  unsigned n_edges = crossings.size()*2;
+
+}

@@ -13,7 +13,9 @@ OPTFLAGS = -g
 LDFLAGS = -L/opt/local/lib
 # LDFLAGS = -pg -L/opt/local/lib
 
-CXXFLAGS = $(OPTFLAGS) -Wall -Wno-unused $(INCLUDES)
+LIBS = -lgmp
+
+CXXFLAGS = $(OPTFLAGS) -DHOME="\"`pwd`\"" -Wall -Wno-unused $(INCLUDES)
 
 LIB_OBJS = lib/refcount.o \
   lib/lib.o lib/smallbitset.o lib/bitset.o lib/setcommon.o lib/io.o lib/directed_multigraph.o
@@ -22,6 +24,7 @@ KNOTKIT_OBJS = planar_diagram.o dt_code.o knot_diagram.o cube.o spanning_tree_co
   smoothing.o cobordism.o knot_tables.o sseq.o \
   knot_parser/knot_parser.o knot_parser/knot_scanner.o \
   rd_parser/rd_parser.o rd_parser/rd_scanner.o
+SURFACES_OBJS = marked_vertex_diagram.o mvd_tables.o knot_detector.o
 
 COMMON_OBJS = $(KNOTKIT_OBJS) $(ALGEBRA_OBJS) $(LIB_OBJS) 
 
@@ -37,7 +40,7 @@ ALGEBRA_HEADERS = algebra/algebra.h algebra/grading.h algebra/module.h \
 KNOTKIT_HEADERS = knotkit.h planar_diagram.h dt_code.h knot_diagram.h \
   smoothing.h cobordism.h cube.h spanning_tree_complex.h cube_impl.h sseq.h
 
-LIBS = -lgmp
+SURFACES_HEADERS = marked_vertex_diagram.h surfacekit.h  knot_detector.h chain_map.h
 
 all: gss
 
@@ -50,8 +53,14 @@ all: gss
 gss: gss.o $(COMMON_OBJS)
 	$(CXX) $(LDFLAGS) -o gss $^ $(LIBS)
 
-main: main.o $(COMMON_OBJS)
+main: main.o $(COMMON_OBJS) $(SURFACES_OBJS)
 	$(CXX) $(LDFLAGS) -o main $^ $(LIBS)
+
+sandbox: sandbox.o $(COMMON_OBJS) $(SURFACES_OBJS)
+	$(CXX) $(LDFLAGS) -o sandbox $^ $(LIBS)
+
+testsurfaces: testsurfaces.o $(COMMON_OBJS) $(SURFACES_OBJS)
+	$(CXX) $(LDFLAGS) -o testsurfaces $^ $(LIBS)
 
 testlib: testlib.o $(COMMON_OBJS)
 	$(CXX) $(LDFLAGS) -o testlib $^
@@ -86,7 +95,7 @@ parser_files: \
 .PHONY: clean
 clean:
 	rm -f *.o lib/*.o algebra/*.o knot_parser/*.o rd_parser/*.o
-	rm -f main gss
+	rm -f main gss testsurfaces
 	rm -f gmon.out
 
 .PHONY: realclean
@@ -102,5 +111,6 @@ realclean: clean
 	rm -f rd_parser/location.hh rd_parser/position.hh rd_parser/stack.hh
 
 $(LIB_OBJS): $(LIB_HEADERS)
-$(ALGEBRA_OBJS): $(ALGEBRA_HEADERS) $(LIB_HEADERS)
-$(KNOTKIT_OBJS) main.o gss.o: $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)
+$(ALGEBRA_OBJS) testlib.o: $(ALGEBRA_HEADERS) $(LIB_HEADERS)
+$(KNOTKIT_OBJS) gss.o: $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)
+$(SURFACE_OBJS) main.o testsurfaces.o sandbox.o: $(SURFACES_HEADERS) $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)
