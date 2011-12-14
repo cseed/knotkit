@@ -69,6 +69,10 @@ class linear_combination
   
   bool homogeneous () const
   {
+#ifndef NDEBUG
+    check ();
+#endif
+    
     if (v.is_empty ())
       return 1;
     
@@ -95,10 +99,14 @@ class linear_combination
   
   void set_coeff (R c, unsigned i)
   {
-    if (c == 0)
+    if (m->is_zero (c, i))
       v -= i;
     else
       v[i] = c;
+    
+#ifndef NDEBUG
+    check ();
+#endif
   }
   
   linear_combination operator * (R c) const
@@ -140,10 +148,32 @@ class linear_combination
   void yank (unsigned i) { v.yank (i); }
   void clear () { v.clear (); }
   
-  bool operator % (unsigned i) const { return v % i; }
-  R operator () (unsigned i) const { return v(i, R (0)); }
+  bool operator % (unsigned i) const
+  {
+#ifndef NDEBUG
+    check ();
+#endif
+    
+    return v % i;
+  }
   
-  unsigned card () const { return v.card (); }
+  R operator () (unsigned i) const
+  {
+#ifndef NDEBUG
+    check ();
+#endif
+    
+    return v(i, R (0));
+  }
+  
+  unsigned card () const
+  {
+#ifndef NDEBUG
+    check ();
+#endif
+    
+    return v.card ();
+  }
   
 #ifndef NDEBUG
   void check () const
@@ -196,8 +226,15 @@ linear_combination<R>::operator *= (R c)
   else if (c != 1)
     {
       for (typename map<unsigned, R>::iter i = v; i; i ++)
-	i.val () *= c;
+	{
+	  i.val () *= c;
+	  if (m->is_zero (i.val (), i.key ()))
+	    i.del ();
+	}
     }
+#ifndef NDEBUG
+    check ();
+#endif
   return *this;
 }
 
@@ -213,6 +250,9 @@ linear_combination<R>::operator += (const linear_combination &lc)
       if (m->is_zero (c, k))
 	v -= k;
     }
+#ifndef NDEBUG
+    check ();
+#endif
   return *this;
 }
 
@@ -228,6 +268,9 @@ linear_combination<R>::operator -= (const linear_combination &lc)
       if (m->is_zero (c, k))
 	v -= k;
     }
+#ifndef NDEBUG
+    check ();
+#endif
   return *this;
 }
 
@@ -238,6 +281,9 @@ linear_combination<R>::muladd (R c, unsigned i)
   ic += c;
   if (m->is_zero (ic, i))
     v -= i;
+#ifndef NDEBUG
+    check ();
+#endif
   return *this;
 }
 
@@ -250,9 +296,12 @@ linear_combination<R>::muladd (R c, const linear_combination &lc)
       unsigned k = i.key ();
       R &vc = v[k];
       vc += (c * i.val ());
-      if (vc == 0)
+      if (m->is_zero (vc, k))
 	v -= k;
     }
+#ifndef NDEBUG
+    check ();
+#endif
   return *this;
 }
 
@@ -263,6 +312,9 @@ linear_combination<R>::mulsub (R c, unsigned i)
   ic -= c;
   if (m->is_zero (ic, i))
     v -= i;
+#ifndef NDEBUG
+    check ();
+#endif
   return *this;
 }
 
@@ -275,15 +327,22 @@ linear_combination<R>::mulsub (R c, const linear_combination &lc)
       unsigned k = i.key ();
       R &vc = v[k];
       vc -= (c * i.val ());
-      if (vc == 0)
+      if (m->is_zero (vc, k))
 	v -= k;
     }
+#ifndef NDEBUG
+    check ();
+#endif
   return *this;
 }
 
 template<class R> void
 linear_combination<R>::show_self () const
 {
+#ifndef NDEBUG
+    check ();
+#endif
+  
   bool first = 1;
   for (typename map<unsigned, R>::const_iter i = v; i; i ++)
     {
