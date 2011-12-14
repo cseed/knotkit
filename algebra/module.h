@@ -1266,8 +1266,8 @@ mod_map<R>::display_self () const
     {
       printf ("  %d: ", i);
       show (columns[i]);
-      //if(columns[i] != 0)
-      //  show (columns[i].hq());
+      if(columns[i] != 0)
+        show (columns[i].hq());
       newline ();
     }
 }

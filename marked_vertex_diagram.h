@@ -72,7 +72,7 @@ public:
   unsigned n_saddles;
   unsigned n_vertices;
   
-  typedef Z2 R;
+  typedef Z R;
   
   cube<R> c; //unreduced cube
   mod_map<R> d;

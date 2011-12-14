@@ -369,8 +369,8 @@ mvd_cube::compute_big_chain_map()
 
   chain_map<R> cm(dom,range, d1, d2, f);
   chain_map_helper<R> helper;
-  //helper.map_info_from_bigq(cm);
-  helper.induced_map_on_homology_s(cm).display_self();
+  helper.map_info_from_bigq(cm);
+  //helper.induced_map_on_homology_s(cm).display_self();
 }
 
 
