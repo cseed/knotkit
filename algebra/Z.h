@@ -55,6 +55,14 @@ class Z
     return Z (STEAL, x);
   }
   
+  Z operator - () const
+  {
+    mpz_t x;
+    mpz_init (x);
+    mpz_neg (x, impl->x);
+    return Z (STEAL, x);
+  }
+  
   Z operator - (const Z &z) const
   {
     mpz_t x;

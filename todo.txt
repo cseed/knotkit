@@ -17,10 +17,11 @@ in lib/
 
 in algebra/
  - Q should use gmp
- - laurentpoly interface needs to be cleand up
+ - laurentpoly interface needs to be cleaned up
  - add Zp
  - linear_combnation can be more efficient (eg no searching when
    coefficients die)
  - monomial ideals and maybe groebner bases
  - cleaner interface for gcd, etc. in fraction_field
  - support kernel, cokernel of torsion modules
+ - change gcd et al so gcd is always positive

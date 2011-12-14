@@ -31,7 +31,8 @@ LIB_HEADERS = lib/lib.h lib/show.h lib/refcount.h lib/pair.h lib/maybe.h lib/vec
   lib/unionfind.h lib/priority_queue.h lib/io.h \
   lib/directed_multigraph.h
 ALGEBRA_HEADERS = algebra/algebra.h algebra/grading.h algebra/module.h \
-  algebra/Z2.h algebra/linear_combination.h algebra/Z.h algebra/Q.h \
+  algebra/Z2.h algebra/linear_combination.h \
+  algebra/Z.h algebra/Zp.h algebra/Q.h \
   algebra/polynomial.h algebra/multivariate_polynomial.h \
   algebra/laurentpoly.h algebra/fraction_field.h
 KNOTKIT_HEADERS = knotkit.h planar_diagram.h dt_code.h knot_diagram.h \

@@ -27,6 +27,7 @@ class Z2
   
   Z2 operator + (const Z2 &x) const { return Z2 (v ^ x.v); }
   Z2 operator - (const Z2 &x) const { return Z2 (v ^ x.v); }
+  Z2 operator - () const { return *this; }
   Z2 operator * (const Z2 &x) const { return Z2 (v & x.v); }
   Z2 operator / (const Z2 &x) const { assert (x.v); return *this; }
   
