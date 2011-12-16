@@ -287,55 +287,50 @@ test_field ()
       }
 }
 
+marked_vertex_diagram pinch_xing(planar_diagram pd, unsigned crossing_to_swap, unsigned position)
+{
+	int edges = 2*pd.crossings.size();
+  	basedvector<basedvector<int, 1>, 1> crossings(pd.crossings);
+	basedvector<basedvector<int, 1>, 1> saddles(1);
+	if(position == 0)
+	{
+		basedvector<int, 1> new_xing(4);
+		basedvector<int, 1> old_xing(crossings[crossing_to_swap]);
+		new_xing[1] = old_xing[1];
+		new_xing[2] = old_xing[2];
+		new_xing[3] = edges+1;
+		new_xing[4] = edges+2;
+		crossings[crossing_to_swap] = new_xing;
+		
+		basedvector<int, 1> new_saddle(4);
+		new_saddle[1] = edges+2;
+		new_saddle[2] = edges+1;
+		new_saddle[3] = old_xing[3];
+		new_saddle[4] = old_xing[4];	
+		saddles[1] = new_saddle;
+		marked_vertex_diagram mvd(pd.name, crossings, saddles);
+		return mvd;
+	}
+	else
+	{
+		
+	
+	}
+}
+
 int
 main ()
 {
 
-  //test_knot_detector();
-  //test_alg_action();
-  test_projector();
-  test_projector_in_series();
-#if 0
+	planar_diagram the_pd = rolfsen_knot(8,19);
+	marked_vertex_diagram mvd = pinch_xing(the_pd, 1, 0);
+	//mvd.display_bohua();
+	//mvd.print_knot_sequence();
+	//mvd_cube cc(mvd);
+	marked_vertex_diagram mvd_mirror(MIRROR, mvd);
+	mvd_mirror.display_bohua();
+	mvd_mirror.print_knot_sequence();
+	mvd_cube cc2(mvd_mirror);
+ 
 
-#endif
-  
-    
-#if 0
-  chain_complex_simplifier<R> s (c.khC, d1, 1, 1);
-  assert (s.new_d == 0);
-  
-  mod_map<R> new_C_d2 = s.pi.compose (d2).compose (s.iota);
-  ptr<const module<R> > new_C_d2_im = new_C_d2.image ();
-  printf ("|new_C_d2| = %d\n",
-	  new_C_d2_im->dim ());
-#endif
-  
-#if 0
-  ptr<const free_submodule<R> > d1_ker = d1.kernel (),
-    d1_im = d1.image ();
-  
-  ptr<const free_submodule<R> > d1_im2 = d1_ker->restrict_submodule (d1_im);
-  
-  ptr<const quotient_module<R> > H = d1_ker->quotient (d1_im2);
-  
-  mod_map<R> ker_d2 = d2.restrict (d1_ker);
-  mod_map<R> H_d2 = ker_d2.induced_map (H);
-  
-  ptr<const module<R> > H_d2_im = H_d2.image ();
-  printf ("|H_d2_im| = %d\n",
-	  H_d2_im->dim ());
-#endif
-
-  test_ring<Z2> (2);
-  test_ring<Z> (0);
-  test_ring<Zp<2> > (2);
-  test_ring<Zp<3> > (3);
-  test_ring<Zp<5> > (5);
-  test_ring<Zp<7> > (7);
-  
-  test_field<Zp<7> > ();
-  test_field<Zp<5> > ();
-  test_field<Zp<3> > ();
-  test_field<Z2> ();
-  test_field<Zp<2> > ();
 }

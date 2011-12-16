@@ -323,8 +323,8 @@ mvd_cube::mvd_cube(marked_vertex_diagram &mvd_)
     n_vertices(mvd_.saddles.size() + mvd_.crossings.size()),
     c(kd,0)
 {
-   //d = c.compute_d (0, 0, 0, 0, 0);
-   d = c.compute_d (1, 0, 0, 0, 0);
+   d = c.compute_d (0, 0, 0, 0, 0);
+   //d = c.compute_d (1, 0, 0, 0, 0);
 
    compute_big_chain_map();
    #if 0
@@ -369,7 +369,8 @@ mvd_cube::compute_big_chain_map()
 
   chain_map<R> cm(dom,range, d1, d2, f);
   chain_map_helper<R> helper;
-  helper.map_info_from_bigq(cm);
+  //helper.map_info_from_bigq(cm);
+  helper.map_info_from_simplifier(cm);
   //helper.induced_map_on_homology_s(cm).display_self();
 }
 

@@ -29,9 +29,11 @@ class chain_map_helper
 
   
   void map_info_from_bigq (chain_map<R> &cm);
+  void map_info_from_simplifier(chain_map<R> &cm);
   mod_map<R> induced_map_on_homology_q (chain_map<R> &cm);
   mod_map<R> induced_map_on_homology_s (chain_map<R> &cm);
   int compare_images_bigq (chain_map<R> &cm1, chain_map<R> &cm2);
+
 };
 
 
@@ -178,6 +180,42 @@ void chain_map_helper<R>::map_info_from_bigq(chain_map<R> &cm)
       */
     }
   }
+
+}
+
+
+template<class R> 
+void chain_map_helper<R>::map_info_from_simplifier(chain_map<R> &cm)
+{
+  cm.test_validity();
+
+ unsigned dh = 1;
+ ptr<const module<R> > C1 = cm.C1,
+   C2 = cm.C2;
+ mod_map<R> d1 = cm.d1,
+   d2 = cm.d2,
+   f = cm.f;
+ for (;;)
+   {
+     chain_complex_simplifier<R> s1 (C1, d1, dh, 1),
+       s2 (C2, d2, dh, 1);
+
+     C1 = s1.new_C;
+     C2 = s2.new_C;
+     d1 = s1.new_d;
+     d2 = s2.new_d;
+
+     f = s2.pi.compose (f).compose (s1.iota);
+
+     dh ++;
+
+     printf ("rank E^%d_1 = %d\n", dh, C1->dim ());
+     printf ("rank E^%d_2 = %d\n", dh, C2->dim ());
+     printf ("f:\n");  display (f);
+
+     if (d1 == 0 && d2 == 0)
+       break;
+   }
 
 }
 
