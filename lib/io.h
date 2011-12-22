@@ -1,11 +1,14 @@
 
+extern FILE *open_file (const std::string &file, const char *mode);
+extern void close_file (FILE *fp);
+
 class writer
 {
  public:
   FILE *fp;
   
  public:
-  writer (const std::string &filename);
+  writer (const std::string &file);
   writer (const writer &); // doesn't exist
   ~writer ();
   
@@ -24,7 +27,7 @@ class reader
   FILE *fp;
 
  public:
-  reader (const std::string &filename);
+  reader (const std::string &file);
   reader (const reader &); // doesn't exist
   ~reader ();
   

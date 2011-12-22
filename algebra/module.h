@@ -56,8 +56,8 @@ class module : public refcounted
   
   ptr<const free_submodule<R> > submodule (const Rmod_span &span) const;
   
-  intpoly2 free_poincare_polynomial () const;
-  intpoly1 free_delta_poincare_polynomial () const;
+  multivariate_laurentpoly<Z> free_poincare_polynomial () const;
+  multivariate_laurentpoly<Z> free_delta_poincare_polynomial () const;
   
   void show_self () const;
   void display_self () const;
@@ -779,26 +779,31 @@ module<R>::submodule (const Rmod_span &span) const
 				span.pivots);
 }
 
-template<class R> intpoly2
+template<class R> multivariate_laurentpoly<Z>
 module<R>::free_poincare_polynomial () const
 {
-  intpoly2 r;
+  multivariate_laurentpoly<Z> r;
   for (unsigned i = 1; i <= free_rank (); i ++)
     {
       grading hq = generator_grading (i);
-      r.addeq (1, exponent2 (hq.h, hq.q));
+      multivariate_laurent_monomial m;
+      m.push_exponent (1, hq.h);
+      m.push_exponent (2, hq.q);
+      r.muladdeq (1, m);
     }
   return r;
 }
 
-template<class R> intpoly1
+template<class R> multivariate_laurentpoly<Z>
 module<R>::free_delta_poincare_polynomial () const
 {
-  intpoly1 r;
+  multivariate_laurentpoly<Z> r;
   for (unsigned i = 1; i <= free_rank (); i ++)
     {
       grading hq = generator_grading (i);
-      r.addeq (1, exponent1 (hq.q - 2*hq.h));
+      multivariate_laurent_monomial m;
+      m.push_exponent (1, hq.q - 2*hq.h);
+      r.muladdeq (1, m);
     }
   return r;
 }

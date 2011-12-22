@@ -51,15 +51,16 @@ template<class R> class linear_combination_const_iter;
 
 template<class R> class module;
 
-#include <algebra/multivariate_polynomial.h>
-
-#include <algebra/laurentpoly.h>
+/* constructor tag for multivariate_polynomial,
+   multivariate_laurentpoly. */
+enum variable { VARIABLE };
 
 #include <algebra/grading.h>
-#include <algebra/module.h>
 
 #include <algebra/Z2.h>
-#include <algebra/linear_combination.h>
+
+#include <algebra/multivariate_polynomial.h>
+#include <algebra/multivariate_laurentpoly.h>
 
 #include <algebra/Z.h>
 #include <algebra/Zp.h>
@@ -67,3 +68,6 @@ template<class R> class module;
 #include <algebra/polynomial.h>
 
 #include <algebra/fraction_field.h>
+
+#include <algebra/module.h>
+#include <algebra/linear_combination.h>

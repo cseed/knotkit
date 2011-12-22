@@ -2,8 +2,6 @@
 /* multivariate polynomial in a (vector) variable x with coefficients
    in T. */
 
-enum variable { VARIABLE };
-
 template<unsigned n>
 class multivariate_monomial
 {
