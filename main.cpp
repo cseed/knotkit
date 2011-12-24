@@ -287,20 +287,21 @@ test_field ()
       }
 }
 
-marked_vertex_diagram pinch_xing(planar_diagram pd, unsigned crossing_to_swap, unsigned position)
+marked_vertex_diagram pinch_xing(planar_diagram pd, unsigned crossing_to_pinch, unsigned position)
 {
+	assert(position < 2);
 	int edges = 2*pd.crossings.size();
-  	basedvector<basedvector<int, 1>, 1> crossings(pd.crossings);
+  	basedvector<basedvector<int, 1>, 1> crossings(COPY, pd.crossings);
 	basedvector<basedvector<int, 1>, 1> saddles(1);
 	if(position == 0)
 	{
 		basedvector<int, 1> new_xing(4);
-		basedvector<int, 1> old_xing(crossings[crossing_to_swap]);
+		basedvector<int, 1> old_xing(crossings[crossing_to_pinch]);
 		new_xing[1] = old_xing[1];
 		new_xing[2] = old_xing[2];
 		new_xing[3] = edges+1;
 		new_xing[4] = edges+2;
-		crossings[crossing_to_swap] = new_xing;
+		crossings[crossing_to_pinch] = new_xing;
 		
 		basedvector<int, 1> new_saddle(4);
 		new_saddle[1] = edges+2;
@@ -313,9 +314,111 @@ marked_vertex_diagram pinch_xing(planar_diagram pd, unsigned crossing_to_swap, u
 	}
 	else
 	{
+		basedvector<int, 1> new_xing(4);
+		basedvector<int, 1> old_xing(crossings[crossing_to_pinch]);
+		new_xing[1] = old_xing[1];
+		new_xing[2] = edges+1;
+		new_xing[3] = edges+2;
+		new_xing[4] = old_xing[4];
+		crossings[crossing_to_pinch] = new_xing;
 		
-	
+		basedvector<int, 1> new_saddle(4);
+		new_saddle[1] = edges+2;
+		new_saddle[2] = edges+1;
+		new_saddle[3] = old_xing[2];
+		new_saddle[4] = old_xing[3];
+		saddles[1] = new_saddle;
+		marked_vertex_diagram mvd(pd.name, crossings, saddles);
+		return mvd;
 	}
+}
+
+
+marked_vertex_diagram pinch_xing(marked_vertex_diagram mvd_in, unsigned crossing_to_pinch, unsigned position)
+{
+	assert(position < 2);
+	int edges = 2*mvd_in.crossings.size() + 2*mvd_in.saddles.size();
+  basedvector<basedvector<int, 1>, 1> crossings(COPY, mvd_in.crossings);
+	basedvector<basedvector<int, 1>, 1> saddles(COPY, mvd_in.saddles);
+	
+	if(position == 0)
+	{
+		basedvector<int, 1> new_xing(4);
+		basedvector<int, 1> old_xing(crossings[crossing_to_pinch]);
+		new_xing[1] = old_xing[1];
+		new_xing[2] = old_xing[2];
+		new_xing[3] = edges+1;
+		new_xing[4] = edges+2;
+		crossings[crossing_to_pinch] = new_xing;
+		
+		basedvector<int, 1> new_saddle(4);
+		new_saddle[1] = edges+2;
+		new_saddle[2] = edges+1;
+		new_saddle[3] = old_xing[3];
+		new_saddle[4] = old_xing[4];	
+		saddles.append(new_saddle);
+		marked_vertex_diagram mvd(mvd_in.name, crossings, saddles);
+		return mvd;
+	}
+	else
+	{
+		basedvector<int, 1> new_xing(4);
+		basedvector<int, 1> old_xing(crossings[crossing_to_pinch]);
+		new_xing[1] = old_xing[1];
+		new_xing[2] = edges+1;
+		new_xing[3] = edges+2;
+		new_xing[4] = old_xing[4];
+		crossings[crossing_to_pinch] = new_xing;
+		
+		basedvector<int, 1> new_saddle(4);
+		new_saddle[1] = edges+2;
+		new_saddle[2] = edges+1;
+		new_saddle[3] = old_xing[2];
+		new_saddle[4] = old_xing[3];
+		saddles.append(new_saddle);
+		marked_vertex_diagram mvd(mvd_in.name, crossings, saddles);
+		return mvd;
+	}
+}
+
+marked_vertex_diagram swap_xing(marked_vertex_diagram mvd_in, unsigned crossing_to_swap)
+{
+	int edges = 2*mvd_in.crossings.size() + 2*mvd_in.saddles.size();
+  basedvector<basedvector<int, 1>, 1> crossings(COPY, mvd_in.crossings);
+	basedvector<basedvector<int, 1>, 1> saddles(COPY, mvd_in.saddles);
+
+	basedvector<int, 1> old_xing(crossings[crossing_to_swap]);
+	
+	basedvector<int, 1> new_xing_1(4);
+	new_xing_1[1] = old_xing[4];
+	new_xing_1[2] = edges + 1;
+	new_xing_1[3] = edges + 2;
+	new_xing_1[4] = edges + 3;
+	crossings[crossing_to_swap] = new_xing_1;
+	
+	basedvector<int, 1> new_xing_2(4);
+	new_xing_2[1] = edges + 5;
+	new_xing_2[2] = edges + 6;
+	new_xing_2[3] = old_xing[3];
+	new_xing_2[4] = edges + 3;
+	crossings.append(new_xing_2);
+		
+	basedvector<int, 1> new_saddle_1(4);
+	new_saddle_1[1] = edges + 1;
+	new_saddle_1[2] = old_xing[1];
+	new_saddle_1[3] = edges + 4;
+	new_saddle_1[4] = edges + 2;
+	saddles.append(new_saddle_1);
+	
+	basedvector<int, 1> new_saddle_2(4);
+	new_saddle_2[1] = edges + 4;
+	new_saddle_2[2] = old_xing[2];
+	new_saddle_2[3] = edges + 6;
+	new_saddle_2[4] = edges + 5;
+	saddles.append(new_saddle_2);
+	
+	marked_vertex_diagram mvd(mvd_in.name, crossings, saddles);
+	return mvd;
 }
 
 int
@@ -327,10 +430,36 @@ main ()
 	//mvd.display_bohua();
 	//mvd.print_knot_sequence();
 	//mvd_cube cc(mvd);
+
+	
+	the_pd = rolfsen_knot(3,1);
+	basedvector<basedvector<int, 1> , 1> no_saddles;
+	marked_vertex_diagram the_mvd(the_pd.name, the_pd.crossings, no_saddles);
+	the_mvd.display_bohua();
+	mvd = swap_xing(the_mvd, 1);
+	mvd.display_bohua();
+	mvd.print_knot_sequence();
+	mvd_cube cc(mvd);
+	
 	marked_vertex_diagram mvd_mirror(MIRROR, mvd);
 	mvd_mirror.display_bohua();
 	mvd_mirror.print_knot_sequence();
 	mvd_cube cc2(mvd_mirror);
- 
+	
+		// 
+		// the_pd = rolfsen_knot(5,2);
+		// for(unsigned i = 1; i < the_pd.crossings.size()-2; i++)
+		// {
+		// 	for(unsigned j = 0; j <= 1; j++)
+		// 	{
+		// 		mvd = pinch_xing(the_pd,i,j);
+		// 		mvd = pinch_xing(mvd, i+1, j);
+		// 		mvd = pinch_xing(mvd, i+2, j);
+		// 		mvd.display_bohua();
+		// 		mvd.print_knot_sequence();
+		// 		mvd_cube cc_it(mvd);			
+		// 	}
+		// }
+		//  
 
 }

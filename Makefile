@@ -6,9 +6,9 @@ CXX = g++
 
 INCLUDES = -I/opt/local/include -I.
 
-# OPTFLAGS = -g
+OPTFLAGS = -g
 # OPTFLAGS = -O2 -g
-OPTFLAGS = -O2 -DNDEBUG
+# OPTFLAGS = -O2 -DNDEBUG
 
 LDFLAGS = -L/opt/local/lib
 # LDFLAGS = -pg -L/opt/local/lib

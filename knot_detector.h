@@ -30,6 +30,9 @@ class knot_detector
   bool component_p_poly_init;
   basedvector<intpoly2,1> component_p_poly;
 
+  basedvector<std::string, 1> name_table;
+  basedvector<intpoly2, 1> p_poly_table;
+
   unsigned next_e (unsigned e)
   {
     unsigned ept = kd.edge_to_ept(e);
@@ -43,6 +46,8 @@ public:
   knot_detector( knot_diagram &kd_);
   ~knot_detector () { }
   
+  void load_table();
+
   void init_algebra_action();
   
   bool is_unlink();

@@ -6,6 +6,8 @@ knot_detector::knot_detector ( knot_diagram &kd_)
     algebra_action_init(false),
     component_p_poly_init(false)
 {
+	load_table();
+	
   Kh = c.compute_kh();
   p_poly = Kh->free_poincare_polynomial();
   
@@ -54,45 +56,7 @@ knot_detector::knot_detector ( knot_diagram &kd_)
   
   assert(components_so_far==n_components);
   
-  /*old way of finding components
-  for(unsigned i=1; i <= n_edges; i++)
-  {
-    edge_component.append(0);
-  }
-  
-  
-  unsigned current_component = 1;
-  component_edges.append();
-  unsigned current_edge = 1;
-  
-  for(unsigned used_edges = 0; used_edges < n_edges; used_edges++)
-  {
-    edge_component[current_edge] = current_component;
-    component_edges[current_component].append(current_edge);
-    
-    unsigned next_edge = next_e(current_edge);
-    
-    if(edge_component[next_edge]>0)
-    {
-      assert(edge_component[next_edge]==current_component);
-      current_component++;
-      for(unsigned i = 1; i <= n_edges; i++)
-      {
-        if(edge_component[i]==0)
-        {
-          current_edge=i;
-          continue;
-        }
-      }
-    }
-    else
-    {
-      edge_component[next_edge]=current_component;
-      current_edge=next_edge;
-    }
-  }  
-  n_components = component_edges.size();
-   */
+
 }
 
 void knot_detector::init_algebra_action()
@@ -283,7 +247,7 @@ void knot_detector::compute_component_polys()
 intpoly2 knot_detector::p_poly_from_kd(knot_diagram &my_kd)
 {
     cube<R> my_cube(my_kd);
-    ptr<const module<R> > my_kh= my_cube.compute_kh();
+    ptr<const module<R> > my_kh = my_cube.compute_kh();
     return my_kh->free_poincare_polynomial();
 }
 
@@ -353,7 +317,7 @@ bool knot_detector::is_product()
 }
 
 void knot_detector::show_self()
-  {
+{
     printf("This link has poincare polynomial\n");
     p_poly.display_self();
     printf("It has %d components, "
@@ -379,4 +343,9 @@ void knot_detector::show_self()
     
     printf("\n\n");
     
-  }
+}
+
+void knot_detector::load_table()
+{
+	
+}
