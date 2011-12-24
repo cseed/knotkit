@@ -462,4 +462,48 @@ main ()
 		// }
 		//  
 
+  knot_diagram kd (rolfsen_knot (8, 19));
+  cube<Z2> c (kd);
+  sseq ss = compute_szabo_sseq (c);
+  multivariate_laurentpoly<Z> ssp = ss.pages[1].poincare_polynomial (ss.bounds);
+  
+  display ("ssp: ", ssp);
+  
+  multivariate_laurentpoly<Z> p;
+  p.muladdeq (5, multivariate_laurent_monomial (VARIABLE, 1, -2));
+  p.muladdeq (-6, multivariate_laurent_monomial (VARIABLE, 2, 13));
+  p.muladdeq (14, (multivariate_laurent_monomial (VARIABLE, 1, 5)
+		   * multivariate_laurent_monomial (VARIABLE, 2, -6)));
+  display ("p: ", p);
+  
+  display ("p*p: ", p*p);
+
+  {
+    writer w ("dump");
+    write (w, p*p);
+  }
+
+  {
+    reader r ("dump");
+    multivariate_laurentpoly<Z> q (r);
+    
+    display ("q: ", q);
+    
+    assert (q == p*p);
+  }
+  
+#if 0
+  test_ring<Z2> (2);
+  test_ring<Z> (0);
+  test_ring<Zp<2> > (2);
+  test_ring<Zp<3> > (3);
+  test_ring<Zp<5> > (5);
+  test_ring<Zp<7> > (7);
+  
+  test_field<Zp<7> > ();
+  test_field<Zp<5> > ();
+  test_field<Zp<3> > ();
+  test_field<Z2> ();
+  test_field<Zp<2> > ();
+#endif  
 }

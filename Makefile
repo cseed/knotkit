@@ -37,7 +37,8 @@ ALGEBRA_HEADERS = algebra/algebra.h algebra/grading.h algebra/module.h \
   algebra/Z2.h algebra/linear_combination.h \
   algebra/Z.h algebra/Zp.h algebra/Q.h \
   algebra/polynomial.h algebra/multivariate_polynomial.h \
-  algebra/laurentpoly.h algebra/fraction_field.h
+  algebra/multivariate_laurentpoly.h \
+  algebra/fraction_field.h
 KNOTKIT_HEADERS = knotkit.h planar_diagram.h dt_code.h knot_diagram.h \
   smoothing.h cobordism.h cube.h spanning_tree_complex.h cube_impl.h sseq.h
 

@@ -129,6 +129,7 @@ class map_wrapper
   }
   
   bool operator == (const map_wrapper &m) const;
+  bool operator < (const map_wrapper &m) const;
   
   void write_self (writer &w) const;
 };
@@ -151,18 +152,49 @@ map_wrapper<M, K, V>::map_wrapper (reader &r)
 template<class M, class K, class V> bool
 map_wrapper<M, K, V>::operator == (const map_wrapper &m) const
 {
-  // event bettr: use (ordered) dual iterators
   if (card () != m.card ())
     return 0;
   
-  for (const_iter i = *this; i; i ++)
+  const_iter i = *this,
+    j = m;
+  while (i && j)
     {
-      // ??? inefficient: use operator ^
-      if (! (m % i.key ())
-	  || m(i.key ()) != i.val ())
+      if (i.key () != j.key ()
+	  || i.val () != j.val ())
 	return 0;
+      i ++;
+      j ++;
     }
+  if (i || j)
+    return 0;
   return 1;
+}
+
+template<class M, class K, class V> bool
+map_wrapper<M, K, V>::operator < (const map_wrapper &m) const
+{
+  const_iter i = *this,
+    j = m;
+  while (i && j)
+    {
+      if (i.key () < j.key ())
+	return 1;
+      else if (i.key () > j.key ())
+	return 0;
+      else
+	{
+	  assert (i.key () == j.key ());
+	  if (i.val () < j.val ())
+	    return 1;
+	  else if (i.val () > j.val ())
+	    return 0;
+	  else
+	    assert (i.val () == j.val ());
+	}
+      i ++;
+      j ++;
+    }
+  return !i && j;
 }
 
 template<class M, class K, class V> void

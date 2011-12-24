@@ -1,15 +1,27 @@
 
 #include <lib/lib.h>
 
-writer::writer (const std::string &filename)
-  : fp(0)
+FILE *open_file (const std::string &file, const char *mode)
 {
-  fp = fopen (filename.c_str (), "w");
+  FILE *fp = fopen (file.c_str (), mode);
   if (fp == 0)
     {
-      stderror ("fopen: %s", filename.c_str ());
+      stderror ("fopen: %s", file.c_str ());
       exit (EXIT_FAILURE);
     }
+  return fp;
+}
+
+void close_file (FILE *fp)
+{
+  fclose (fp);
+}
+
+
+writer::writer (const std::string &file)
+  : fp(0)
+{
+  fp = open_file (file, "w");
 }
 
 writer::~writer ()
@@ -21,15 +33,10 @@ writer::~writer ()
     }
 }
 
-reader::reader (const std::string &filename)
+reader::reader (const std::string &file)
   : fp(0)
 {
-  fp = fopen (filename.c_str (), "r");
-  if (fp == 0)
-    {
-      stderror ("fopen: %s", filename.c_str ());
-      exit (EXIT_FAILURE);
-    }
+  fp = open_file (file, "r");
 }
 
 reader::~reader ()

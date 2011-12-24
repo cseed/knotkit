@@ -18,7 +18,18 @@ class Z
     Z_impl (int init) { mpz_init_set_si (x, init); }
     Z_impl (copy, mpz_srcptr init) { mpz_init_set (x, init); }
     Z_impl (steal, mpz_srcptr init) { x[0] = *init; }
+    Z_impl (reader &r)
+    {
+      mpz_init (x);
+      mpz_inp_raw (x, r.fp);
+    }
+    
     ~Z_impl () { mpz_clear (x); }
+    
+    void write_self (writer &w) const
+    {
+      mpz_out_raw (w.fp, x);
+    }
   };
   
   ptr<Z_impl> impl;
@@ -30,6 +41,7 @@ class Z
   Z (int init) : impl(new Z_impl (init)) { }
   Z (const Z &z) : impl(z.impl) { }
   Z (copy, const Z &z) : impl(new Z_impl (COPY, z.impl->x)) { }
+  Z (reader &r) : impl(new Z_impl (r)) { }
   ~Z () { }
   
   Z &operator = (const Z &z) { impl = z.impl; return *this; }
@@ -98,6 +110,12 @@ class Z
   {
     assert (is_unit ());
     return Z (COPY, *this);
+  }
+  
+  Z &muladdeq (const Z &z1, const Z &z2)
+  {
+    // ??? use muladd primitive
+    return operator += (z1 * z2);
   }
   
   Z &operator += (const Z &z)
@@ -176,4 +194,5 @@ class Z
   static void show_ring () { printf ("Z"); }
   void show_self () const { mpz_out_str (stdout, 10, impl->x); }
   void display_self () const { show_self (); newline (); }
+  void write_self (writer &w) const { write (w, *impl); }
 };

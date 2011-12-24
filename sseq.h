@@ -55,8 +55,8 @@ class sseq_page
   bool equal_as_spaces (const sseq_page &pg) const { return rank == pg.rank; }
   
   unsigned total_rank () const;
-  intpoly2 poincare_polynomial (const sseq_bounds &b) const;
-  intpoly1 delta_poincare_polynomial (const sseq_bounds &b) const;
+  multivariate_laurentpoly<Z> poincare_polynomial (const sseq_bounds &b) const;
+  multivariate_laurentpoly<Z> delta_poincare_polynomial (const sseq_bounds &b) const;
   unsigned homological_width (const sseq_bounds &b) const;
   
   void addeq (const sseq_bounds &b, const sseq_bounds &b2, const sseq_page &pg2);

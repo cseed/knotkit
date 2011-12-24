@@ -21,17 +21,17 @@ class knot_detector
   
   cube<R> c; //unreduced cube
   ptr<const module<R> > Kh; //khovanov homology over F2
-  intpoly2 p_poly; //p_poly for the whole link
+  multivariate_laurentpoly<Z> p_poly; //p_poly for the whole link
   
   bool algebra_action_init;
   ptr<const quotient_module<R> > H;  //khovanov homology as a quotient
   basedvector<mod_map<R>,1> x_list; //algebra action on H
   
   bool component_p_poly_init;
-  basedvector<intpoly2,1> component_p_poly;
+  basedvector<multivariate_laurentpoly<Z>,1> component_p_poly;
 
   basedvector<std::string, 1> name_table;
-  basedvector<intpoly2, 1> p_poly_table;
+  basedvector<multivariate_laurentpoly<Z>, 1> p_poly_table;
 
   unsigned next_e (unsigned e)
   {
@@ -56,7 +56,7 @@ public:
   
   bool is_product();
   
-  intpoly2 p_poly_from_kd(knot_diagram &kd);
+  multivariate_laurentpoly<Z> p_poly_from_kd(knot_diagram &kd);
   
   void show_self();
   
@@ -64,6 +64,6 @@ public:
   std::string guess_link();
   std::string guess_components();
   std::string guess_knot(knot_diagram &kd);
-  std::string guess_knot(intpoly2 p);
+  std::string guess_knot(multivariate_laurentpoly<Z> p);
 };
 

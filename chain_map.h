@@ -123,7 +123,7 @@ int chain_map_helper<R>::compare_images_bigq (chain_map<R> &cm1, chain_map<R> &c
   if(H->free_rank() == H->dim())
   {
     printf("total span\n");
-    intpoly2 span_poly = f1_im->free_poincare_polynomial() + f2_im->free_poincare_polynomial() - im_submod->free_poincare_polynomial();
+    multivariate_laurentpoly<Z> span_poly = f1_im->free_poincare_polynomial() + f2_im->free_poincare_polynomial() - im_submod->free_poincare_polynomial();
     span_poly.display_self();
   }
   

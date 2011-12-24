@@ -103,16 +103,16 @@ bool knot_detector::is_unlink()
     return false;
   
   //check poincare_polynomial
-  intpoly2 U_p_poly;
-  U_p_poly.addeq(1,exponent2(0,1));
-  U_p_poly.addeq(1,exponent2(0,-1));
+  multivariate_laurentpoly<Z> U_p;
+	U_p.muladdeq (1, multivariate_laurent_monomial (VARIABLE, 2, 1));
+	U_p.muladdeq (1, multivariate_laurent_monomial (VARIABLE, 2, -1));
       
-  intpoly2 UL_p_poly=U_p_poly;
+  multivariate_laurentpoly<Z> UL_p=U_p;
   for(unsigned i = 1; i< n_components;i++){
-    UL_p_poly = UL_p_poly * U_p_poly;
+    UL_p = UL_p * U_p;
   }
            
-  if(UL_p_poly != p_poly)
+  if(UL_p != p_poly)
     return false;
   
   return true;
@@ -244,20 +244,21 @@ void knot_detector::compute_component_polys()
 }
 
 
-intpoly2 knot_detector::p_poly_from_kd(knot_diagram &my_kd)
+multivariate_laurentpoly<Z> knot_detector::p_poly_from_kd(knot_diagram &my_kd)
 {
     cube<R> my_cube(my_kd);
     ptr<const module<R> > my_kh = my_cube.compute_kh();
     return my_kh->free_poincare_polynomial();
 }
 
-std::string knot_detector::guess_knot(intpoly2 p)
+std::string knot_detector::guess_knot(multivariate_laurentpoly<Z> p)
 {
   /*check for unknot*/
-  intpoly2 U_p_poly;
-  U_p_poly.addeq(1,exponent2(0,1));
-  U_p_poly.addeq(1,exponent2(0,-1));
-  if(p == U_p_poly)
+	multivariate_laurentpoly<Z> U_p;
+	U_p.muladdeq (1, multivariate_laurent_monomial (VARIABLE, 2, 1));
+	U_p.muladdeq (1, multivariate_laurent_monomial (VARIABLE, 2, -1));
+
+  if(p == U_p)
     return "U";
   /*let's start with all prime knots up to six crossings*/
   for(unsigned n = 3; n <= 6; n++)
@@ -266,7 +267,7 @@ std::string knot_detector::guess_knot(intpoly2 p)
     {
       planar_diagram this_pd = rolfsen_knot(n,k);
       knot_diagram this_kd(this_pd);
-      intpoly2 candidate_p = p_poly_from_kd(this_kd);
+      multivariate_laurentpoly<Z> candidate_p = p_poly_from_kd(this_kd);
       if(p == candidate_p)
         return this_pd.name;
       knot_diagram mirror_kd(MIRROR, this_kd);
@@ -305,7 +306,7 @@ bool knot_detector::is_product()
   if(!component_p_poly_init)
     compute_component_polys();
   
-  intpoly2 product_poly = component_p_poly[1];
+  multivariate_laurentpoly<Z> product_poly = component_p_poly[1];
   
   for(unsigned i =2; i<=component_p_poly.size(); i++)
     product_poly = product_poly * component_p_poly[i];

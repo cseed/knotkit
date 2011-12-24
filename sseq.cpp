@@ -103,33 +103,38 @@ sseq_page::homological_width (const sseq_bounds &b) const
     }
 }
 
-intpoly2
+multivariate_laurentpoly<Z>
 sseq_page::poincare_polynomial (const sseq_bounds &b) const
 {
-  intpoly2 r;
+  multivariate_laurentpoly<Z> r;
   for (int i = b.minh; i <= b.maxh; i ++)
     {
       for (int j = b.minq; j <= b.maxq; j ++)
 	{
 	  unsigned c = rank[i - b.minh][j - b.minq];
 	  if (c)
-	    r.addeq (c, exponent2 (i, j));
+	    {
+	      multivariate_laurent_monomial m;
+	      m.push_exponent (1, i);
+	      m.push_exponent (2, j);
+	      r.muladdeq (c, m);
+	    }
 	}
     }
   return r;
 }
 
-intpoly1
+multivariate_laurentpoly<Z>
 sseq_page::delta_poincare_polynomial (const sseq_bounds &b) const
 {
-  intpoly1 r;
+  multivariate_laurentpoly<Z> r;
   for (int i = b.minh; i <= b.maxh; i ++)
     {
       for (int j = b.minq; j <= b.maxq; j ++)
 	{
 	  unsigned c = rank[i - b.minh][j - b.minq];
 	  if (c)
-	    r.addeq (c, exponent1 (j - 2*i));
+	    r.muladdeq (c, multivariate_laurent_monomial (VARIABLE, 1, j - 2*i));
 	}
     }
   return r;
