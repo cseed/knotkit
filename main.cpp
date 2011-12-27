@@ -111,6 +111,7 @@ test_field ()
 int
 main ()
 {
+#if 0
   knot_diagram kd (rolfsen_knot (8, 19));
   cube<Z2> c (kd);
   sseq ss = compute_szabo_sseq (c);
@@ -140,15 +141,18 @@ main ()
     
     assert (q == p*p);
   }
+#endif
   
-#if 0
+#if 1
   test_ring<Z2> (2);
   test_ring<Z> (0);
+  test_ring<Q> (0);
   test_ring<Zp<2> > (2);
   test_ring<Zp<3> > (3);
   test_ring<Zp<5> > (5);
   test_ring<Zp<7> > (7);
   
+  test_field<Q> ();
   test_field<Zp<7> > ();
   test_field<Zp<5> > ();
   test_field<Zp<3> > ();

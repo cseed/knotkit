@@ -17,7 +17,7 @@ CXXFLAGS = $(OPTFLAGS) -Wall -Wno-unused $(INCLUDES)
 
 LIB_OBJS = lib/refcount.o \
   lib/lib.o lib/smallbitset.o lib/bitset.o lib/setcommon.o lib/io.o lib/directed_multigraph.o
-ALGEBRA_OBJS = algebra/algebra.o algebra/Q.o algebra/grading.o algebra/polynomial.o
+ALGEBRA_OBJS = algebra/algebra.o algebra/grading.o algebra/polynomial.o
 KNOTKIT_OBJS = planar_diagram.o dt_code.o knot_diagram.o cube.o spanning_tree_complex.o \
   smoothing.o cobordism.o knot_tables.o sseq.o \
   knot_parser/knot_parser.o knot_parser/knot_scanner.o \
@@ -34,8 +34,7 @@ ALGEBRA_HEADERS = algebra/algebra.h algebra/grading.h algebra/module.h \
   algebra/Z2.h algebra/linear_combination.h \
   algebra/Z.h algebra/Zp.h algebra/Q.h \
   algebra/polynomial.h algebra/multivariate_polynomial.h \
-  algebra/multivariate_laurentpoly.h \
-  algebra/laurentpoly.h algebra/fraction_field.h
+  algebra/multivariate_laurentpoly.h algebra/fraction_field.h
 KNOTKIT_HEADERS = knotkit.h planar_diagram.h dt_code.h knot_diagram.h \
   smoothing.h cobordism.h cube.h spanning_tree_complex.h cube_impl.h sseq.h
 
