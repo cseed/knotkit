@@ -5,9 +5,9 @@ class Z
   typedef ::linear_combination<Z> linear_combination;
   typedef ::linear_combination_const_iter<Z> linear_combination_const_iter;
   
+ private:
   enum steal { STEAL };
   
- private:
   class Z_impl : public refcounted
   {
   public:
@@ -114,8 +114,8 @@ class Z
   
   Z &muladdeq (const Z &z1, const Z &z2)
   {
-    // ??? use muladd primitive
-    return operator += (z1 * z2);
+    mpz_addmul (impl->x, z1.impl->x, z2.impl->x);
+    return *this;
   }
   
   Z &operator += (const Z &z)

@@ -1,5 +1,6 @@
 in knotkit/
- - twisted theory over U
+ - my (or Kh) tangle algebra over Z
+ - enumerate 2-connect sum knots to test mutation invariance over Z
  - add homology orientations for odd Khovanov homology and spectral
    sequence over Z
  - unify smoothing, resolution_diagram wiring (and knot_diagram?)
@@ -16,9 +17,6 @@ in lib/
  - add make_pair, etc.
 
 in algebra/
- - Q should use gmp
- - laurentpoly interface needs to be cleaned up
- - add Zp
  - linear_combnation can be more efficient (eg no searching when
    coefficients die)
  - monomial ideals and maybe groebner bases
