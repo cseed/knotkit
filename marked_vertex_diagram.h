@@ -33,6 +33,13 @@ public:
       saddles(mvd.saddles)
   { }
   
+	//construct trivial mvd from pd
+	marked_vertex_diagram (const planar_diagram &pd)
+		: name(pd.name),
+			crossings(pd.crossings),
+			saddles(0)
+	{ }
+
   marked_vertex_diagram (mirror, const marked_vertex_diagram &mvd);
 
   /*to add: constructor from marked black graphs */
@@ -72,7 +79,7 @@ public:
   unsigned n_saddles;
   unsigned n_vertices;
   
-  typedef Z2 R;
+  typedef Zp<3> R;
   
   cube<R> c; //unreduced cube
   mod_map<R> d;
@@ -131,4 +138,18 @@ public:
     
   void compute_big_chain_map();
 };
+
+
+class mvd_helper
+{
+public:
+	mvd_helper (){}
+	~mvd_helper (){}
+	
+	marked_vertex_diagram swap_xing(marked_vertex_diagram mvd_in, unsigned crossing_to_swap);
+	marked_vertex_diagram pinch_xing(marked_vertex_diagram mvd_in, unsigned crossing_to_pinch, unsigned position);
+	marked_vertex_diagram j_trick(marked_vertex_diagram mvd_in, unsigned crossing_1, unsigned crossing_2);
+	
+};
+
 

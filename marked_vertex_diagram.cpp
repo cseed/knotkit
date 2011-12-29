@@ -579,5 +579,103 @@ mvd_playoffs::compute_big_chain_map()
 
 }
 
+marked_vertex_diagram
+mvd_helper::pinch_xing(marked_vertex_diagram mvd_in, unsigned crossing_to_pinch, unsigned position)
+{
+	assert(position < 2);
+	int edges = 2*mvd_in.crossings.size() + 2*mvd_in.saddles.size();
+  basedvector<basedvector<int, 1>, 1> crossings(COPY, mvd_in.crossings);
+	basedvector<basedvector<int, 1>, 1> saddles(COPY, mvd_in.saddles);
+
+	if(position == 0)
+	{
+		basedvector<int, 1> new_xing(4);
+		basedvector<int, 1> old_xing(crossings[crossing_to_pinch]);
+		new_xing[1] = old_xing[1];
+		new_xing[2] = old_xing[2];
+		new_xing[3] = edges+1;
+		new_xing[4] = edges+2;
+		crossings[crossing_to_pinch] = new_xing;
+
+		basedvector<int, 1> new_saddle(4);
+		new_saddle[1] = edges+2;
+		new_saddle[2] = edges+1;
+		new_saddle[3] = old_xing[3];
+		new_saddle[4] = old_xing[4];	
+		saddles.append(new_saddle);
+		marked_vertex_diagram mvd(mvd_in.name, crossings, saddles);
+		return mvd;
+	}
+	else
+	{
+		basedvector<int, 1> new_xing(4);
+		basedvector<int, 1> old_xing(crossings[crossing_to_pinch]);
+		new_xing[1] = old_xing[1];
+		new_xing[2] = edges+1;
+		new_xing[3] = edges+2;
+		new_xing[4] = old_xing[4];
+		crossings[crossing_to_pinch] = new_xing;
+
+		basedvector<int, 1> new_saddle(4);
+		new_saddle[1] = edges+2;
+		new_saddle[2] = edges+1;
+		new_saddle[3] = old_xing[2];
+		new_saddle[4] = old_xing[3];
+		saddles.append(new_saddle);
+		marked_vertex_diagram mvd(mvd_in.name, crossings, saddles);
+		return mvd;
+	}
+}
+
+marked_vertex_diagram
+mvd_helper::swap_xing(marked_vertex_diagram mvd_in, unsigned crossing_to_swap)
+{
+	int edges = 2*mvd_in.crossings.size() + 2*mvd_in.saddles.size();
+  basedvector<basedvector<int, 1>, 1> crossings(COPY, mvd_in.crossings);
+	basedvector<basedvector<int, 1>, 1> saddles(COPY, mvd_in.saddles);
+
+	basedvector<int, 1> old_xing(crossings[crossing_to_swap]);
+
+	basedvector<int, 1> new_xing_1(4);
+	new_xing_1[1] = old_xing[4];
+	new_xing_1[2] = edges + 1;
+	new_xing_1[3] = edges + 2;
+	new_xing_1[4] = edges + 3;
+	crossings[crossing_to_swap] = new_xing_1;
+
+	basedvector<int, 1> new_xing_2(4);
+	new_xing_2[1] = edges + 5;
+	new_xing_2[2] = edges + 6;
+	new_xing_2[3] = old_xing[3];
+	new_xing_2[4] = edges + 3;
+	crossings.append(new_xing_2);
+
+	basedvector<int, 1> new_saddle_1(4);
+	new_saddle_1[1] = edges + 1;
+	new_saddle_1[2] = old_xing[1];
+	new_saddle_1[3] = edges + 4;
+	new_saddle_1[4] = edges + 2;
+	saddles.append(new_saddle_1);
+
+	basedvector<int, 1> new_saddle_2(4);
+	new_saddle_2[1] = edges + 4;
+	new_saddle_2[2] = old_xing[2];
+	new_saddle_2[3] = edges + 6;
+	new_saddle_2[4] = edges + 5;
+	saddles.append(new_saddle_2);
+
+	marked_vertex_diagram mvd(mvd_in.name, crossings, saddles);
+	return mvd;
+}
+marked_vertex_diagram 
+mvd_helper::j_trick(marked_vertex_diagram mvd_in, unsigned crossing_1, unsigned crossing_2)
+{
+	
+	return mvd_in;
+
+}
+
+
+
 
 

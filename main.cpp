@@ -424,19 +424,16 @@ marked_vertex_diagram swap_xing(marked_vertex_diagram mvd_in, unsigned crossing_
 int
 main ()
 {
-
+	mvd_helper h;
 	planar_diagram the_pd = rolfsen_knot(8,19);
-	marked_vertex_diagram mvd = pinch_xing(the_pd, 1, 0);
-	//mvd.display_bohua();
-	//mvd.print_knot_sequence();
-	//mvd_cube cc(mvd);
-
+	marked_vertex_diagram mvd = h.pinch_xing(the_pd, 1, 0);
+	// 	mvd.display_bohua();
+	// 	mvd.print_knot_sequence();
+	// 	mvd_cube cc1(mvd);
 	
-	the_pd = rolfsen_knot(3,1);
-	basedvector<basedvector<int, 1> , 1> no_saddles;
-	marked_vertex_diagram the_mvd(the_pd.name, the_pd.crossings, no_saddles);
+	marked_vertex_diagram the_mvd(rolfsen_knot(3,1));
 	the_mvd.display_bohua();
-	mvd = swap_xing(the_mvd, 1);
+	mvd = h.swap_xing(the_mvd, 1);
 	mvd.display_bohua();
 	mvd.print_knot_sequence();
 	mvd_cube cc(mvd);
@@ -446,7 +443,26 @@ main ()
 	mvd_mirror.print_knot_sequence();
 	mvd_cube cc2(mvd_mirror);
 	
-		// 
+	the_mvd = marked_vertex_diagram(rolfsen_knot(6,1));
+	the_mvd = marked_vertex_diagram(MIRROR,the_mvd);
+	for(unsigned i = 1; i <= the_mvd.crossings.size(); i++)
+	{
+			mvd = h.swap_xing(the_mvd,i);
+			mvd.display_bohua();
+			mvd.print_knot_sequence();
+			mvd_cube cc_it(mvd);			
+	}
+
+
+	for(unsigned i = 1; i <= the_mvd.crossings.size(); i++)
+	{
+			mvd = h.pinch_xing(the_mvd,i,0);
+			mvd.display_bohua();
+			mvd.print_knot_sequence();
+			mvd_cube cc_it(mvd);			
+	}
+
+
 		// the_pd = rolfsen_knot(5,2);
 		// for(unsigned i = 1; i < the_pd.crossings.size()-2; i++)
 		// {
@@ -460,7 +476,7 @@ main ()
 		// 		mvd_cube cc_it(mvd);			
 		// 	}
 		// }
-		//  
+
 
   knot_diagram kd (rolfsen_knot (8, 19));
   cube<Z2> c (kd);
