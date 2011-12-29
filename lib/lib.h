@@ -47,6 +47,23 @@ inline hash_t hash (unsigned long x) { return (hash_t)x; }
 
 inline hash_t hash (uint64 x) { return (hash_t)((x >> 32) ^ x); }
 
+hash_t hash (const std::string &s);
+
+inline bool operator == (const std::string &s, const std::string &t)
+{
+  return strcmp (s.c_str (), t.c_str ()) == 0;
+}
+
+inline bool operator < (const std::string &s, const std::string &t)
+{
+  return strcmp (s.c_str (), t.c_str ()) < 0;
+}
+
+inline bool operator <= (const std::string &s, const std::string &t)
+{
+  return strcmp (s.c_str (), t.c_str ()) <= 0;
+}
+
 template<class T>
 inline hash_t hash (const T &x)
 {

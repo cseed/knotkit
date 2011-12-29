@@ -515,6 +515,24 @@ main ()
   }
 #endif
   
+  map<std::string, int> m;
+  m.push ("foo", 3);
+  m.push ("barz", 4);
+  m.push ("pazazz", 39);
+  
+  assert (m % "foo");
+  assert (m("foo") == 3);
+  assert (! (m % "fop"));
+  
+  hashmap<std::string, int> m2;
+  m2.push ("foo", 3);
+  m2.push ("barz", 4);
+  m2.push ("pazazz", 39);
+  
+  assert (m2 % "foo");
+  assert (m2("foo") == 3);
+  assert (! (m2 % "fop"));
+  
 #if 0
   test_ring<Z2> (2);
   test_ring<Z> (0);

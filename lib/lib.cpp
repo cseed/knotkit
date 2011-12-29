@@ -72,3 +72,13 @@ alpha_to_int (char c)
       return - (c - 'A' + 1);
     }
 }
+
+hash_t 
+hash (const std::string &s)
+{
+  size_t n = s.length ();
+  hash_t h = hash (n);
+  for (unsigned i = 0; i < n; i ++)
+    h = hash_combine (h, hash (s[i]));
+  return h;
+}
