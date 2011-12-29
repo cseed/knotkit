@@ -424,6 +424,11 @@ marked_vertex_diagram swap_xing(marked_vertex_diagram mvd_in, unsigned crossing_
 int
 main ()
 {
+	char buf[1000];
+  sprintf (buf, HOME "/ppoly_dat");
+	populate_p_poly_table(buf);
+	
+#if 0
 	mvd_helper h;
 	planar_diagram the_pd = rolfsen_knot(8,19);
 	marked_vertex_diagram mvd = h.pinch_xing(the_pd, 1, 0);
@@ -461,7 +466,7 @@ main ()
 			mvd.print_knot_sequence();
 			mvd_cube cc_it(mvd);			
 	}
-
+#endif
 
 		// the_pd = rolfsen_knot(5,2);
 		// for(unsigned i = 1; i < the_pd.crossings.size()-2; i++)

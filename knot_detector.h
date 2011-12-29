@@ -67,3 +67,4 @@ public:
   std::string guess_knot(multivariate_laurentpoly<Z> p);
 };
 
+void populate_p_poly_table(std::string file_name);
