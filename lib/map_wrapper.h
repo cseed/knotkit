@@ -28,6 +28,7 @@ class map_wrapper
   map_wrapper (unsigned dummy_size) : impl(new map_impl) { }
   map_wrapper (const map_wrapper &m) : impl(m.impl) { }
   map_wrapper (copy, const map_wrapper &m) : impl(new map_impl) { impl->t = M (m.impl->t); }
+  map_wrapper (copy2, const map_wrapper &m);
   map_wrapper (reader &r);
   ~map_wrapper () { }
   
@@ -133,6 +134,15 @@ class map_wrapper
   
   void write_self (writer &w) const;
 };
+
+template<class M, class K, class V>
+map_wrapper<M, K, V>::map_wrapper (copy2, const map_wrapper &m)
+  : impl(new map_impl)
+{
+  /* Keys are immutable.  Just copy the values. */
+  for (const_iter i = m; i; i ++)
+    push (i.key (), V (COPY, i.val ()));
+}
 
 template<class M, class K, class V>
 map_wrapper<M, K, V>::map_wrapper (reader &r)

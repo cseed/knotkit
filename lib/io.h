@@ -45,6 +45,7 @@ inline void read (reader &r, char &x) { x = r.read_char (); }
 inline void read (reader &r, int &x) { x = r.read_int (); }
 inline void read (reader &r, unsigned &x) { x = r.read_unsigned (); }
 inline void read (reader &r, uint64 &x) { x = r.read_uint64 (); }
+void read (reader &r, std::string &s);
 template<class T> inline void read (reader &r, T &x) { x = T(r); }
 
 inline void ctor_read (reader &r, bool *p) { *p = r.read_bool (); }
@@ -59,4 +60,5 @@ inline void write (writer &w, char x) { w.write_char (x); }
 inline void write (writer &w, int x) { w.write_int (x); }
 inline void write (writer &w, unsigned x) { w.write_unsigned (x); }
 inline void write (writer &w, uint64 x) { w.write_uint64 (x); }
+void write (writer &w, const std::string &s);
 template<class T> inline void write (writer &w, const T &x) { x.write_self (w); }
