@@ -515,23 +515,50 @@ main ()
   }
 #endif
   
-  map<std::string, int> m;
-  m.push ("foo", 3);
-  m.push ("barz", 4);
-  m.push ("pazazz", 39);
+  multivariate_laurentpoly<Z> p = -11;
+  p.muladdeq (5, VARIABLE, 1);
+  p.muladdeq (7, VARIABLE, 2);
+  p.muladdeq (-3, VARIABLE, 3);
+
+  multivariate_laurentpoly<Z> q = p*p + p + 23;
+  multivariate_laurentpoly<Z> r = q*q - Z (7)*p + 81;
   
-  assert (m % "foo");
-  assert (m("foo") == 3);
-  assert (! (m % "fop"));
+  multivariate_laurentpoly<Z> s = r - p*q + 10;
+
+  display ("p:", p);
+  display ("q:", q);
+  display ("r:", r);
+  display ("s:", s);
   
-  hashmap<std::string, int> m2;
-  m2.push ("foo", 3);
-  m2.push ("barz", 4);
-  m2.push ("pazazz", 39);
+  map<multivariate_laurentpoly<Z>, std::string> m;
+  m.push (p, "p");
+  m.push (q, "q");
+  m.push (r, "thisisr");
   
-  assert (m2 % "foo");
-  assert (m2("foo") == 3);
-  assert (! (m2 % "fop"));
+  assert (m % p);
+  assert (m % q);
+  assert (m % r);
+  assert (! (m % s));
+  
+  assert (m(p) == "p");
+  assert (m(q) == "q");
+  assert (m(r) == "thisisr");
+  
+  std::string str ("This is a test.");
+  
+  {
+    writer w ("test.dat");
+    write (w, m);
+  }
+  
+  reader rdr ("test.dat");
+  map<multivariate_laurentpoly<Z>, std::string> m2 (rdr);
+    
+  assert (m == m2);
+    
+  assert (m2(p) == "p");
+  assert (m2(q) == "q");
+  assert (m2(r) == "thisisr");
   
 #if 0
   test_ring<Z2> (2);

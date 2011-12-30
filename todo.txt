@@ -9,6 +9,8 @@ in knotkit/
  - unify chain_complex_simplifer and build_sseq
  - remove hardcoded limits (max_...)
  - revive testlib
+ - figure out proper copy interface and consistently support copy and
+   deepcopy
 
 in lib/
  - add hashset

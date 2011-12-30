@@ -56,15 +56,6 @@ class multivariate_laurent_monomial
     return m == e.m;
   }
   
-  bool operator < (const multivariate_laurent_monomial &e) const
-  {
-#ifndef NDEBUG
-    check ();
-    e.check ();
-#endif
-    return m < e.m;
-  }
-  
   bool operator == (int x) const
   {
     assert (x == 1);
@@ -75,6 +66,24 @@ class multivariate_laurent_monomial
   }
   
   bool operator != (int x) const { return !operator == (x); }
+  
+  bool operator < (const multivariate_laurent_monomial &e) const
+  {
+#ifndef NDEBUG
+    check ();
+    e.check ();
+#endif
+    return m < e.m;
+  }
+  
+  bool operator <= (const multivariate_laurent_monomial &e) const
+  {
+#ifndef NDEBUG
+    check ();
+    e.check ();
+#endif
+    return m <= e.m;
+  }
   
   multivariate_laurent_monomial &operator *= (const multivariate_laurent_monomial &e)
   {
@@ -203,7 +212,7 @@ class multivariate_laurentpoly
   
   multivariate_laurentpoly (const multivariate_laurentpoly &p) : coeffs(p.coeffs) { }
   multivariate_laurentpoly (copy, const multivariate_laurentpoly &p)
-    : coeffs(COPY, p.coeffs)
+    : coeffs(COPY2, p.coeffs)
   {
   }
 
@@ -226,7 +235,7 @@ class multivariate_laurentpoly
     return *this;
   }
   
-  bool operator == (multivariate_laurentpoly p) const
+  bool operator == (const multivariate_laurentpoly &p) const
   {
 #ifndef NDEBUG
     check ();
@@ -234,9 +243,6 @@ class multivariate_laurentpoly
 #endif
     return coeffs == p.coeffs;
   }
-  
-  unsigned card () const { return coeffs.card (); }
-  pair<monomial, T> head () const { return coeffs.head (); }
   
   bool operator == (int x) const
   {
@@ -259,9 +265,30 @@ class multivariate_laurentpoly
   
   bool operator != (int x) const { return !operator == (x); }
   
-  multivariate_laurentpoly &operator += (multivariate_laurentpoly p);
-  multivariate_laurentpoly &operator -= (multivariate_laurentpoly p);
-  multivariate_laurentpoly &operator *= (multivariate_laurentpoly p)
+  bool operator < (const multivariate_laurentpoly &p) const
+  {
+#ifndef NDEBUG
+    check ();
+    p.check ();
+#endif
+    return coeffs < p.coeffs;
+  }
+  
+  bool operator <= (const multivariate_laurentpoly &p) const
+  {
+#ifndef NDEBUG
+    check ();
+    p.check ();
+#endif
+    return coeffs <= p.coeffs;
+  }
+  
+  unsigned card () const { return coeffs.card (); }
+  pair<monomial, T> head () const { return coeffs.head (); }
+  
+  multivariate_laurentpoly &operator += (const multivariate_laurentpoly &p);
+  multivariate_laurentpoly &operator -= (const multivariate_laurentpoly &p);
+  multivariate_laurentpoly &operator *= (const multivariate_laurentpoly &p)
   {
     return operator = (*this * p);
   }
@@ -290,14 +317,14 @@ class multivariate_laurentpoly
   multivariate_laurentpoly &muladdeq (multivariate_laurentpoly a, multivariate_laurentpoly b);
   
   multivariate_laurentpoly operator - () const { return multivariate_laurentpoly () - *this; }
-  multivariate_laurentpoly operator + (multivariate_laurentpoly p) const
+  multivariate_laurentpoly operator + (const multivariate_laurentpoly &p) const
   {
     multivariate_laurentpoly r (COPY, *this);
     r += p;
     return r;
   }
   
-  multivariate_laurentpoly operator - (multivariate_laurentpoly p) const
+  multivariate_laurentpoly operator - (const multivariate_laurentpoly &p) const
   {
     multivariate_laurentpoly r (COPY, *this);
     r -= p;
@@ -330,7 +357,7 @@ operator * (const T &s, const multivariate_laurentpoly<T> &p)
 }
 
 template<class T> multivariate_laurentpoly<T> &
-multivariate_laurentpoly<T>::operator += (multivariate_laurentpoly p)
+multivariate_laurentpoly<T>::operator += (const multivariate_laurentpoly &p)
 {
   for (typename map<monomial, T>::const_iter i = p.coeffs; i; i ++)
     {
@@ -344,7 +371,7 @@ multivariate_laurentpoly<T>::operator += (multivariate_laurentpoly p)
 }
 
 template<class T> multivariate_laurentpoly<T> &
-multivariate_laurentpoly<T>::operator -= (multivariate_laurentpoly p)
+multivariate_laurentpoly<T>::operator -= (const multivariate_laurentpoly &p)
 {
   for (typename map<monomial, T>::const_iter i = p.coeffs; i; i ++)
     {

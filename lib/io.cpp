@@ -157,3 +157,33 @@ reader::read_uint64 ()
     }
   return x;
 }
+
+void
+read (reader &r, std::string &s)
+{
+  unsigned n = r.read_unsigned ();
+  
+  char buf[n + 1];
+  unsigned k = fread (buf, sizeof (char), n + 1, r.fp);
+  if (k != n + 1)
+    {
+      stderror ("fread");
+      exit (EXIT_FAILURE);
+    }
+  assert (buf[n] == 0);
+  
+  s = std::string (buf);
+}
+
+void
+write (writer &w, const std::string &s)
+{
+  unsigned n = s.length ();
+  w.write_unsigned (n);
+  
+  if (fwrite (s.c_str (), sizeof (char), n + 1, w.fp) != n + 1)
+    {
+      stderror ("fwrite");
+      exit (EXIT_FAILURE);
+    }
+}
