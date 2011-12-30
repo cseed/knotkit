@@ -807,3 +807,15 @@ knot_diagram::display_self () const
    }
   printf ("\n");
 }
+
+void
+knot_diagram::show_gauss_code ()
+{
+	
+	
+	
+	
+	
+	
+	
+}

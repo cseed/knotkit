@@ -153,6 +153,8 @@ class knot_diagram
   
   basedvector<basedvector<int, 1>, 1> planar_diagram_crossings () const;
   
+	void show_gauss_code ();
+
   hash_t hash_self () const;
   
   void show_ept (unsigned p) const;
