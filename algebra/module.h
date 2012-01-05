@@ -283,6 +283,8 @@ class mod_map
   linear_combination &operator [] (unsigned i) { return columns[i]; }
   const linear_combination &operator [] (unsigned i) const { return columns[i]; }
   
+	unsigned from_dim() const {return from->dim();}
+
   linear_combination map (const linear_combination &lc) const;
   mod_map compose (const mod_map &m2) const;
   
@@ -294,6 +296,9 @@ class mod_map
   bool homogeneous () const;
   void check_grading (grading delta) const;
   
+	ptr<const Rmod> domain () const {return from;}
+	ptr<const Rmod> range () const {return to;}
+
   // inj : ker -> from
   ptr<const free_submodule<R> > kernel () const;
   

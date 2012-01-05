@@ -44,6 +44,9 @@ class grading
   
   grading mirror_grading (unsigned nplus, unsigned nminus, bool torsion) const;
   
+	int e() {return (q - 3*h);}
+	int tau() {return (2 * h);}
+
   void show_self () const;
   void display_self () const;
 };

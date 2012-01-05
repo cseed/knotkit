@@ -359,20 +359,24 @@ void populate_p_poly_table(std::string file_name)
 	{
 		for(unsigned k=1; k<=rolfsen_crossing_knots(n); k++)
 		{
-			
-			planar_diagram pd = rolfsen_knot(n,k);
-			knot_diagram kd(pd);
-			cube<Z2> c(kd,0);
-			multivariate_laurentpoly<Z> p = c.compute_kh()->free_poincare_polynomial();
-			if(poly_map % p)
-			{
-				printf("Coincidence found: %s and %s\n", poly_map.find(p).first.c_str(), kd.name.c_str());
-				//poly_map[p] += ("or " kd.name);
-			}
-			else
-			{
-				poly_map.push(p,kd.name);
-				printf("pushed %s\n",kd.name.c_str());
+			for(unsigned m=0; m<= 1; m++)
+				{
+				planar_diagram pd = rolfsen_knot(n,k);
+				knot_diagram kd(pd);
+				if(m)
+					kd = knot_diagram(MIRROR,kd);
+				cube<Z2> c(kd,0);
+				multivariate_laurentpoly<Z> p = c.compute_kh()->free_poincare_polynomial();
+				if(poly_map % p)
+				{
+					printf("Coincidence found: %s and %s\n", poly_map.find(p).first.c_str(), kd.name.c_str());
+					//poly_map[p] += ("or " kd.name);
+				}
+				else
+				{
+					poly_map.push(p,kd.name);
+					printf("pushed %s\n",kd.name.c_str());
+				}
 			}
 		}
 	}

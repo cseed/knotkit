@@ -68,7 +68,6 @@ public:
   unsigned n_components();
   int framing_shift();
   bool orientable();
-
 };
 
 class mvd_cube
@@ -78,21 +77,24 @@ public:
   knot_diagram kd;
   unsigned n_saddles;
   unsigned n_vertices;
-  
+	grading initial_adjust;
+	grading final_adjust;
+
   typedef Zp<3> R;
-  
+	//typedef Z2 R;
+
   cube<R> c; //unreduced cube
   mod_map<R> d;
-  mod_map<R> big_chain_map;
+  mod_map<R> cob_map;
   
 public:
   mvd_cube(marked_vertex_diagram &mvd_);
   ~mvd_cube() {}
-  
-  void display_self () const;
-  
-  void compute_big_chain_map();
+    
+  void compute_cob_map();
   void factorize_map();
+
+  void display_self () const;
 };
 
 /*to compare two surfaces, make a big diagram containing the saddles required for each. the knot is the full 1 resolution, but now the 0 resolution isn't a shared starting point. instead, the zero res of the saddles for a fixed surface is the origin for that surface. to tell whether or not two surfaces are distinguishable by kh, we compare their images; if the sum of the image subspaces is equal to both of its summands, then they are the same; otherwise, different.*/
@@ -127,7 +129,8 @@ public:
   knot_diagram kd;
   unsigned n_vertices;
   
-  typedef Z2 R;
+	typedef Zp<3> R;
+  //typedef Z2 R;
   
   cube<R> c; //unreduced cube
   mod_map<R> d;
@@ -151,5 +154,3 @@ public:
 	marked_vertex_diagram j_trick(marked_vertex_diagram mvd_in, unsigned crossing_1, unsigned crossing_2);
 	
 };
-
-
