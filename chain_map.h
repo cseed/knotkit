@@ -64,6 +64,23 @@ mod_map<R> chain_map_helper<R>::induced_map_on_homology_s(chain_map<R> &cm)
 {
   cm.test_validity();
   
+#if 1
+  chain_complex_simplifier<R> s1a (cm.C1, cm.d1, 0, 1);
+  chain_complex_simplifier<R> s1b (s1a.new_C, s1a.new_d, 2, 1);
+  assert (s1b.new_d == 0);
+  
+  chain_complex_simplifier<R> s2a (cm.C2, cm.d2, 0, 1);
+  chain_complex_simplifier<R> s2b (s2a.new_C, s2a.new_d, 2, 1);
+  assert (s2b.new_d == 0);
+  
+  mod_map<R> new_f = (s2b.pi.compose
+		      (s2a.pi.compose
+		       (cm.f.compose
+			(s1a.iota.compose
+			 (s1b.iota)))));
+#endif
+  
+#if 0
   chain_complex_simplifier<R> s1 (cm.C1, cm.d1, 1, 1);
   assert (s1.new_d == 0);
   
@@ -71,6 +88,7 @@ mod_map<R> chain_map_helper<R>::induced_map_on_homology_s(chain_map<R> &cm)
   assert (s2.new_d == 0);  
   
   mod_map<R> new_f = s2.pi.compose (cm.f.compose(s1.iota));
+#endif
   
   return new_f;
 }

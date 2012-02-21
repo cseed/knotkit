@@ -77,14 +77,17 @@ public:
   knot_diagram kd;
   unsigned n_saddles;
   unsigned n_vertices;
-	grading initial_adjust;
-	grading final_adjust;
-
-	//typedef Z R;
+  
+  grading initial_adjust;
+  grading final_adjust;
+  
+  //typedef Z R;
   //typedef Zp<3> R;
-	typedef Z2 R;
+  //typedef Z2 R;
+  typedef fraction_field<polynomial<Z2> > R;
+  
+  cube<R> c;
 
-  cube<R> c; //unreduced cube
   mod_map<R> d;
   mod_map<R> cob_map;
   

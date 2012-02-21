@@ -1,6 +1,31 @@
 
 #include <surfacekit.h>
 
+typedef fraction_field<polynomial<Z2> > R;
+
+int
+main ()
+{
+  knot_diagram kd (rolfsen_knot (8, 19));
+  kd.marked_edge = 1;
+  cube<R> c (kd, 1);
+  mod_map<R> d = twisted_differential (c);
+  assert (d.compose (d) == 0);
+  
+  ptr<const module<R> > C = c.khC;
+  unsigned dh = 0;
+  while (d != 0)
+    {
+      chain_complex_simplifier<R> s (C, d, dh);
+      C = s.new_C;
+      d = s.new_d;
+      dh ++;
+    }
+  
+  printf ("|C| = %d\n", C->dim ());
+}
+
+#if 0
 void
 test_knot_detector()
 {  
@@ -409,3 +434,4 @@ main ()
   
  
 }
+#endif

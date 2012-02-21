@@ -118,6 +118,9 @@ class twisted_cube
   mod_map<R> twisted_d0 (basedvector<int, 1> edge_weight) const;
 };
 
+extern mod_map<fraction_field<polynomial<Z2> > >
+  twisted_differential (const cube<fraction_field<polynomial<Z2> > > &c);
+
 extern sseq compute_szabo_sseq (const cube<Z2> &c);
 
 #include <cube_impl.h>

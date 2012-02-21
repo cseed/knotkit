@@ -395,9 +395,17 @@ cube<R>::compute_projector (basedvector<unsigned,1> which_proj)
           //this_res.show_self();
           //printf("\n");
           smoothing s (kd, this_res);
+	  unsigned marked_s = markedp_only
+	    ? s.edge_circle[kd.marked_edge]
+	    : 0;
+	  
           //go thru every monomial, and map it to itself
           for (unsigned j = 0; j < s.num_monomials(); j++)
           {
+	    if (markedp_only
+		&& unsigned_bittest (j, marked_s))
+	      continue;
+	    
             linear_combination &v = A[generator(i,j)];
             v.muladd(1,generator(i,j));
           }

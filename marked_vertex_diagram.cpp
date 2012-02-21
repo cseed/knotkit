@@ -322,11 +322,15 @@ mvd_cube::mvd_cube(marked_vertex_diagram &mvd_)
     kd(mvd_.mvd_as_kd()),
     n_saddles(mvd_.saddles.size()),
     n_vertices(mvd_.saddles.size() + mvd_.crossings.size()),
-    c(kd,0)
+    c(kd,1)
 {
-   //d = c.compute_d (0, 0, 0, 0, 0);
-  d = c.compute_d (1, 0, 0, 0, 0);
-
+  // ??? too late?
+  kd.marked_edge = 1;
+  
+  // d = c.compute_d (0, 0, 0, 0, 0); // Zoltan's
+  // d = c.compute_d (1, 0, 0, 0, 0);  // Khovanov
+  d = twisted_differential (c);  // Cotton's (Zoltan's twisted)
+  
 	knot_diagram kd_initial(mvd.initial_knot());
 	knot_diagram kd_final(mvd.final_knot());
 	

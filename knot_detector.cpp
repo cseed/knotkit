@@ -391,6 +391,8 @@ is_homologically_amphi(knot_diagram &kd)
 
 void populate_p_poly_table(unsigned n_max)
 {
+  abort ();
+#if 0
 	map<multivariate_laurentpoly<Z>, std::string> poly_map;
 
 	//first the unknot
@@ -483,4 +485,5 @@ void populate_p_poly_table(unsigned n_max)
   sprintf (file_name, HOME "/ppoly_dat");
 	writer w(file_name);
 	write (w, poly_map);
+#endif
 }
