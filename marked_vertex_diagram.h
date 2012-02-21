@@ -80,8 +80,9 @@ public:
 	grading initial_adjust;
 	grading final_adjust;
 
-  typedef Zp<3> R;
-	//typedef Z2 R;
+	//typedef Z R;
+  //typedef Zp<3> R;
+	typedef Z2 R;
 
   cube<R> c; //unreduced cube
   mod_map<R> d;
@@ -129,8 +130,8 @@ public:
   knot_diagram kd;
   unsigned n_vertices;
   
-	typedef Zp<3> R;
-  //typedef Z2 R;
+	//typedef Zp<3> R;
+  typedef Z2 R;
   
   cube<R> c; //unreduced cube
   mod_map<R> d;

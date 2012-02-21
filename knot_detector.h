@@ -8,6 +8,18 @@
  Computes the khovanov homology of each component of a link, in hopes of identifying each component of the link from a table.
  */
 
+class knot_table
+{
+	public:
+		map<multivariate_laurentpoly<Z>, std::string> poly_map;
+
+	public:
+		knot_table();
+		~knot_table () {}
+
+		std::string lookup(multivariate_laurentpoly<Z> p);
+};
+
 class knot_detector 
 {
  public:  
@@ -23,15 +35,14 @@ class knot_detector
   ptr<const module<R> > Kh; //khovanov homology over F2
   multivariate_laurentpoly<Z> p_poly; //p_poly for the whole link
   
+	knot_table kt;
+
   bool algebra_action_init;
   ptr<const quotient_module<R> > H;  //khovanov homology as a quotient
   basedvector<mod_map<R>,1> x_list; //algebra action on H
   
   bool component_p_poly_init;
   basedvector<multivariate_laurentpoly<Z>,1> component_p_poly;
-
-  basedvector<std::string, 1> name_table;
-  basedvector<multivariate_laurentpoly<Z>, 1> p_poly_table;
 
   unsigned next_e (unsigned e)
   {
@@ -46,8 +57,6 @@ public:
   knot_detector( knot_diagram &kd_);
   ~knot_detector () { }
   
-  void load_table();
-
   void init_algebra_action();
   
   bool is_unlink();
@@ -60,11 +69,12 @@ public:
   
   void show_self();
   
-  /*p_poly lookup gueses*/
   std::string guess_link();
   std::string guess_components();
   std::string guess_knot(knot_diagram &kd);
   std::string guess_knot(multivariate_laurentpoly<Z> p);
 };
 
-void populate_p_poly_table(std::string file_name);
+void populate_p_poly_table(unsigned n_max);
+bool is_amphi(unsigned n, unsigned k);
+bool is_homologically_amphi(knot_diagram &kd);

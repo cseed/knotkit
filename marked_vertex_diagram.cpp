@@ -268,7 +268,7 @@ marked_vertex_diagram::orientable()
     basedvector<int , 1> pointing_out(4);
     for(int j = 1; j<=4; j++)
     {
-      if((edges[saddles[i][j]][1][1] == i )&& (edges[saddles[i][j]][1][3] == 0))
+      if((edges[saddles[i][j]][1][1] == (int) i ) && (edges[saddles[i][j]][1][3] == 0))
         pointing_out[j] = 1;
       else
         pointing_out[j] = 0;

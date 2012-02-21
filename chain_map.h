@@ -119,15 +119,11 @@ int chain_map_helper<R>::compare_images_bigq (chain_map<R> &cm1, chain_map<R> &c
         ,f1_im->dim()
         ,f2_im->dim()
         ,im_submod->dim());
-        
-  if(H->free_rank() == H->dim())
-  {
-    printf("total span\n");
-    multivariate_laurentpoly<Z> span_poly = f1_im->free_poincare_polynomial() + f2_im->free_poincare_polynomial() - im_submod->free_poincare_polynomial();
-    span_poly.display_self();
-  }
-  
-  return f1_im->dim() + f2_im->dim() - im_submod->dim();
+
+  if(im_submod->dim() > f1_im->dim())
+		printf("KH says these are different!\n");
+
+  return im_submod->dim() - f1_im->dim();
 }
 
 

@@ -5,9 +5,7 @@ knot_detector::knot_detector ( knot_diagram &kd_)
     c(kd_,0),
     algebra_action_init(false),
     component_p_poly_init(false)
-{
-	load_table();
-	
+{	
   Kh = c.compute_kh();
   p_poly = Kh->free_poincare_polynomial();
   
@@ -116,7 +114,8 @@ bool knot_detector::is_unlink()
     return false;
   
   return true;
-  
+
+  //TO BE DONE
   //check algebra structure
   if(!algebra_action_init)
     init_algebra_action();
@@ -252,7 +251,11 @@ multivariate_laurentpoly<Z> knot_detector::p_poly_from_kd(knot_diagram &my_kd)
 }
 
 std::string knot_detector::guess_knot(multivariate_laurentpoly<Z> p)
-{
+{	
+	
+	return kt.lookup(p);
+	
+	
   /*check for unknot*/
 	multivariate_laurentpoly<Z> U_p;
 	U_p.muladdeq (1, multivariate_laurent_monomial (VARIABLE, 2, 1));
@@ -276,7 +279,6 @@ std::string knot_detector::guess_knot(multivariate_laurentpoly<Z> p)
         return (this_pd.name + "M");
     }
   } 
-  
   
   return "unknown";
 }
@@ -346,20 +348,67 @@ void knot_detector::show_self()
     
 }
 
-void knot_detector::load_table()
+knot_table::knot_table()
 {
+	char file_name[1000];
+  sprintf (file_name, HOME "/ppoly_dat");
+	reader r(file_name);
 	
+	map<multivariate_laurentpoly<Z>, std::string> the_poly_map(r);
+	poly_map = the_poly_map;
 }
 
-void populate_p_poly_table(std::string file_name)
+std::string
+knot_table::lookup(multivariate_laurentpoly<Z> p)
+{
+	if(poly_map % p)
+		return poly_map(p);
+	else
+		return "unknown";
+}
+
+bool
+is_amphi(unsigned n, unsigned k)
+{
+	//hack for now. should just grab a list, at least for low-crossing guys
+	planar_diagram pd(rolfsen_knot(n,k));
+	knot_diagram kd(pd);
+	return is_homologically_amphi(kd);
+}
+
+bool
+is_homologically_amphi(knot_diagram &kd)
+{
+	cube<Z2> c(kd,0);
+	multivariate_laurentpoly<Z> p = c.compute_kh()->free_poincare_polynomial();
+	
+	knot_diagram kdM(MIRROR,kd);
+	cube<Z2> cM(kdM,0);
+	multivariate_laurentpoly<Z> pM = cM.compute_kh()->free_poincare_polynomial();
+	
+	return pM == p;
+}
+
+void populate_p_poly_table(unsigned n_max)
 {
 	map<multivariate_laurentpoly<Z>, std::string> poly_map;
 
-	for(unsigned n = 3; n <= 10; n++)
+	//first the unknot
+	multivariate_laurentpoly<Z> U_p;
+	U_p.muladdeq (1, multivariate_laurent_monomial (VARIABLE, 2, 1));
+	U_p.muladdeq (1, multivariate_laurent_monomial (VARIABLE, 2, -1));
+	
+	poly_map.push(U_p, "U");
+
+	//now prime knots
+	for(unsigned n = 3; n <= n_max; n++)
 	{
 		for(unsigned k=1; k<=rolfsen_crossing_knots(n); k++)
 		{
-			for(unsigned m=0; m<= 1; m++)
+			unsigned non_amphi = 1;
+			if(is_amphi(n,k))
+				non_amphi = 0;
+			for(unsigned m=0; m<= non_amphi; m++)
 				{
 				planar_diagram pd = rolfsen_knot(n,k);
 				knot_diagram kd(pd);
@@ -381,6 +430,57 @@ void populate_p_poly_table(std::string file_name)
 		}
 	}
 	
+	//sums of pairs
+	for(unsigned n1 = 3; n1 <= n_max; n1++)
+	{
+		for(unsigned n2  = n1; n1 + n2 <= n_max; n2++)
+		{
+			for(unsigned k1 = 1; k1 <= rolfsen_crossing_knots(n1); k1++)
+			{
+				for(unsigned k2 = 1; k2 <= rolfsen_crossing_knots(n2); k2++)
+				{
+					if(n1 == n2 && k1 > k2)
+						break;
+					unsigned non_amphi1 = 1;
+					if(is_amphi(n1,k1))
+						non_amphi1 = 0;
+					unsigned non_amphi2 = 1;
+					if(is_amphi(n2,k2) || (n1==n2 && k1 == k2))
+						non_amphi2 = 0;
+					for(unsigned m1=0; m1 <= non_amphi1; m1++)
+					{
+						for(unsigned m2=0; m2 <= non_amphi2; m2++)
+						{
+							planar_diagram pd1 = rolfsen_knot(n1,k1);
+							planar_diagram pd2 = rolfsen_knot(n2,k2);
+							knot_diagram kd1(pd1);
+							knot_diagram kd2(pd2);
+							if(m1)
+								kd1 = knot_diagram(MIRROR,kd1);
+							if(m2)
+								kd2 = knot_diagram(MIRROR,kd2);
+							knot_diagram kd(CONNECT_SUM, kd1, kd2);
+							cube<Z2> c(kd,0);
+							multivariate_laurentpoly<Z> p = c.compute_kh()->free_poincare_polynomial();
+							if(poly_map % p)
+							{
+								printf("Coincidence found: %s and %s\n", poly_map.find(p).first.c_str(), kd.name.c_str());
+								//poly_map[p] += ("or " kd.name);
+							}
+							else
+							{
+								poly_map.push(p,kd.name);
+								printf("pushed %s\n",kd.name.c_str());
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	char file_name[1000];
+  sprintf (file_name, HOME "/ppoly_dat");
 	writer w(file_name);
 	write (w, poly_map);
 }

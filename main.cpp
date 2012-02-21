@@ -287,14 +287,38 @@ test_field ()
       }
 }
 
+void
+test_p_poly_table()
+{		
+	knot_table kt;
+	
+	planar_diagram pd(rolfsen_knot(4,1));
+	knot_diagram kd(pd);
+	cube<Z2> c(kd,0);
+	multivariate_laurentpoly<Z> p1 = c.compute_kh()->free_poincare_polynomial();
+	printf("4_1 is %s\n", kt.lookup(p1).c_str());
+	
+	planar_diagram pd2(rolfsen_knot(6,2));
+	knot_diagram kd2M(pd2);
+	knot_diagram kd2(MIRROR, kd2M);
+	cube<Z2> c2(kd2,0);
+	multivariate_laurentpoly<Z> p2 = c2.compute_kh()->free_poincare_polynomial();
+	printf("6_2M is %s\n", kt.lookup(p2).c_str());
+	
+	multivariate_laurentpoly<Z> p = -11;
+  p.muladdeq (5, VARIABLE, 1);
+  p.muladdeq (7, VARIABLE, 2);
+  p.muladdeq (-3, VARIABLE, 3);
 
+  multivariate_laurentpoly<Z> q = p*p + p + 23;
+	printf("fictional ppoly is %s", kt.lookup(q).c_str());
+}
 
 int
 main ()
 {
-	char buf[1000];
-  sprintf (buf, HOME "/ppoly_dat");
-	//populate_p_poly_table(buf);
+	//populate_p_poly_table(8);
+	//test_p_poly_table();
 	
 #if 1
 	mvd_helper h;
@@ -383,65 +407,5 @@ main ()
   }
 #endif
   
-  multivariate_laurentpoly<Z> p = -11;
-  p.muladdeq (5, VARIABLE, 1);
-  p.muladdeq (7, VARIABLE, 2);
-  p.muladdeq (-3, VARIABLE, 3);
-
-  multivariate_laurentpoly<Z> q = p*p + p + 23;
-  multivariate_laurentpoly<Z> r = q*q - Z (7)*p + 81;
-  
-  multivariate_laurentpoly<Z> s = r - p*q + 10;
-
-  display ("p:", p);
-  display ("q:", q);
-  display ("r:", r);
-  display ("s:", s);
-  
-  map<multivariate_laurentpoly<Z>, std::string> m;
-  m.push (p, "p");
-  m.push (q, "q");
-  m.push (r, "thisisr");
-  
-  assert (m % p);
-  assert (m % q);
-  assert (m % r);
-  assert (! (m % s));
-  
-  assert (m(p) == "p");
-  assert (m(q) == "q");
-  assert (m(r) == "thisisr");
-  
-  std::string str ("This is a test.");
-  
-  {
-    writer w ("test.dat");
-    write (w, m);
-  }
-  
-  reader rdr ("test.dat");
-  map<multivariate_laurentpoly<Z>, std::string> m2 (rdr);
-    
-  assert (m == m2);
-    
-  assert (m2(p) == "p");
-  assert (m2(q) == "q");
-  assert (m2(r) == "thisisr");
-  
-#if 0
-  test_ring<Z2> (2);
-  test_ring<Z> (0);
-  test_ring<Q> (0);
-  test_ring<Zp<2> > (2);
-  test_ring<Zp<3> > (3);
-  test_ring<Zp<5> > (5);
-  test_ring<Zp<7> > (7);
-  
-  test_field<Q> ();
-  test_field<Zp<7> > ();
-  test_field<Zp<5> > ();
-  test_field<Zp<3> > ();
-  test_field<Z2> ();
-  test_field<Zp<2> > ();
-#endif  
+ 
 }
