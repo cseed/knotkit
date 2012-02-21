@@ -284,6 +284,7 @@ class mod_map
   const linear_combination &operator [] (unsigned i) const { return columns[i]; }
   
 	unsigned from_dim() const {return from->dim();}
+	unsigned to_dim() const {return to->dim();}
 
   linear_combination map (const linear_combination &lc) const;
   mod_map compose (const mod_map &m2) const;

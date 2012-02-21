@@ -437,6 +437,8 @@ mvd_cube::compute_cob_map()
 void 
 mvd_cube::display_self() const
 {
+	printf("Source rank: %d\nTarget rank: %d\n",cob_map.from_dim(),cob_map.to_dim());
+	
 	printf("The map, in h/q grading:\n");
   for (unsigned i = 1; i <= cob_map.from_dim(); i++)
     {
@@ -469,6 +471,23 @@ mvd_cube::display_self() const
 					printf("x");
 	      newline ();
 	    }
+	
+			printf("The map, in delta grading:\n");
+		  for (unsigned i = 1; i <= cob_map.from_dim(); i ++)
+		    {
+		      printf ("  %d: ", i);
+					grading source_hq = cob_map.domain()->generator_grading(i) + initial_adjust;
+					printf("(%d)",source_hq.delta());
+		      if(cob_map[i] != 0)
+					{
+						printf(" -> ");
+						grading target_hq = cob_map[i].hq() + final_adjust;
+						printf("(%d)",target_hq.delta());
+					}
+					else
+						printf("x");
+		      newline ();
+		    }
 }
 
 

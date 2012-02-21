@@ -47,6 +47,8 @@ class grading
 	int e() {return (q - 3*h);}
 	int tau() {return (2 * h);}
 
+	int delta() {return (q - 2*h);}
+
   void show_self () const;
   void display_self () const;
 };
