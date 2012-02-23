@@ -121,6 +121,54 @@ class twisted_cube
 extern mod_map<fraction_field<polynomial<Z2> > >
   twisted_differential (const cube<fraction_field<polynomial<Z2> > > &c);
 
+enum theory { KHOVANOV_HOMOLOGY, GEOMETRIC_SSEQ, TWISTED_GEOMETRIC_SSEQ };
+
+template<class R, theory th>
+class differential_helper
+{
+ public:
+  static mod_map<R> differential (const cube<R> &c)
+  {
+    switch (th)
+      {
+      case KHOVANOV_HOMOLOGY:
+	return c.compute_d (1, 0, 0, 0, 0);
+	
+      case GEOMETRIC_SSEQ:
+	return c.compute_d (0, 0, 0, 0, 0);
+	
+      default: abort ();
+      }
+  }
+};
+
+template<>
+class differential_helper<fraction_field<polynomial<Z2> >,
+  TWISTED_GEOMETRIC_SSEQ>
+{
+  typedef fraction_field<polynomial<Z2> > R;
+  
+ public:
+  static mod_map<R> differential (const cube<R> &c)
+  {
+    twisted_cube<Z2> tc (c);
+    
+    basedvector<int, 1> edge_weight (c.kd.num_edges ());
+    for (unsigned i = 1; i <= c.kd.num_edges (); i ++)
+      edge_weight[i] = 1;
+    
+    return (tc.twisted_d0 (edge_weight)
+	    + c.compute_d (0, 0, 0, 0, 0)
+	    + tc.compute_twisted_barE (edge_weight, 0, 0));
+  }
+};
+
+template<class R, theory th> mod_map<R>
+differential (const cube<R> &c)
+{
+  return differential_helper<R, th>::differential (c);
+}
+
 extern sseq compute_szabo_sseq (const cube<Z2> &c);
 
 #include <cube_impl.h>
