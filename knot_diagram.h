@@ -10,6 +10,7 @@ add_base1_mod4 (unsigned x, unsigned y)
 
 enum mirror { MIRROR };
 enum connect_sum { CONNECT_SUM };
+enum sublink { SUBLINK };
 
 class knot_diagram
 {
@@ -96,6 +97,8 @@ class knot_diagram
   }
   bool is_smoothing_to_ept (unsigned p) const { return !is_smoothing_from_ept (p); }
   
+  unsigned num_components () const;
+  
   void orient ();
   void calculate_nminus_nplus ();
   void calculate_smoothing_orientation ();
@@ -106,9 +109,9 @@ class knot_diagram
  public:
   knot_diagram ()
     : n_crossings(0),
-    marked_edge(0),
-    nminus(0),
-    nplus(0)
+      marked_edge(0),
+      nminus(0),
+      nplus(0)
   { }
   explicit knot_diagram (const planar_diagram &pd);
   explicit knot_diagram (const dt_code &dt);
@@ -116,6 +119,9 @@ class knot_diagram
   knot_diagram (connect_sum,
 		const knot_diagram &d1,
 		const knot_diagram &d2);
+  knot_diagram (sublink,
+		smallbitset c,
+		const knot_diagram &kd);
   
   knot_diagram (const std::string &name_, unsigned n_crossings_, unsigned crossings_ar[][4]);
   knot_diagram (const std::string &name_, const basedvector<basedvector<unsigned, 1>, 1> &crossings_);

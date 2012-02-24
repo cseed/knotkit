@@ -108,9 +108,72 @@ test_field ()
       }
 }
 
+void
+check (const dt_code &dt)
+{
+  if (dt.num_components () > 1)
+    {
+      knot_diagram kd (dt);
+      kd.marked_edge = 1;
+      show (kd); newline ();
+      
+      cube<Z2> c (kd, 1);
+      mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+      sseq_builder b (c.khC, d);
+      sseq ss = b.build_sseq ();
+      
+      unsigned n_comps = kd.num_components ();
+      assert (n_comps == dt.num_components ());
+      
+      unsigned split = 1;
+      for (unsigned k = 1; k < unsigned_2pow (n_comps) - 1; k ++)
+	{
+	  knot_diagram kd2 (SUBLINK,
+			    smallbitset (n_comps, k),
+			    kd);
+	  kd2.marked_edge = 1;
+	  unsigned n_comps2 = kd2.num_components ();
+	  
+	  assert (n_comps2 == unsigned_bitcount (k));
+	  assert (n_comps2 > 0);
+	  assert (n_comps2 < n_comps);
+	  
+	  cube<Z2> c2 (kd2, 1);
+	  mod_map<Z2> d2 = c2.compute_d (1, 0, 0, 0, 0);
+	  sseq_builder b2 (c2.khC, d2);
+	  sseq ss2 = b2.build_sseq ();
+	  
+	  printf ("  k = %d, %d <=? %d\n",
+		  k,
+		  ss2.pages[1].total_rank (),
+		  ss.pages[1].total_rank ());
+	  if (ss2.pages[1].total_rank () > ss.pages[1].total_rank ())
+	    printf ("    !! COUNTEREXAMPLE\n");
+	  
+	  if (unsigned_bitcount (k) == 1)
+	    split *= ss2.pages[1].total_rank ();
+	}
+      
+      printf ("  split %d <=? %d\n",
+	      split,
+	      ss.pages[1].total_rank ());
+      if (split > ss.pages[1].total_rank ())
+	printf ("    !! COUNTEREXAMPLE\n");
+    }
+}
+
 int
 main ()
 {
+  for (unsigned i = 1; i <= 14; i ++)
+    {
+      for (unsigned j = 1; j <= mt_links (i, 0); j ++)
+	check (mt_link (i, 0, j));
+
+      for (unsigned j = 1; j <= mt_links (i, 1); j ++)
+	check (mt_link (i, 1, j));
+    }
+  
 #if 0
   knot_diagram kd (rolfsen_knot (8, 19));
   cube<Z2> c (kd);
@@ -143,6 +206,7 @@ main ()
   }
 #endif
   
+#if 0
   multivariate_laurentpoly<Z> p = -11;
   p.muladdeq (5, VARIABLE, 1);
   p.muladdeq (7, VARIABLE, 2);
@@ -187,6 +251,7 @@ main ()
   assert (m2(p) == "p");
   assert (m2(q) == "q");
   assert (m2(r) == "thisisr");
+#endif
   
 #if 0
   test_ring<Z2> (2);
