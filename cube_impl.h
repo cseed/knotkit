@@ -30,7 +30,7 @@ cube<R>::compute_map (unsigned dh, unsigned max_n,
 		      unsigned to_reverse,
 		      const map_rules &rules) const
 {
-  mod_map<R> r (khC);
+  map_builder<R> b (khC);
   
   smoothing from_s (kd);
   smoothing to_s (kd);
@@ -167,7 +167,7 @@ cube<R>::compute_map (unsigned dh, unsigned max_n,
 		      assert (!unsigned_bittest (v_to, p));
 		    }
 
-		  r[generator (fromstate, v_from)].muladd
+		  b[generator (fromstate, v_from)].muladd
 		    (sign, generator (tostate, v_to));
 		}
 	    }
@@ -180,7 +180,7 @@ cube<R>::compute_map (unsigned dh, unsigned max_n,
       fprintf (stderr, "computing differential done.\n");
     }
   
-  return r;
+  return mod_map<R> (b);
 }
 
 class d_rules : public map_rules
@@ -247,7 +247,7 @@ cube<R>::compute_nu () const
 {
   assert (!markedp_only);
   
-  mod_map<R> nu (khC);
+  map_builder<R> b (khC);
   for (unsigned i = 0, j = 1; i < n_resolutions; i ++)
     {
       smoothing s (kd, smallbitset (n_crossings, i));
@@ -258,11 +258,14 @@ cube<R>::compute_nu () const
 	      if (!unsigned_bittest (j, k))
 		{
 		  unsigned j2 = unsigned_bitset (j, k);
-		  nu[generator (i, j)].muladd (1, generator (i, j2));
+		  b[generator (i, j)].muladd (1, generator (i, j2));
 		}
 	    }
 	}
     }
+  
+  mod_map<R> nu (b);
+  
   nu.check_grading (0, 2);
   assert (nu.compose (nu) == 0);
   
@@ -275,7 +278,7 @@ cube<R>::compute_X (unsigned p) const
   assert (!markedp_only);
   
   /* define Khovanov's map X */
-  mod_map<R> X (khC);
+  map_builder<R> b (khC);
   for (unsigned i = 0, j = 1; i < n_resolutions; i ++)
     {
       smoothing r (kd, smallbitset (n_crossings, i));
@@ -285,10 +288,12 @@ cube<R>::compute_X (unsigned p) const
 	  if (unsigned_bittest (j, s))
 	    {
 	      unsigned j2 = unsigned_bitclear (j, s);
-	      X[generator (i, j)].muladd (1, generator (i, j2));
+	      b[generator (i, j)].muladd (1, generator (i, j2));
 	    }
 	}
     }
+
+  mod_map<R> X (b);
   assert (X.compose (X) == 0);
   
   return X;
@@ -297,7 +302,7 @@ cube<R>::compute_X (unsigned p) const
 template<class R> mod_map<R>
 cube<R>::H_i (unsigned c)
 {
-  mod_map<R> H_c (khC, 0);
+  mod_map<R> b (khC, 0);
   for (unsigned i = 0; i < n_resolutions; i ++)
     {
       if (unsigned_bittest (i, c))
@@ -323,7 +328,7 @@ cube<R>::H_i (unsigned c)
 	      j2 = unsigned_bitset (j2, to_s.edge_circle[from_circle_edge_rep[s]]);
 	    }
 	  
-	  linear_combination &v = H_c[generator (i, j)];
+	  linear_combination &v = b[generator (i, j)];
 	  if (from == to
 	      && unsigned_bittest (j, from))
 	    {
@@ -343,6 +348,9 @@ cube<R>::H_i (unsigned c)
 	    }
 	}
     }
+  
+  mod_map<R> H_c (b);
+  
   H_c.check_grading (grading (1, 2));
   
   return H_c;
@@ -522,7 +530,7 @@ twisted_cube<F>::compute_twisted_map (basedvector<int, 1> edge_weight,
 				      unsigned dh, unsigned to_reverse,
 				      const twisted_map_rules &rules) const
 {
-  mod_map<R> r (c.khC);
+  map_builder<R> b (c.khC);
   
   knot_diagram &kd = c.kd;
   unsigned n_crossings = c.n_crossings;
@@ -653,7 +661,7 @@ twisted_cube<F>::compute_twisted_map (basedvector<int, 1> edge_weight,
 		    }
 		  
 		  // ??? sign
-		  r[c.generator (fromstate, v_from)].muladd
+		  b[c.generator (fromstate, v_from)].muladd
 		    (polynomial<F> (1) + polynomial<F> (1, w),
 		     c.generator (tostate, v_to));
 		}
@@ -661,7 +669,7 @@ twisted_cube<F>::compute_twisted_map (basedvector<int, 1> edge_weight,
 	}
     }
   
-  return r;
+  return mod_map<R> (b);
 }
 
 class twisted_barE_rules : public twisted_map_rules
@@ -692,7 +700,7 @@ twisted_cube<F>::compute_twisted_barE (basedvector<int, 1> edge_weight,
 template<class F> mod_map<typename twisted_cube<F>::R> 
 twisted_cube<F>::twisted_d0 (basedvector<int, 1> edge_weight) const
 {
-  mod_map<R> d0 (c.khC);
+  map_builder<R> b (c.khC);
   for (unsigned i = 0, j = 1; i < c.n_resolutions; i ++)
     {
       smoothing r (c.kd, smallbitset (c.n_crossings, i));
@@ -718,11 +726,11 @@ twisted_cube<F>::twisted_d0 (basedvector<int, 1> edge_weight) const
 		      w += edge_weight[k];
 		  
 		  unsigned j2 = unsigned_bitclear (j, s);
-		  d0[c.generator (i, j)].muladd (polynomial<F> (1) + polynomial<F> (1, w),
-						 c.generator (i, j2));
+		  b[c.generator (i, j)].muladd (polynomial<F> (1) + polynomial<F> (1, w),
+						c.generator (i, j2));
 		}
 	    }
 	}
     }
-  return d0;
+  return mod_map<R> (b);
 }
