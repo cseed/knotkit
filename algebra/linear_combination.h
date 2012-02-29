@@ -145,6 +145,17 @@ class linear_combination
   
   unsigned card () const { return v.card (); }
   
+  linear_combination<R> tensor (const linear_combination<R> &lc) const
+  {
+    linear_combination<R> r (m->tensor (lc.m));
+    for (linear_combination_const_iter<R> i = *this; i; i ++)
+      for (linear_combination_const_iter<R> j = lc; j; j ++)
+	{
+	  r.muladd (i.val () * j.val (), m->tensor_generators (i.key (), lc.m, j.key ()));
+	}
+    return r;
+  }
+  
 #ifndef NDEBUG
   void check () const
   {
@@ -292,7 +303,10 @@ linear_combination<R>::show_self () const
       else
 	printf (" + ");
       show (i.val ());
-      printf ("*%d", i.key ());
+      
+      // printf ("*%d", i.key ());
+      printf ("*");
+      m->show_generator (i.key ());
     }
 }
 
@@ -445,7 +459,8 @@ linear_combination<Z2>::show_self () const
 	first = 0;
       else
 	printf ("+");
-      printf ("%d", i.val ());
+      // printf ("%d", i.val ());
+      m->show_generator (i.val ());
     }
 }
 

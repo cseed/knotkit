@@ -1,15 +1,38 @@
 
 template<class R> class mod_map;
+
 template<class R> class mod_span;
+
 template<class R> class free_submodule;
 template<class R> class quotient_module;
+template<class R> class tensor_product;
+template<class R> class hom_module;
 
 /* `module' is a bigraded module over a ring R. */
 template<class R>
 class module : public refcounted
 {
+ private:
+  unsigned id;
+  
+  static unsigned id_counter;
+  
+#if 0
+  static map<basedvector<unsigned, 1>,
+    ptr<const direct_sum<R> > direct_sum_idx;
+#endif
+  
+  static map<basedvector<unsigned, 1>,
+    ptr<const tensor_product<R> > > tensor_product_idx;
+  static map<pair<unsigned, unsigned>,
+    ptr<const hom_module<R> > > hom_module_idx;
+  
  public:
-  module () { }
+  module ()
+  {
+    id = id_counter;
+    id_counter ++;
+  }
   module (const module &); // doesn't exist
   virtual ~module () { }
   
@@ -27,6 +50,8 @@ class module : public refcounted
   
   // r < i <= n
   virtual R generator_ann (unsigned i) const = 0;
+  
+  bool is_free () const { return dim () == free_rank (); }
   
   bool is_zero (R c, unsigned i) const
   {
@@ -53,9 +78,277 @@ class module : public refcounted
   multivariate_laurentpoly<Z> free_poincare_polynomial () const;
   multivariate_laurentpoly<Z> free_delta_poincare_polynomial () const;
   
+  ptr<const tensor_product<R> > tensor (ptr<const module<R> > m) const
+  {
+    basedvector<ptr<const module<R> >, 1> factors (2);
+    factors[1] = this;
+    factors[2] = m;
+    return tensor (factors);
+  }
+  
+  ptr<const hom_module<R> > hom (ptr<const module<R> > to) const;
+  
+  pair<unsigned, unsigned>
+  generator_factors (ptr<const module<R> > m, unsigned g) const
+  {
+    pair<unsigned, unsigned> p ((g - 1) % dim () + 1,
+				(g - 1) / dim () + 1);
+    assert (g == tensor_generators (p.first, m, p.second));
+    return p;
+  }
+  
+  static ptr<const tensor_product<R> > tensor (basedvector<ptr<const module<R> >, 1> compound_factors);
+  
+  unsigned tensor_generators (unsigned i, ptr<const module<R> > m, unsigned j) const
+  {
+    return (i - 1) + (j - 1) * dim () + 1;
+  }
+  
+  virtual void append_tensor_factors (basedvector<ptr<const module<R> >, 1> &factors) const
+  {
+    factors.append (this);
+  }
+  
   void show_self () const;
   void display_self () const;
 };
+
+template<class R> unsigned module<R>::id_counter = 1;
+template<class R> map<basedvector<unsigned, 1>,
+  ptr<const tensor_product<R> > > module<R>::tensor_product_idx;
+
+template<class R> map<pair<unsigned, unsigned>,
+  ptr<const hom_module<R> > > module<R>::hom_module_idx;
+
+#if 0
+template<class R>
+class direct_sum : public module<R>
+{
+  unsigned n;
+  basedvector<ptr<const module<R> >, 1> summands;
+  
+ public:
+  direct_sum (basedvector<ptr<const module<R> >, 1> summands_)
+    : n(0),
+    summands(summands_)
+  {
+#ifndef NDEBUG
+    for (unsigned i = 1; i <= terms.size (); i ++)
+      assert (terms[i]->is_free ());
+#endif
+    
+    for (unsigned i = 1; i <= terms.size (); i ++)
+      n += terms[i]->dim ();
+  }
+  
+  unsigned dim () const { return n; }
+  unsigned free_rank () const { return n; }
+  
+  // ???
+  grading generator_grading (unsigned i) const { abort (); }
+  void show_generator (unsigned i) const { abort (); }
+};
+#endif
+
+template<class R>
+class tensor_product : public module<R>
+{
+  unsigned n;
+  basedvector<ptr<const module<R> >, 1> factors;
+  
+  basedvector<unsigned, 1> generator_factors (unsigned g) const;
+  
+ public:
+  tensor_product (basedvector<ptr<const module<R> >, 1> factors_)
+    : n(1),
+      factors(factors_)
+  {
+#ifndef NDEBUG
+    for (unsigned i = 1; i <= factors.size (); i ++)
+      assert (factors[i]->is_free ());
+#endif
+    
+    for (unsigned i = 1; i <= factors.size (); i ++)
+      n *= factors[i]->dim ();
+  }
+  ~tensor_product () { }
+  
+  unsigned dim () const { return n; }
+  unsigned free_rank () const { return n; }
+  
+  grading generator_grading (unsigned i) const;
+  void show_generator (unsigned i) const;
+  R generator_ann (unsigned i) const { return R (0); }
+  
+  unsigned tensor_generators (basedvector<unsigned, 1> gs) const;
+  
+  void append_tensor_factors (basedvector<ptr<const module<R> >, 1> &pfactors) const
+  {
+    for (unsigned i = 1; i <= factors.size (); i ++)
+      pfactors.append (factors[i]);
+  }
+};
+
+template<class R> ptr<const tensor_product<R> >
+module<R>::tensor (basedvector<ptr<const module<R> >, 1> compound_factors)
+{
+  basedvector<ptr<const module<R> >, 1> factors;
+  for (unsigned i = 1; i <= compound_factors.size (); i ++)
+    compound_factors[i]->append_tensor_factors (factors);
+  
+  basedvector<unsigned, 1> factor_ids (factors.size ());
+  for (unsigned i = 1; i <= factors.size (); i ++)
+    factor_ids[i] = factors[i]->id;
+  
+  pair<ptr<const tensor_product<R> > &, bool> p = tensor_product_idx.find (factor_ids);
+  if (!p.second)
+    p.first = new tensor_product<R> (factors);
+  return p.first;
+}
+
+template<class R> grading
+tensor_product<R>::generator_grading (unsigned i) const
+{
+  basedvector<unsigned, 1> gs = generator_factors (i);
+  assert (gs.size () == factors.size ());
+  
+  grading gr;
+  for (unsigned i = 1; i <= factors.size (); i ++)
+    gr += factors[i]->generator_grading (gs[i]);
+  
+  return gr;
+}
+
+template<class R> void
+tensor_product<R>::show_generator (unsigned i) const
+{
+  basedvector<unsigned, 1> gs = generator_factors (i);
+  assert (gs.size () == factors.size ());
+  
+  printf ("o(");
+  for (unsigned i = 1; i <= factors.size (); i ++)
+    {
+      if (i > 1)
+	printf (",");
+      factors[i]->show_generator (gs[i]);
+    }
+  printf (")");
+}
+
+template<class R> unsigned
+tensor_product<R>::tensor_generators (basedvector<unsigned, 1> gs) const
+{
+  assert (gs.size () == factors.size ());
+  
+  unsigned r = gs[gs.size ()] - 1;
+  for (unsigned i = gs.size () - 1; i >= 1; i --)
+    {
+      r *= factors[i]->dim ();
+      r += gs[i] - 1;
+    }
+  r ++;
+  
+  return r;
+}
+
+template<class R> basedvector<unsigned, 1>
+tensor_product<R>::generator_factors (unsigned g) const
+{
+  basedvector<unsigned, 1> r (factors.size ());
+  
+  unsigned g0 = g;
+  
+  g --;
+  for (unsigned i = 1; i <= factors.size (); i ++)
+    {
+      r[i] = (g % factors[i]->dim ()) + 1;
+      g /= factors[i]->dim ();
+    }
+  assert (g == 0);
+  assert (tensor_generators (r) == g0);
+  
+  return r;
+}
+
+template<class R> 
+class hom_module : public module<R>
+{
+ public:
+  unsigned n;
+  ptr<const module<R> > from;
+  ptr<const module<R> > to;
+  
+ public:
+  hom_module (ptr<const module<R> > from_,
+	      ptr<const module<R> > to_)
+    : from(from_), to(to_)
+  {
+    assert (from->is_free ()
+	    && to->is_free ());
+    n = from->dim () * to->dim ();
+  }
+  ~hom_module () { }
+  
+  // e_ij -> ij
+  pair<unsigned, unsigned> generator_indices (unsigned g) const
+  {
+    unsigned d = from->dim ();
+    unsigned g0 = g;
+    
+    g --;
+    pair<unsigned, unsigned> p ((g % d) + 1,
+				(g / d) + 1);
+    
+    assert (generator (p.first, p.second) == g0);
+    
+    return p;
+  }
+  
+  // ij -> e_ij 
+  unsigned generator (unsigned i, unsigned j) const
+  {
+    return (i - 1) + (j - 1) * from->dim () + 1;
+  }
+  
+  unsigned dim () const { return n; }
+  unsigned free_rank () const { return n; }
+  
+  grading generator_grading (unsigned i) const;
+  void show_generator (unsigned i) const;
+  R generator_ann (unsigned i) const { return R (0); }
+  
+  linear_combination<R> map_as_element (const mod_map<R> &m) const;
+};
+
+template<class R> ptr<const hom_module<R> >
+module<R>::hom (ptr<const module<R> > to) const
+{
+  pair<ptr<const hom_module<R> > &, bool> p = hom_module_idx.find (pair<unsigned, unsigned>
+								   (id, to->id));
+  if (!p.second)
+    p.first = new hom_module<R> (this, to);
+  return p.first;
+}
+
+template<class R> grading
+hom_module<R>::generator_grading (unsigned i) const
+{
+  pair<unsigned, unsigned> p = generator_indices (i);
+  return (to->generator_grading (p.second)
+	  - from->generator_grading (p.first));
+}
+
+template<class R> void
+hom_module<R>::show_generator (unsigned i) const
+{
+  pair<unsigned, unsigned> p = generator_indices (i);
+  
+  printf ("(");
+  from->show_generator (p.first);
+  printf (" -> ");
+  to->show_generator (p.second);
+  printf (")");
+}
 
 template<class R, class G>
 class base_module : public module<R>
@@ -287,10 +580,10 @@ template<class R>
 class composition_impl : public map_impl<R>
 {
   // f(g(x))
-  ptr<map_impl<R> > f, g;
+  ptr<const map_impl<R> > f, g;
   
  public:
-  composition_impl (ptr<map_impl<R> > f_, ptr<map_impl<R> > g_)
+  composition_impl (ptr<const map_impl<R> > f_, ptr<const map_impl<R> > g_)
     : map_impl<R>(g_->from, f_->to),
       f(f_),
       g(g_)
@@ -301,6 +594,30 @@ class composition_impl : public map_impl<R>
   linear_combination<R> column (unsigned i) const
   {
     return f->map (g->column (i));
+  }
+};
+
+template<class R>
+class tensor_impl : public map_impl<R>
+{
+  // f\otimes g
+  ptr<const map_impl<R> > f, g;
+  
+ public:
+  tensor_impl (ptr<const map_impl<R> > f_, ptr<const map_impl<R> > g_)
+    : map_impl<R>(f_->from->tensor (g_->from),
+		  f_->to->tensor (g_->from)),
+      f(f_),
+      g(g_)
+  {
+  }
+  
+  linear_combination<R> column (unsigned i) const
+  {
+    pair<unsigned, unsigned> p = f->from->generator_factors (g->from, i);
+    
+    // ??
+    return f->column (p.first).tensor (g->column (p.second));
   }
 };
 
@@ -349,9 +666,12 @@ map_builder<R>::init ()
 template<class R>
 class mod_map
 {
-  ptr<map_impl<R> > impl;
+  // ???
+  enum impl_ctor { IMPL };
+
+  ptr<const map_impl<R> > impl;
   
-  mod_map (ptr<map_impl<R> > impl_) : impl(impl_) { }
+  mod_map (impl_ctor, ptr<const map_impl<R> > impl_) : impl(impl_) { }
   
  public:
   mod_map () { }
@@ -389,13 +709,16 @@ class mod_map
   
   mod_map &operator = (const mod_map &m) { impl = m.impl; return *this; }
   
+  ptr<const module<R> > domain () const { return impl->from; }
+  ptr<const module<R> > codomain () const { return impl->to; }
+  
   bool operator == (const mod_map &m) const
   {
     assert (impl->from == m.impl->from);
     assert (impl->to == m.impl->to);
     for (unsigned i = 1; i <= impl->from->dim (); i ++)
       {
-	if (impl->columns (i) != m.impl->columns (i))
+	if (impl->column (i) != m.impl->column (i))
 	  return 0;
       }
     return 1;
@@ -420,7 +743,17 @@ class mod_map
   linear_combination<R> operator [] (unsigned i) const { return impl->column (i); }
   
   linear_combination<R> map (const linear_combination<R> &lc) const { return impl->map (lc); }
-  mod_map compose (const mod_map &m) const { return new composition_impl<R> (impl, m.impl); }
+  mod_map compose (const mod_map &m) const
+  {
+    return mod_map (IMPL,
+		    new composition_impl<R> (impl, m.impl));
+  }
+  
+  mod_map tensor (const mod_map &m) const
+  {
+    return mod_map (IMPL,
+		    new tensor_impl<R> (impl, m.impl));
+  }
   
   // ?? add and other map operations should not be explicit
   mod_map operator + (const mod_map &m) const;
@@ -456,6 +789,21 @@ class mod_map
   void show_self () const;
   void display_self () const;
 };
+
+template<class R> linear_combination<R> 
+hom_module<R>::map_as_element (const mod_map<R> &m) const
+{
+  assert (from == m.domain ()
+	  && to == m.codomain ());
+  
+  linear_combination<R> r (this);
+  for (unsigned i = 1; i <= from->dim (); i ++)
+    {
+      for (linear_combination_const_iter<R> j = m.column (i); j; j ++)
+	r.muladd (j.val (), generator (i, j.key ()));
+    }
+  return r;
+}
 
 template<class R>
 class mod_span
@@ -1319,7 +1667,9 @@ mod_map<R>::display_self () const
   show_self (); newline ();
   for (unsigned i = 1; i <= impl->from->dim (); i ++)
     {
-      printf ("  %d: ", i);
+      printf ("  %d ", i);
+      impl->from->show_generator (i);
+      printf (": ");
       show (column (i));
       newline ();
     }

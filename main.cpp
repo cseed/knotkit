@@ -165,6 +165,55 @@ check (const dt_code &dt)
 int
 main ()
 {
+  ptr<const explicit_module<Q> > A
+    = new explicit_module<Q> (2, basedvector<Q, 1> (), basedvector<grading, 1> (2));
+  ptr<const explicit_module<Q> > B
+    = new explicit_module<Q> (3, basedvector<Q, 1> (), basedvector<grading, 1> (3));
+  ptr<const explicit_module<Q> > C
+    = new explicit_module<Q> (3, basedvector<Q, 1> (), basedvector<grading, 1> (3));
+  ptr<const explicit_module<Q> > D
+    = new explicit_module<Q> (2, basedvector<Q, 1> (), basedvector<grading, 1> (2));
+  ptr<const explicit_module<Q> > E
+    = new explicit_module<Q> (2, basedvector<Q, 1> (), basedvector<grading, 1> (3));
+  ptr<const explicit_module<Q> > F
+    = new explicit_module<Q> (2, basedvector<Q, 1> (), basedvector<grading, 1> (2));
+  
+  map_builder<Q> fb (A, B);
+  fb[1].muladd (2, 1);
+  fb[1].muladd (3, 2);
+  fb[2].muladd (-5, 2);
+  fb[2].muladd (4, 3);
+  mod_map<Q> f (fb);
+  display ("f:\n", f);
+  
+  map_builder<Q> gb (C, D);
+  gb[1].muladd (1, 1);
+  gb[2].muladd (3, 1);
+  gb[2].muladd (-2, 2);
+  gb[3].muladd (-6, 2);
+  mod_map<Q> g (gb);
+  display ("g:\n", g);
+
+  map_builder<Q> hb (E, F);
+  hb[1].muladd (3, 2);
+  hb[2].muladd (-3, 1);
+  mod_map<Q> h (hb);
+  display ("h:\n", h);
+  
+  mod_map<Q> fg = f.tensor (g);
+  display ("fg:\n", fg);
+  
+  ptr<const module<Q> > AB_C = (A->tensor (B))->tensor (C),
+    A_BC = A->tensor (B->tensor (C));
+  assert (AB_C == A_BC);
+  
+  assert ((f.tensor (g)).tensor (h) == f.tensor (g.tensor (h)));
+  
+  ptr<const hom_module<Q> > homAB = A->hom (B);
+  linear_combination<Q> x = homAB->map_as_element (f);
+  display ("x:\n", x);
+
+#if 0 
   for (unsigned i = 1; i <= 14; i ++)
     {
       for (unsigned j = 1; j <= mt_links (i, 0); j ++)
@@ -173,6 +222,7 @@ main ()
       for (unsigned j = 1; j <= mt_links (i, 1); j ++)
 	check (mt_link (i, 1, j));
     }
+#endif
   
 #if 0
   knot_diagram kd (rolfsen_knot (8, 19));
