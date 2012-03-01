@@ -193,7 +193,9 @@ main ()
   gb[3].muladd (-6, 2);
   mod_map<Q> g (gb);
   display ("g:\n", g);
-
+  
+  display ("f oplus g:\n", f.add (g));
+  
   map_builder<Q> hb (E, F);
   hb[1].muladd (3, 2);
   hb[2].muladd (-3, 1);

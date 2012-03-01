@@ -5,6 +5,7 @@ template<class R> class mod_span;
 
 template<class R> class free_submodule;
 template<class R> class quotient_module;
+template<class R> class direct_sum;
 template<class R> class tensor_product;
 template<class R> class hom_module;
 
@@ -17,11 +18,8 @@ class module : public refcounted
   
   static unsigned id_counter;
   
-#if 0
   static map<basedvector<unsigned, 1>,
-    ptr<const direct_sum<R> > direct_sum_idx;
-#endif
-  
+    ptr<const direct_sum<R> > > direct_sum_idx;
   static map<basedvector<unsigned, 1>,
     ptr<const tensor_product<R> > > tensor_product_idx;
   static map<pair<unsigned, unsigned>,
@@ -78,6 +76,37 @@ class module : public refcounted
   multivariate_laurentpoly<Z> free_poincare_polynomial () const;
   multivariate_laurentpoly<Z> free_delta_poincare_polynomial () const;
   
+  ptr<const direct_sum<R> >
+    add (basedvector<ptr<const module<R> >, 1> compound_summands) const;
+  
+  ptr<const direct_sum<R> > add (ptr<const module<R> > m) const
+  {
+    basedvector<ptr<const module<R> >, 1> summands (2);
+    summands[1] = this;
+    summands[2] = m;
+    return add (summands);
+  }
+  
+  // g -> (g, 0)
+  unsigned inject_1 (unsigned g, ptr<const module<R> > m) const
+  {
+    return g;
+  }
+  
+  // g -> (0, g)
+  unsigned inject_2 (ptr<const module<R> > m, unsigned g) const
+  {
+    return dim () + g;
+  }
+  
+  pair<unsigned, unsigned> project (ptr<const module<R> > m, unsigned g) const
+  {
+    if (g <= dim ())
+      return pair<unsigned, unsigned> (1, g);
+    else
+      return pair<unsigned, unsigned> (2, g - dim ());
+  }
+  
   ptr<const tensor_product<R> > tensor (ptr<const module<R> > m) const
   {
     basedvector<ptr<const module<R> >, 1> factors (2);
@@ -104,6 +133,11 @@ class module : public refcounted
     return (i - 1) + (j - 1) * dim () + 1;
   }
   
+  virtual void append_direct_summands (basedvector<ptr<const module<R> >, 1> &summands) const
+  {
+    summands.append (this);
+  }
+  
   virtual void append_tensor_factors (basedvector<ptr<const module<R> >, 1> &factors) const
   {
     factors.append (this);
@@ -114,13 +148,16 @@ class module : public refcounted
 };
 
 template<class R> unsigned module<R>::id_counter = 1;
+
+template<class R> map<basedvector<unsigned, 1>,
+  ptr<const direct_sum<R> > > module<R>::direct_sum_idx;
+
 template<class R> map<basedvector<unsigned, 1>,
   ptr<const tensor_product<R> > > module<R>::tensor_product_idx;
 
 template<class R> map<pair<unsigned, unsigned>,
   ptr<const hom_module<R> > > module<R>::hom_module_idx;
 
-#if 0
 template<class R>
 class direct_sum : public module<R>
 {
@@ -130,25 +167,97 @@ class direct_sum : public module<R>
  public:
   direct_sum (basedvector<ptr<const module<R> >, 1> summands_)
     : n(0),
-    summands(summands_)
+      summands(summands_)
   {
 #ifndef NDEBUG
-    for (unsigned i = 1; i <= terms.size (); i ++)
-      assert (terms[i]->is_free ());
+    for (unsigned i = 1; i <= summands.size (); i ++)
+      assert (summands[i]->is_free ());
 #endif
     
-    for (unsigned i = 1; i <= terms.size (); i ++)
-      n += terms[i]->dim ();
+    for (unsigned i = 1; i <= summands.size (); i ++)
+      n += summands[i]->dim ();
   }
+  ~direct_sum () { }
   
   unsigned dim () const { return n; }
   unsigned free_rank () const { return n; }
   
-  // ???
-  grading generator_grading (unsigned i) const { abort (); }
-  void show_generator (unsigned i) const { abort (); }
+  grading generator_grading (unsigned i) const;
+  void show_generator (unsigned i) const;
+  R generator_ann (unsigned i) const { return R (0); }
+  
+  void append_direct_summands (basedvector<ptr<const module<R> >, 1> &psummands) const
+  {
+    for (unsigned i = 1; i <= summands.size (); i ++)
+      psummands.append (summands[i]);
+  }
+  
+  unsigned inject (unsigned i, unsigned g) const;
+  pair<unsigned, unsigned> project (unsigned g) const;
 };
-#endif
+
+template<class R> grading
+direct_sum<R>::generator_grading (unsigned i) const
+{
+  pair<unsigned, unsigned> p = project (i);
+  return summands[p.first]->generator_grading (p.second);
+}
+
+template<class R> void
+direct_sum<R>::show_generator (unsigned i) const
+{
+  pair<unsigned, unsigned> p = project (i);
+  printf ("%d:", p.first);
+  return summands[p.first]->show_generator (p.second);
+}
+
+template<class R> unsigned
+direct_sum<R>::inject (unsigned i, unsigned g) const
+{
+  assert (i >= 1 && i <= summands.size ());
+  
+  for (unsigned j = 1; j < i; j ++)
+    g += summands[j]->dim ();
+  return g;
+}
+
+template<class R> pair<unsigned, unsigned>
+direct_sum<R>::project (unsigned g) const
+{
+  assert (g <= n);
+  
+  unsigned g0 = g;
+  
+  for (unsigned j = 1; j <= summands.size (); j ++)
+    {
+      if (g <= summands[j]->dim ())
+	{
+	  assert (inject (j, g) == g0);
+	  
+	  return pair<unsigned, unsigned> (j, g);
+	}
+      else
+	g -= summands[j]->dim ();
+    }
+  abort ();  // shouldn't get here
+}
+
+template<class R> ptr<const direct_sum<R> >
+module<R>::add (basedvector<ptr<const module<R> >, 1> compound_summands) const
+{
+  basedvector<ptr<const module<R> >, 1> summands;
+  for (unsigned i = 1; i <= compound_summands.size (); i ++)
+    compound_summands[i]->append_direct_summands (summands);
+  
+  basedvector<unsigned, 1> summand_ids (summands.size ());
+  for (unsigned i = 1; i <= summands.size (); i ++)
+    summand_ids[i] = summands[i]->id;
+  
+  pair<ptr<const direct_sum<R> > &, bool> p = direct_sum_idx.find (summand_ids);
+  if (!p.second)
+    p.first = new direct_sum<R> (summands);
+  return p.first;
+}
 
 template<class R>
 class tensor_product : public module<R>
@@ -598,6 +707,41 @@ class composition_impl : public map_impl<R>
 };
 
 template<class R>
+class direct_sum_impl : public map_impl<R>
+{
+  // f\oplus g
+  ptr<const map_impl<R> > f, g;
+  
+ public:
+  direct_sum_impl (ptr<const map_impl<R> > f_, ptr<const map_impl<R> > g_)
+    : map_impl<R>(f_->from->add (g_->from),
+		  f_->to->add (g_->to)),
+      f(f_),
+      g(g_)
+  {
+  }
+  
+  linear_combination<R> column (unsigned i) const
+  {
+    pair<unsigned, unsigned> p = f->from->project (g->from, i);
+    
+    linear_combination<R> r (this->to);
+    if (p.first == 1)
+      {
+	for (linear_combination_const_iter<R> j = f->column (p.second); j; j ++)
+	  r.muladd (j.val (), f->to->inject_1 (j.key (), g->to));
+      }
+    else
+      {
+	assert (p.first == 2);
+	for (linear_combination_const_iter<R> j = g->column (p.second); j; j ++)
+	  r.muladd (j.val (), f->to->inject_2 (g->to, j.key ()));
+      }
+    return r;
+  }
+};
+
+template<class R>
 class tensor_impl : public map_impl<R>
 {
   // f\otimes g
@@ -747,6 +891,13 @@ class mod_map
   {
     return mod_map (IMPL,
 		    new composition_impl<R> (impl, m.impl));
+  }
+  
+  // ??? in the sense of direct sum
+  mod_map add (const mod_map &m) const
+  {
+    return mod_map (IMPL,
+		    new direct_sum_impl<R> (impl, m.impl));
   }
   
   mod_map tensor (const mod_map &m) const
