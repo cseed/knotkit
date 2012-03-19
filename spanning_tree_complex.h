@@ -22,7 +22,8 @@ class spanning_tree_complex
   
   grading tree_grading (unsigned i) const;
   void show_tree (unsigned i) const;
-  
+
+  mod_map<R> totally_twisted_kh_d () const;
   mod_map<R> twisted_d2 () const;
 };
 
@@ -90,8 +91,8 @@ template<class F> mod_map<fraction_field<polynomial<F> > >
 spanning_tree_complex<F>::twisted_d2 () const
 {
   assert (kd.marked_edge);
-  
-  mod_map<R> d (C);
+
+  map_builder<R> b (C);
   
   basedvector<int, 1> edge_weight (kd.num_edges ());
   for (unsigned i = 1; i <= kd.num_edges (); i ++)
@@ -201,10 +202,107 @@ spanning_tree_complex<F>::twisted_d2 () const
 	      x += R (polynomial<F> (1),
 		      polynomial<F> (1) + polynomial<F> (1, B));
 	      
-	      d[i].muladd (x, j);
+	      b[i].muladd (x, j);
 	    }
 	}
     }
   
-  return d;
+  return mod_map<R> (b);
+}
+
+template<class F> mod_map<fraction_field<polynomial<F> > >
+spanning_tree_complex<F>::totally_twisted_kh_d () const
+{
+  assert (kd.marked_edge);
+  
+  map_builder<R> b (C);
+  
+  basedvector<int, 1> edge_weight (kd.num_edges ());
+  for (unsigned i = 1; i <= kd.num_edges (); i ++)
+    {
+      edge_weight[i] = i;
+      // edge_weight[i] = (1 << i);
+      // edge_weight[i] = 1;
+    }
+  
+  for (unsigned i = 1; i <= trees.size (); i ++)
+    {
+      set<unsigned> t = trees[i];
+      
+      smallbitset r (kd.n_crossings);
+      for (unsigned k = 1; k <= kd.n_crossings; k ++)
+	{
+	  if ((edge_height[k] == 1) == (t % k))
+	    r.push (k);
+	}
+      smoothing s (kd, r);
+      
+      for (set_const_iter<unsigned> ee = t; ee; ee ++)
+	{
+	  unsigned e = ee.val ();
+	  
+	  if (edge_height[e] != 0)
+	    continue;
+	  
+	  for (unsigned f = 1; f <= bg.num_edges (); f ++)
+	    {
+	      if (edge_height[f] != 1 || (t % f))
+		continue;
+	      
+	      set<unsigned> t2 (COPY, t);
+	      t2.yank (e);
+	      t2.push (f);
+	      unsigned j = tree_idx(t2, 0);
+	      if (j == 0)
+		continue;
+	      
+	      set<unsigned> neither (COPY, t);
+	      neither.yank (e);
+	      
+	      smallbitset neither_r (kd.n_crossings);
+	      for (unsigned k = 1; k <= kd.n_crossings; k ++)
+		{
+		  if ((edge_height[k] == 1) == (neither % k))
+		    neither_r.push (k);
+		}
+	      smoothing neither_s (kd, neither_r);
+	      
+	      set<unsigned> both (COPY, t);
+	      both.push (f);
+	      
+	      R A = 0;
+	      for (unsigned k = 1; k <= kd.num_edges (); k ++)
+		{
+		  if (neither_s.edge_circle[k]
+		      != neither_s.edge_circle[kd.marked_edge])
+		    A += polynomial<F> (1, edge_weight[k]);
+		}
+	      
+	      smallbitset both_r (kd.n_crossings);
+	      for (unsigned k = 1; k <= kd.n_crossings; k ++)
+		{
+		  if ((edge_height[k] == 1) == (both % k))
+		    both_r.push (k);
+		}
+	      smoothing both_s (kd, both_r);
+	      
+	      R B = 0;
+	      for (unsigned k = 1; k <= kd.num_edges (); k ++)
+		{
+		  if (both_s.edge_circle[k]
+		      != both_s.edge_circle[kd.marked_edge])
+		    B += polynomial<F> (1, edge_weight[k]);
+		}
+	      
+	      R x;
+	      
+	      x += R (polynomial<F> (1)) / A;
+	      x += R (polynomial<F> (1)) / B;
+	      
+	      b[i].muladd (x, j);
+	    }
+	}
+    }
+  
+  return mod_map<R> (b);
 }

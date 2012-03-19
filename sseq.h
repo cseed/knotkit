@@ -150,8 +150,7 @@ class chain_complex_simplifier
   mod_map<R> pi, iota;
   
  private:
-  mod_map<R> new_d0;
-  
+  basedvector<linear_combination, 1> new_d0;
   basedvector<set<unsigned>, 1> preim;
   
   bool build_pi_iota;
@@ -271,7 +270,7 @@ chain_complex_simplifier<R>::chain_complex_simplifier (ptr<const module<R> > C_,
 						       int dh,
 						       bool build_pi_iota_)
   : C(C_), n(C_->dim ()), d(d_),
-    new_d0(COPY2, d),
+    new_d0(COPY2, d_.explicit_columns ()),
     preim(C_->dim ()),
     build_pi_iota(build_pi_iota_)
 {

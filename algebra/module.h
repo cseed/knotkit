@@ -630,9 +630,9 @@ class map_impl : public refcounted
   
   virtual linear_combination<R> column (unsigned i) const = 0;
   
-  linear_combination<R> map (linear_combination<R> &lc) const
+  linear_combination<R> map (const linear_combination<R> &lc) const
   {
-    linear_combination<R> r;
+    linear_combination<R> r (this->to);
     for (linear_combination_const_iter<R> i = lc; i; i ++)
       r.muladd (i.val (), column (i.key ()));
     return r;
@@ -750,7 +750,7 @@ class tensor_impl : public map_impl<R>
  public:
   tensor_impl (ptr<const map_impl<R> > f_, ptr<const map_impl<R> > g_)
     : map_impl<R>(f_->from->tensor (g_->from),
-		  f_->to->tensor (g_->from)),
+		  f_->to->tensor (g_->to)),
       f(f_),
       g(g_)
   {
@@ -1741,7 +1741,7 @@ mod_map<R>::homology () const
 template<class R> basedvector<linear_combination<R>, 1>
 mod_map<R>::explicit_columns () const
 {
-  basedvector<linear_combination<R>, 1> v;
+  basedvector<linear_combination<R>, 1> v (impl->from->dim ());
   for (unsigned i = 1; i <= impl->from->dim (); i ++)
     v[i] = column (i);
   return v;
