@@ -124,9 +124,43 @@ rank_lte (multivariate_laurentpoly<Z> p,
   return 1;
 }
 
+triple<multivariate_laurentpoly<Z>,
+       multivariate_laurentpoly<Z>,
+       multivariate_laurentpoly<Z> >
+square (knot_diagram &kd)
+{
+  cube<Z2> c (kd);
+  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+  
+  chain_complex_simplifier<Z2> s (c.khC, d, 1);
+  
+  steenrod_square sq (c, d, s);
+  mod_map<Z2> sq1 = sq.sq1 ();
+  // display ("sq1:\n", sq1);
+  
+  mod_map<Z2> sq2 = sq.sq2 ();
+  // display ("sq2:\n", sq2);
+  
+  assert (sq1.compose (sq1) == 0);
+  assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+  
+  multivariate_laurentpoly<Z> P = s.new_C->free_poincare_polynomial ();
+  
+  ptr<const free_submodule<Z2> > sq1_im = sq1.image ();
+  multivariate_laurentpoly<Z> sq1_P = sq1_im->free_poincare_polynomial ();
+  
+  ptr<const free_submodule<Z2> > sq2_im = sq2.image ();
+  multivariate_laurentpoly<Z> sq2_P = sq2_im->free_poincare_polynomial ();
+  
+  return triple<multivariate_laurentpoly<Z>,
+		multivariate_laurentpoly<Z>,
+		multivariate_laurentpoly<Z> > (P, sq1_P, sq2_P);
+}
+
 int
 main ()
 {
+#if 0
   for (int a = 1; a >= 0; a --)
     for (unsigned i = 1; i <= 9; i ++)
       for (unsigned j = 1; j <= htw_knots (i, a); j ++)
@@ -172,7 +206,7 @@ main ()
       }
 #endif
   
-#if 1
+#if 0
   map<multivariate_laurentpoly<Z>,
       set<triple<unsigned, int, unsigned> > > kh_knot_map;
   
@@ -199,7 +233,7 @@ main ()
   }
 #endif
   
-#if 0
+#if 1
   reader r ("kh_knot_map.dat");
   map<multivariate_laurentpoly<Z>,
       set<triple<unsigned, int, unsigned> > > kh_knot_map (r);
@@ -207,15 +241,44 @@ main ()
   for (map<multivariate_laurentpoly<Z>,
 	   set<triple<unsigned, int, unsigned> > >::const_iter i = kh_knot_map; i; i ++)
     {
-      printf ("P = "); display (i.key ());
+      if (i.val ().card () == 1)
+	continue;
+      
+      printf ("group\n");
+      bool first = 1;
+      multivariate_laurentpoly<Z> P, sq1_P, sq2_P;
+      
       for (set_const_iter<triple<unsigned, int, unsigned> > j = i.val (); j; j ++)
 	{
 	  knot_diagram kd (htw_knot (j.val ().first,
 				     j.val ().second,
 				     j.val ().third));
-	  printf ("  ");
-	  show (kd);
-	  newline ();
+	  printf ("  "); show (kd); newline ();
+	  
+	  triple<multivariate_laurentpoly<Z>,
+		 multivariate_laurentpoly<Z>,
+		 multivariate_laurentpoly<Z> > t = square (kd);
+#if 0
+	  display ("t.first = ", t.first);
+	  display ("i.key () = ", i.key ());
+	  assert (t.first == i.key ());
+#endif
+	  
+	  if (first)
+	    {
+	      P = t.first;
+	      sq1_P = t.second;
+	      sq2_P = t.third;
+	      first = 0;
+	    }
+	  else
+	    {
+	      assert (P == t.first);
+	      if (sq1_P != t.second)
+		printf ("  prev sq1_P != sq1_P\n");
+	      if (sq2_P != t.third)
+		printf ("  prev sq2_P != sq2_P\n");
+	    }
 	}
     }
 #endif

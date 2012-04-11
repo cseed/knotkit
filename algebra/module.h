@@ -1828,6 +1828,8 @@ mod_map<R>::display_self () const
     {
       printf ("  %d ", i);
       impl->from->show_generator (i);
+      printf (" ");
+      show (impl->from->generator_grading (i));
       printf (": ");
       show (column (i));
       newline ();
