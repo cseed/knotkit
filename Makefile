@@ -3,6 +3,7 @@ BISON = /opt/local/bin/bison
 FLEX = /opt/local/bin/flex
 
 # CXX = g++
+# CXX = mpic++
 CXX = clang++ -fno-color-diagnostics --stdlib=libc++ --std=c++11
 
 INCLUDES = -I/opt/local/include -I.
@@ -58,6 +59,9 @@ gss: gss.o $(COMMON_OBJS)
 main: main.o $(COMMON_OBJS)
 	$(CXX) $(LDFLAGS) -o main $^ $(LIBS)
 
+mpimain: mpimain.o mpi_aux.o $(COMMON_OBJS)
+	$(CXX) $(LDFLAGS) -o main $^ $(LIBS)
+
 testlib: testlib.o $(COMMON_OBJS)
 	$(CXX) $(LDFLAGS) -o testlib $^
 
@@ -108,4 +112,6 @@ realclean: clean
 
 $(LIB_OBJS): $(LIB_HEADERS)
 $(ALGEBRA_OBJS): $(ALGEBRA_HEADERS) $(LIB_HEADERS)
-$(KNOTKIT_OBJS) main.o gss.o: $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)
+$(KNOTKIT_OBJS) main.o mpimain.o gss.o: $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)
+
+mpimain.o mpi_aux.o: mpi_aux.h

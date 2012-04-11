@@ -499,6 +499,13 @@ mt_links (unsigned n, bool alternating)
     return mt_nonalternating[n - 1];
 }
 
+unsigned
+mt_links (unsigned n)
+{
+  assert (between (1, n, 14));
+  return mt_alternating[n - 1] + mt_nonalternating[n - 1];
+}
+
 dt_code
 mt_link (unsigned n, bool alternating, unsigned k)
 {
@@ -533,6 +540,19 @@ mt_link (unsigned n, bool alternating, unsigned k)
   sprintf (buf2, "L%d%c%d", n, alternating ? 'a' : 'n', k);
   
   return dt_code (buf2, buf);
+}
+
+dt_code
+mt_link (unsigned n, unsigned k)
+{
+  assert (between (1, n, 16));
+  assert (k >= 1);
+  
+  unsigned na = mt_links (n, 1);
+  if (k <= na)
+    return mt_link (n, 1, k);
+  else
+    return mt_link (n, 0, k - na);
 }
 
 planar_diagram
@@ -727,4 +747,133 @@ mutant_knot_groups (unsigned n)
     }
   
   return r;
+}
+
+knot_diagram
+knot_desc::diagram () const
+{
+  switch (t)
+    {
+    case ROLFSEN:
+      return knot_diagram (rolfsen_knot (i, j));
+      
+    case HTW:
+      return knot_diagram (htw_knot (i, j));
+    case HTW_ALT:
+      return knot_diagram (htw_knot (i, 1, j));
+    case HTW_NONALT:
+      return knot_diagram (htw_knot (i, 0, j));
+
+    case MT:
+      return knot_diagram (mt_link (i, j));
+    case MT_ALT:
+      return knot_diagram (mt_link (i, 1, j));
+    case MT_NONALT:
+      return knot_diagram (mt_link (i, 0, j));
+      
+    case TORUS:
+      return knot_diagram (torus_knot (i, j));
+      
+    default: abort ();
+    }
+}
+  
+std::string
+knot_desc::name () const
+{
+  char buf[1000];
+  switch (t)
+    {
+    case ROLFSEN:
+      sprintf (buf, "%d_%d", i, j);
+      break;
+      
+    case HTW:
+      {
+	unsigned na = htw_knots (i, 1);
+	if (j <= na)
+	  sprintf (buf, "%da%d", i, j);
+	else
+	  sprintf (buf, "%dn%d", i, j - na);
+      }
+      break;
+      
+    case HTW_ALT:
+      sprintf (buf, "%da%d", i, j);
+      break;
+
+    case HTW_NONALT:
+      sprintf (buf, "%dn%d", i, j);
+      break;
+
+    case MT:
+      {
+	unsigned na = mt_links (i, 1);
+	if (j <= na)
+	  sprintf (buf, "L%da%d", i, j);
+	else
+	  sprintf (buf, "L%dn%d", i, j - na);
+      }
+      break;
+      
+    case MT_ALT:
+      sprintf (buf, "L%da%d", i, j);
+      break;
+
+    case MT_NONALT:
+      sprintf (buf, "L%dn%d", i, j);
+      break;
+      
+    case TORUS:
+      sprintf (buf, "T(%d, %d)", i, j);
+      break;
+      
+    default: abort ();
+    }
+  
+  return buf;
+}
+
+unsigned
+knot_desc::table_crossing_knots () const
+{
+  switch (t)
+    {
+    case ROLFSEN:
+      return rolfsen_crossing_knots (i);
+      
+    case HTW:
+      return htw_knots (i);
+    case HTW_ALT:
+      return htw_knots (i, 1);
+    case HTW_NONALT:
+      return htw_knots (i, 0);
+
+    case MT:
+      return mt_links (i);
+    case MT_ALT:
+      return mt_links (i, 1);
+    case MT_NONALT:
+      return mt_links (i, 0);
+      
+    default: abort ();
+    }
+}
+
+knot_desc::knot_desc (reader &r)
+{
+  int x;
+  read (r, x);
+  t = (table)x;
+  
+  read (r, i);
+  read (r, j);
+}
+
+void
+knot_desc::write_self (writer &w) const
+{
+  write (w, (int)t);
+  write (w, i);
+  write (w, j);
 }
