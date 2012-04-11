@@ -14,11 +14,13 @@ class knot_diagram;
 #include <dt_code.h>
 #include <knot_diagram.h>
 
+#include <simplify_chain_complex.h>
 #include <sseq.h>
 #include <smoothing.h>
 #include <cobordism.h>
 
 #include <cube.h>
+#include <steenrod_square.h>
 #include <spanning_tree_complex.h>
 
 unsigned rolfsen_crossing_knots (unsigned n);

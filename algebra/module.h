@@ -628,7 +628,8 @@ class map_impl : public refcounted
   
   map_impl &operator = (const map_impl &) = delete;
   
-  virtual linear_combination<R> column (unsigned i) const = 0;
+  virtual const linear_combination<R> column (unsigned i) const = 0;
+  virtual const linear_combination<R> column_copy (unsigned i) const { return column (i); }
   
   linear_combination<R> map (const linear_combination<R> &lc) const
   {
@@ -657,7 +658,11 @@ class explicit_map_impl : public map_impl<R>
   { }
   ~explicit_map_impl () { }
   
-  linear_combination<R> column (unsigned i) const { return columns[i]; }
+  const linear_combination<R> column (unsigned i) const { return columns[i]; }
+  const linear_combination<R> column_copy (unsigned i) const
+  {
+    return linear_combination<R> (COPY, columns[i]);
+  }
 };
 
 template<class R>
@@ -667,7 +672,7 @@ class zero_map_impl : public map_impl<R>
   zero_map_impl (ptr<const module<R> > fromto) : map_impl<R>(fromto) { }
   zero_map_impl (ptr<const module<R> > from, ptr<const module<R> > to) : map_impl<R>(from, to) { }
   
-  linear_combination<R> column (unsigned i) const { return linear_combination<R> (this->to); }
+  const linear_combination<R> column (unsigned i) const { return linear_combination<R> (this->to); }
 };
 
 template<class R>
@@ -677,7 +682,7 @@ class id_map_impl : public map_impl<R>
   id_map_impl (ptr<const module<R> > fromto) : map_impl<R>(fromto) { }
   id_map_impl (ptr<const module<R> > from, ptr<const module<R> > to) : map_impl<R>(from, to) { }
   
-  linear_combination<R> column (unsigned i) const
+  const linear_combination<R> column (unsigned i) const
   {
     linear_combination<R> r (this->to);
     r.muladd (1, i);
@@ -700,7 +705,7 @@ class composition_impl : public map_impl<R>
     assert (g->to == f->from);
   }
   
-  linear_combination<R> column (unsigned i) const
+  const linear_combination<R> column (unsigned i) const
   {
     return f->map (g->column (i));
   }
@@ -721,7 +726,7 @@ class direct_sum_impl : public map_impl<R>
   {
   }
   
-  linear_combination<R> column (unsigned i) const
+  const linear_combination<R> column (unsigned i) const
   {
     pair<unsigned, unsigned> p = f->from->project (g->from, i);
     
@@ -756,7 +761,7 @@ class tensor_impl : public map_impl<R>
   {
   }
   
-  linear_combination<R> column (unsigned i) const
+  const linear_combination<R> column (unsigned i) const
   {
     pair<unsigned, unsigned> p = f->from->generator_factors (g->from, i);
     
@@ -884,8 +889,10 @@ class mod_map
   
   bool operator != (int x) const { return !operator == (x); }
   
-  linear_combination<R> column (unsigned i) const { return impl->column (i); }
-  linear_combination<R> operator [] (unsigned i) const { return impl->column (i); }
+  const linear_combination<R> column (unsigned i) const { return impl->column (i); }
+  const linear_combination<R> operator [] (unsigned i) const { return impl->column (i); }
+  
+  const linear_combination<R> column_copy (unsigned i) const { return impl->column_copy (i); }
   
   linear_combination<R> map (const linear_combination<R> &lc) const { return impl->map (lc); }
   mod_map compose (const mod_map &m) const
@@ -1637,8 +1644,8 @@ mod_map<R>::operator + (const mod_map &m) const
   
   basedvector<linear_combination<R>, 1> v (impl->from->dim ());
   for (unsigned i = 1; i <= m.impl->from->dim (); i ++)
-    v[i] = column (i) + m.columns (i);
-  return explicit_map_impl<R> (impl->from, impl->to, v);
+    v[i] = column (i) + m.column (i);
+  return mod_map (IMPL, new explicit_map_impl<R> (impl->from, impl->to, v));
 }
 
 template<class R> ptr<const free_submodule<R> > 

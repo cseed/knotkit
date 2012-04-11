@@ -16,8 +16,8 @@ template<class R>
 class cube /* of resolutions */
 {
 public:
-  typedef typename R::linear_combination linear_combination;
-  typedef typename R::linear_combination_const_iter linear_combination_const_iter;
+  typedef ::linear_combination<R> linear_combination;
+  typedef ::linear_combination_const_iter<R> linear_combination_const_iter;
   
  public:
   bool markedp_only;

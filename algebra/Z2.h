@@ -11,6 +11,7 @@ class Z2
  public:
   Z2 () : v(0) { }
   Z2 (int x) : v((bool)(x & 1)) { }
+  Z2 (unsigned x) : v((bool)(x & 1)) { }
   Z2 (bool v_) : v(v_) { }
   Z2 (const Z2 &x) : v(x.v) { }
   Z2 (copy, const Z2 &x) : v(x.v) { }

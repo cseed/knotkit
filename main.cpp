@@ -127,189 +127,143 @@ rank_lte (multivariate_laurentpoly<Z> p,
 int
 main ()
 {
-#if 0
-  ullmanset<1> empty;
-  assert (empty.size () == 0);
-  assert (empty.card () == 0);
-  assert (empty.is_empty ());
+  for (int a = 1; a >= 0; a --)
+    for (unsigned i = 1; i <= 9; i ++)
+      for (unsigned j = 1; j <= htw_knots (i, a); j ++)
+	{
+	  knot_diagram kd (htw_knot (i, a, j));
+	  show (kd); newline ();
+	  
+	  cube<Z2> c (kd);
+	  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
   
-  ullmanset<1> empty2;
-  assert (empty == empty2);
+	  chain_complex_simplifier<Z2> s (c.khC, d, 1);
+  
+	  steenrod_square sq (c, d, s);
+	  mod_map<Z2> sq1 = sq.sq1 ();
+	  // display ("sq1:\n", sq1);
 
-  ullmanset<1> emptycopy (COPY, empty);
-  assert (emptycopy == empty);
+	  mod_map<Z2> sq2 = sq.sq2 ();
+	  if (a)
+	    assert (sq2 == 0);
+	  else
+	    display ("sq2:\n", sq2);
   
-  ullmanset<1> s (50, {1,2,5,5,2,1,3,4});
-  assert (s.card () == 5);
-  
-  ullmanset<1> scopy (COPY, s);
-  assert (scopy == s);
-  
-  printf ("s:");
-  for (int x : s)
-    printf (" %d", x);
-  newline ();
-#endif
-  
-  map<unsigned, const char *> m = { { 5, "foo" }, { 11, "bar" } };
-  
-  hashmap<unsigned, const char *> m2 = { { 5, "foo" }, { 11, "bar" }, { 37, "baz" } };
-  for (std::pair<unsigned, const char *> i : m2)
-    {
-      printf ("%d -> %s\n", i.first, i.second);
-    }
+	  assert (sq1.compose (sq1) == 0);
+	  assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+	}
   
 #if 0
-  set<unsigned> s {1,2,5,5,2,1,3,4};
-  printf ("s:");
-  for (int x : s)
-    printf (" %d", x);
-  newline ();
-#endif
+  typedef Z2 R;
   
-#if 0
-  basedvector<int, 1> v (4);
-  v[1] = 2;
-  v[2] = -1;
-  v[3] = 0xbf32813;
-  v[4] = -352182;
-
-  vector<int> sleb (512);
-  for (unsigned i = 0; i < 512; i ++)
-    sleb[i] = ((int)i << 23);
-
-  printf ("sleb:\n");
-  for (unsigned i = 0; i < 512; i ++)
-    printf ("  %d\n", sleb[i]);
-  
-  vector<unsigned> uleb (512);
-  for (unsigned i = 0; i < 512; i ++)
-    uleb[i] = ((unsigned)i << 23);
-  
-  printf ("uleb:\n");
-  for (unsigned i = 0; i < 512; i ++)
-    printf ("  %u\n", uleb[i]);
-  
-  polynomial<Z> one (1);
-  polynomial<Z> x (1, 1);
-  polynomial<Z> bigp (Z (367521));
-  
-  polynomial<Z> t = x + bigp*one;
-  polynomial<Z> p = (t*t*t + t*t + t + one)*(bigp*t*t + bigp*bigp*t + bigp*bigp*bigp)*(bigp*bigp*t*t*t + bigp*t*t + t + one);
-  display ("p: ", p);
-  
-  {
-    file_writer w ("test.dat");
-    write (w, v);
-    write (w, p);
-    write (w, sleb);
-    write (w, uleb);
-  }
-  
-  {
-    gzfile_writer w ("test.2.dat.gz");
-    write (w, v);
-    write (w, p);
-    write (w, sleb);
-    write (w, uleb);
-  }
-  
-  system ("gzip -cd test.2.dat.gz > test.2.dat");
-  
-  {
-    file_reader r ("test.dat");
-    basedvector<int, 1> v2 (r);
-    polynomial<Z> p2 (r);
-    
-    vector<int> sleb2 (r);
-    printf ("sleb2:\n");
-    for (unsigned i = 0; i < 512; i ++)
-      printf ("  %d\n", sleb2[i]);
-    
-    vector<unsigned> uleb2 (r);
-    assert (v == v2);
-    assert (p == p2);
-    assert (sleb == sleb2);
-    assert (uleb == uleb2);
-  }
-  
-  system ("gzip -c9 test.dat > test.dat.gz");
-  
-  {
-    gzfile_reader r ("test.dat.gz");
-    basedvector<int, 1> v2 (r);
-    polynomial<Z> p2 (r);
-    vector<int> sleb2 (r);
-    vector<unsigned> uleb2 (r);
-    assert (v == v2);
-    assert (p == p2);
-    assert (sleb == sleb2);
-    assert (uleb == uleb2);
-  }
-#endif
-  
-#if 0
-  
-#if 0
-  test_ring<Z> (0);
-  test_ring<polynomial<Z> > (0);
-  
-  test_field<Z2> ();
-  test_field<Zp<7> > ();
-  test_field<Q> ();
-  // test_field<fraction_field<Zp<7> > > ();
-#endif
-  
-#if 0
-  for (unsigned i = 1; i <= 10; i ++)
-    for (unsigned j = 1; j <= rolfsen_crossing_knots (i); j ++)
-      {
-	knot_diagram kd (rolfsen_knot (i, j));
-#endif
-  for (unsigned i = 1; i <= 12; i ++)
+  for (unsigned i = 12; i <= 12; i ++)
     for (unsigned j = 1; j <= htw_knots (i, 0); j ++)
       {
 	knot_diagram kd (htw_knot (i, 0, j));
+	show (kd); newline ();
 	
+	cube<R> c (kd);
+	mod_map<R> d = c.compute_d (1, 0, 0, 0, 0);
+	
+	chain_complex_simplifier<R> s (c.khC, d, 1);
+	// assert (s.new_d == 0);
+	
+	printf ("|s.new_C| = %d\n", s.new_C->dim ());
+      }
+#endif
+  
+#if 1
+  map<multivariate_laurentpoly<Z>,
+      set<triple<unsigned, int, unsigned> > > kh_knot_map;
+  
+  for (int a = 1; a >= 0; a --)
+    for (unsigned i = 1; i <= 12; i ++)
+      for (unsigned j = 1; j <= htw_knots (i, a); j ++)
+	{
+	  knot_diagram kd (htw_knot (i, a, j));
+	  kd.marked_edge = 1;
+	  show (kd); newline ();
+	  
+	  cube<Z2> c (kd, 1);
+	  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+	  sseq_builder b (c.khC, d);
+	  sseq ss = b.build_sseq ();
+	  
+	  multivariate_laurentpoly<Z> P = ss.pages[1].poincare_polynomial (ss.bounds);
+	  kh_knot_map[P].push (triple<unsigned, int, unsigned> (i, a, j));
+	}
+  
+  {
+    writer w ("kh_knot_map.dat");
+    write (w, kh_knot_map);
+  }
+#endif
+  
+#if 0
+  reader r ("kh_knot_map.dat");
+  map<multivariate_laurentpoly<Z>,
+      set<triple<unsigned, int, unsigned> > > kh_knot_map (r);
+  
+  for (map<multivariate_laurentpoly<Z>,
+	   set<triple<unsigned, int, unsigned> > >::const_iter i = kh_knot_map; i; i ++)
+    {
+      printf ("P = "); display (i.key ());
+      for (set_const_iter<triple<unsigned, int, unsigned> > j = i.val (); j; j ++)
+	{
+	  knot_diagram kd (htw_knot (j.val ().first,
+				     j.val ().second,
+				     j.val ().third));
+	  printf ("  ");
+	  show (kd);
+	  newline ();
+	}
+    }
+#endif
+  
+#if 0
+  typedef Z2 F;
+  typedef fraction_field<polynomial<F> > R;
+
+  for (unsigned i = 1; i <= 10; i ++)
+    for (unsigned j = 1; j <= htw_knots (i, 0); j ++)
+      {
+	knot_diagram kd (htw_knot (i, 0, j));
 	kd.marked_edge = 1;
 	
 	show (kd); newline ();
 	
-	spanning_tree_complex<Z2> c (kd);
+	spanning_tree_complex<F> st (kd);
   
-	mod_map<fraction_field<polynomial<Z2> > > E2_d = c.twisted_d2 ();
-	assert (E2_d.compose (E2_d) == 0);
-	// display ("E2_d:\n", E2_d);
+	mod_map<R> d2 = st.twisted_d2 ();
+	assert (d2.compose (d2) == 0);
 	
-	chain_complex_simplifier<fraction_field<polynomial<Z2> > > E2_s (c.C, E2_d, 2);
-	assert (E2_s.new_d == 0);
+	mod_map<R> d2U1 = st.twisted_d2Un (1);
+	// mod_map<R> d2U1 = st.twisted_d2U1_test ();
   
-	multivariate_laurentpoly<Z> E3_p = E2_s.new_C->free_delta_poincare_polynomial ();
-	printf ("E3_p = "); show (E3_p); newline ();
-  
-	mod_map<fraction_field<polynomial<Z2> > > tt_d = c.totally_twisted_kh_d ();
-	assert (tt_d.compose (tt_d) == 0);
-	// display ("tt_d:\n", tt_d);
+	assert (d2.compose (d2U1) + d2U1.compose (d2) == 0);
 	
-	chain_complex_simplifier<fraction_field<polynomial<Z2> > > tt_s (c.C, tt_d, 2);
-	assert (tt_s.new_d == 0);
+	mod_map<R> d2U2 = st.twisted_d2Un (2);
+	assert (d2.compose (d2U2) + d2U2.compose (d2) + d2U1.compose (d2U1) == 0);
+  
+	mod_map<R> d2U3 = st.twisted_d2Un (3);
+	assert (d2.compose (d2U3) + d2U3.compose (d2)
+		+ d2U2.compose (d2U1) + d2U1.compose (d2U2) == 0);
 
-	multivariate_laurentpoly<Z> tt_p = tt_s.new_C->free_delta_poincare_polynomial ();
-	printf ("tt_p = "); show (tt_p); newline ();
+	mod_map<R> d2U4 = st.twisted_d2Un (4);
+	assert (d2.compose (d2U4) + d2U4.compose (d2)
+		+ d2U3.compose (d2U1) + d2U1.compose (d2U3)
+		+ d2U2.compose (d2U2) == 0);
+
+	mod_map<R> d2U5 = st.twisted_d2Un (5);
+	assert (d2.compose (d2U5) + d2U5.compose (d2)
+		+ d2U4.compose (d2U1) + d2U1.compose (d2U4)
+		+ d2U3.compose (d2U2) + d2U2.compose (d2U3) == 0);
 	
-	cube<Z2> kh_c (kd, 1);
-	mod_map<Z2> kh_d = kh_c.compute_d (1, 0, 0, 0, 0);
-	
-	sseq_builder builder (kh_c.khC, kh_d);
-	sseq ss = builder.build_sseq ();
-	multivariate_laurentpoly<Z> kh_p = ss.pages[1].delta_poincare_polynomial (ss.bounds);
-	printf ("kh_p = "); show (kh_p); newline ();
-	
-	if (tt_p != kh_p)
-	  printf (" > tt_p != kh_p!!\n");
-	
-	if (! rank_lte (E3_p, tt_p))
-	  printf (" > rank E2 > rank tt!!\n");
+	mod_map<R> d2U6 = st.twisted_d2Un (6);
+	assert (d2.compose (d2U6) + d2U6.compose (d2)
+		+ d2U5.compose (d2U1) + d2U1.compose (d2U5)
+		+ d2U4.compose (d2U2) + d2U2.compose (d2U4)
+		+ d2U3.compose (d2U3) == 0);
       }
 #endif
 }

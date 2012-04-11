@@ -40,7 +40,7 @@ class linear_combination
       v.push (i.key (), R (COPY, i.val ()));
   }
   ~linear_combination () { }
-
+  
   linear_combination &operator = (const linear_combination &lc)
   {
     m = lc.m;
