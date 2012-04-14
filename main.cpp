@@ -157,6 +157,123 @@ square (knot_diagram &kd)
 		multivariate_laurentpoly<Z> > (P, sq1_P, sq2_P);
 }
 
+void
+compute_show_kh_sq (knot_desc desc
+#if 0
+		    ,
+		    multivariate_laurentpoly<Z> orig_P,
+		    multivariate_laurentpoly<Z> orig_sq1_P,
+		    multivariate_laurentpoly<Z> orig_sq2_P
+#endif
+		    )
+{
+  knot_diagram kd = desc.diagram ();
+  
+  printf ("computing %s...\n", kd.name.c_str ());
+  
+  cube<Z2> c (kd);
+  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+  
+  chain_complex_simplifier<Z2> s (c.khC, d, 1);
+  
+  steenrod_square sq (c, d, s);
+  mod_map<Z2> sq1 = sq.sq1 ();
+  mod_map<Z2> sq2 = sq.sq2 ();
+  
+  assert (sq1.compose (sq1) == 0);
+  assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+  
+  multivariate_laurentpoly<Z> P = s.new_C->free_poincare_polynomial ();
+  
+  ptr<const free_submodule<Z2> > sq1_im = sq1.image ();
+  multivariate_laurentpoly<Z> sq1_P = sq1_im->free_poincare_polynomial ();
+  
+  ptr<const free_submodule<Z2> > sq2_im = sq2.image ();
+  multivariate_laurentpoly<Z> sq2_P = sq2_im->free_poincare_polynomial ();
+  
+  printf ("  P "); display (P);
+  printf ("  sq1_P "); display (sq1_P);
+  printf ("  sq2_P "); display (sq2_P);
+  
+#if 0
+  assert (P == orig_P);
+  assert (sq1_P == orig_sq1_P);
+  assert (sq2_P == orig_sq2_P);
+#endif
+}
+
+void
+load (map<knot_desc,
+	  triple<multivariate_laurentpoly<Z>,
+		 multivariate_laurentpoly<Z>,
+		 multivariate_laurentpoly<Z> > > &knot_kh_sq,
+      knot_desc desc)
+{
+  char buf[1000];
+  if (desc.t == knot_desc::TORUS)
+    {
+      sprintf (buf, "kh_sq/T.dat");
+    }
+  else
+    {
+      unsigned j0 = desc.j;
+      
+      switch (desc.t)
+	{
+	case knot_desc::ROLFSEN:
+	  sprintf (buf, "kh_sq/%d_%d.dat", desc.i, j0);
+	  break;
+
+	case knot_desc::HTW:
+	  sprintf (buf, "kh_sq/K%d_%d.dat", desc.i, j0);
+	  break;
+
+	case knot_desc::MT:
+	  sprintf (buf, "kh_sq/L%d_%d.dat", desc.i, j0);
+	  break;
+
+	default: abort ();
+	}
+    }
+  
+  printf ("loading %s...\n", buf);
+  
+  reader r (buf);
+  map<knot_desc,
+      triple<multivariate_laurentpoly<Z>,
+	     multivariate_laurentpoly<Z>,
+	     multivariate_laurentpoly<Z> > > m (r);
+  for (map<knot_desc,
+	   triple<multivariate_laurentpoly<Z>,
+		  multivariate_laurentpoly<Z>,
+		  multivariate_laurentpoly<Z> > >::const_iter i = m; i; i ++)
+    {
+      // ??? check computations agree!!
+      if (! (knot_kh_sq % i.key ()))
+	{
+#if 0
+	  assert (i.key ().t == desc.t);
+	  assert (i.key ().i == desc.i);
+	  assert (desc.j <= i.key ().j);
+	  assert (i.key ().j <= desc.j + 4000);
+	  
+	  if (i.key ().t == knot_desc::MT
+	      && i.key ().i == 11
+	      && (i.key ().j == 862
+		  || i.key ().j == 865))
+	    compute_show_kh_sq (i.key (),
+				i.val ().first,
+				i.val ().second,
+				i.val ().third);
+#endif
+	  
+	  knot_kh_sq.push (i.key (), i.val ());
+	}
+    }
+  
+  printf ("done.\n");
+}
+
 int
 main ()
 {
@@ -234,6 +351,84 @@ main ()
 #endif
   
 #if 1
+  compute_show_kh_sq (knot_desc (knot_desc::ROLFSEN, 8, 19));
+  
+  map<knot_desc,
+      triple<multivariate_laurentpoly<Z>,
+	     multivariate_laurentpoly<Z>,
+	     multivariate_laurentpoly<Z> > > knot_kh_sq;
+  
+  for (unsigned i = 1; i <= 10; i ++)
+    for (unsigned j = 1; j <= rolfsen_crossing_knots (i); j += 4000)
+      {
+	load (knot_kh_sq, knot_desc (knot_desc::ROLFSEN, i, j));
+      }
+  
+  for (unsigned i = 1; i <= 12; i ++)
+    for (unsigned j = 1; j <= htw_knots (i); j += 4000)
+      {
+	load (knot_kh_sq, knot_desc (knot_desc::HTW, i, j));
+      }
+  
+  for (unsigned i = 1; i <= 13; i ++)
+    for (unsigned j = 1; j <= mt_links (i); j += 4000)
+      {
+	load (knot_kh_sq, knot_desc (knot_desc::MT, i, j));
+      }
+  
+  map<multivariate_laurentpoly<Z>,
+      triple<knot_desc,
+	     multivariate_laurentpoly<Z>,
+	     multivariate_laurentpoly<Z> > > m;
+  
+  multivariate_laurentpoly<Z> groups;
+  
+  for (map<knot_desc,
+	   triple<multivariate_laurentpoly<Z>,
+		  multivariate_laurentpoly<Z>,
+		  multivariate_laurentpoly<Z> > >::const_iter i = knot_kh_sq; i; i ++)
+    {
+      multivariate_laurentpoly<Z> P = i.val ().first,
+	P_sq1 = i.val ().second,
+	P_sq2 = i.val ().third;
+      
+      pair<triple<knot_desc,
+		  multivariate_laurentpoly<Z>,
+		  multivariate_laurentpoly<Z> > &,
+	   bool> p = m.find (P);
+      if (p.second)
+	{
+	  groups += P;
+	  
+	  if (p.first.second != P_sq1
+	      || p.first.third != P_sq2)
+	    {
+	      printf ("DIFFER  ");
+	      display (P);
+	      
+	      printf ("  %s\n", p.first.first.name ().c_str ());
+	      printf ("    sq1 "); display (p.first.second);
+	      printf ("    sq2 "); display (p.first.third);
+
+	      printf ("  %s\n", i.key ().name ().c_str ());
+	      printf ("    sq1 "); display (P_sq1);
+	      printf ("    sq2 "); display (P_sq2);
+	    }
+	}
+      else
+	{
+	  p.first.first = i.key ();
+	  p.first.second = P_sq1;
+	  p.first.third = P_sq2;
+	}
+    }
+  
+  printf ("|groups| = %d\n", groups.card ());
+  
+  printf ("done.\n");
+#endif
+  
+#if 0
   reader r ("kh_knot_map.dat");
   map<multivariate_laurentpoly<Z>,
       set<triple<unsigned, int, unsigned> > > kh_knot_map (r);
