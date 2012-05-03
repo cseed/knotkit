@@ -60,7 +60,7 @@ main: main.o $(COMMON_OBJS)
 	$(CXX) $(LDFLAGS) -o main $^ $(LIBS)
 
 mpimain: mpimain.o mpi_aux.o $(COMMON_OBJS)
-	$(CXX) $(LDFLAGS) -o main $^ $(LIBS)
+	$(CXX) $(LDFLAGS) -o mpimain $^ $(LIBS)
 
 testlib: testlib.o $(COMMON_OBJS)
 	$(CXX) $(LDFLAGS) -o testlib $^

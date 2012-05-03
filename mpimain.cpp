@@ -1,4 +1,4 @@
-
+s
 #include <knotkit.h>
 
 #include <mpi.h>
@@ -42,8 +42,6 @@ master ()
   
   int ntasks = num_tasks ();
   
-  assert (work.size () > ntasks);
-  
   set<unsigned> active;
   
   for (int rank = 1; rank < ntasks && work.size () > 0; rank ++)
@@ -51,9 +49,9 @@ master ()
       send_int (CMD_DO, rank);
       
       knot_desc desc = work.pop ();
-      send_int ((int)desc.t);
-      send_int ((int)desc.i);
-      send_int ((int)desc.j);
+      send_int ((int)desc.t, rank);
+      send_int ((int)desc.i, rank);
+      send_int ((int)desc.j, rank);
       
       active.push (rank);
     }
@@ -65,9 +63,9 @@ master ()
       send_int (CMD_DO, rank);
       
       knot_desc desc = work.pop ();
-      send_int ((int)desc.t);
-      send_int ((int)desc.i);
-      send_int ((int)desc.j);
+      send_int ((int)desc.t, rank);
+      send_int ((int)desc.i, rank);
+      send_int ((int)desc.j, rank);
     }
   
   while (active.card () > 0)
@@ -129,18 +127,20 @@ slave ()
 	    desc.i = (knot_desc::table)recv_int ();
 	    desc.j = (knot_desc::table)recv_int ();
 	    
+	    printf ("[% 2d] CMD_DO %s\n", rank, desc.name ().c_str ());
+	    
 	    map<knot_desc,
 		triple<ptr<const module<Z2> >, mod_map<Z2>, mod_map<Z2> > > knot_kh_sq;
 	    
 	    char buf[1000];
-	    if (desc.t == TORUS)
+	    if (desc.t == knot_desc::TORUS)
 	      {
 		sprintf (buf, "T.dat");
 		
 		for (unsigned t = 3; t <= 16; t ++)   // twists
 		  for (unsigned s = 2; s <= t; s ++) // strands
 		    {
-		      if ((s - 1) * t > 16)
+		      if ((s - 1) * t > 18)
 			continue;
 		      
 		      desc.i = s;
@@ -153,10 +153,22 @@ slave ()
 	      {
 		unsigned j0 = desc.j;
 		
-		assert (desc.t == knot_desc::HTW || desc.t == knot_desc::MT);
-		sprintf (buf, "%c%d.dat",
-			 desc.t == knot_desc::HTW ? 'K' : 'L',
-			 j0);
+		switch (desc.t)
+		  {
+		  case knot_desc::ROLFSEN:
+		    sprintf (buf, "%d_%d.dat", desc.i, j0);
+		    break;
+		    
+		  case knot_desc::HTW:
+		    sprintf (buf, "K%d_%d.dat", desc.i, j0);
+		    break;
+		    
+		  case knot_desc::MT:
+		    sprintf (buf, "L%d_%d.dat", desc.i, j0);
+		    break;
+		    
+		  default: abort ();
+		  }
 		
 		for (unsigned j = j0;
 		     j <= std::min (j0 + block_size - 1,
@@ -171,7 +183,7 @@ slave ()
 	    
 	    {
 	      writer w (buf);
-	      write (w, kh_knot_map);
+	      write (w, knot_kh_sq);
 	    }
 	    
 	    send_int (0, 0);
