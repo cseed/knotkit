@@ -15,6 +15,7 @@ class Z2
   Z2 (bool v_) : v(v_) { }
   Z2 (const Z2 &x) : v(x.v) { }
   Z2 (copy, const Z2 &x) : v(x.v) { }
+  Z2 (reader &r) { v = r.read_bool (); }
   ~Z2 () { }
   
   Z2 &operator = (const Z2 &x) { v = x.v; return *this; }
@@ -64,6 +65,7 @@ class Z2
   }
   
   static void show_ring () { printf ("Z2"); }
+  void write_self (writer &w) const { w.write_bool (v); }
   void show_self () const { printf ("%d", (int)v); }
   void display_self () const { printf ("%d\n", (int)v); }
 };

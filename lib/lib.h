@@ -158,17 +158,17 @@ void stderror (const char *fmt, ...);
 
 int alpha_to_int (char c);
 
-#include <lib/io.h>
-
-#include <lib/show.h>
-#include <lib/refcount.h>
-
 using std::tuple;
 using std::get;
 using std::make_tuple;
 using std::tie;
 using std::ignore;
 using std::initializer_list;
+
+#include <lib/show.h>
+#include <lib/refcount.h>
+
+#include <lib/io.h>
 
 #include <lib/pair.h>
 
@@ -194,7 +194,6 @@ inline int random_int (int from, int to)
 #include <lib/bitset.h>
 #include <lib/ullmanset.h>
 #include <lib/setcommon.h>
-
 #include <lib/map_wrapper.h>
 #include <lib/map.h>
 
@@ -212,3 +211,23 @@ struct hasher : public std::unary_function<K, hash_t>
 #include <lib/unionfind.h>
 #include <lib/priority_queue.h>
 #include <lib/directed_multigraph.h>
+
+// ??? io
+
+class algebra_writer
+{
+public:
+  // modules
+  unsigned io_id_counter;
+  map<unsigned, unsigned> id_io_id;
+  
+  algebra_writer () : io_id_counter(0) { }
+  ~algebra_writer () { }
+};
+
+class algebra_reader
+{
+public:
+  map<unsigned, unsigned> io_id_id;
+  
+};

@@ -1,5 +1,6 @@
 
-#include <lib/lib.h>
+// #include <lib/lib.h>
+#include <algebra/algebra.h>
 
 void
 writer::write_int (int x)

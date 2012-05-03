@@ -39,6 +39,13 @@ class linear_combination
     for (typename map<unsigned, R>::const_iter i = lc.v; i; i ++)
       v.push (i.key (), R (COPY, i.val ()));
   }
+  
+  linear_combination (reader &r)
+  {
+    m = r.read_mod<R> ();
+    v = map<unsigned, R> (r);
+  }
+  
   ~linear_combination () { }
   
   linear_combination &operator = (const linear_combination &lc)
@@ -164,6 +171,12 @@ class linear_combination
       assert (!m->is_zero (i.val (), i.key ()));
   }
 #endif
+
+  void write_self (writer &w) const
+  {
+    write (w, *m);
+    write (w, v);
+  }
   
   void show_self () const;
   void display_self () const { show_self (); newline (); }
@@ -337,6 +350,12 @@ class linear_combination<Z2>
   linear_combination (ptr<const Z2mod> m_) : m(m_) { }
   linear_combination (const linear_combination &lc) : m(lc.m), v(lc.v) { }
   linear_combination (copy, const linear_combination &lc) : m(lc.m), v(COPY, lc.v) { }
+  linear_combination (reader &r)
+  {
+    m = r.read_mod<Z2> ();
+    v = set<unsigned> (r);
+  }
+  
   ~linear_combination () { }
   
   linear_combination &operator = (const linear_combination &lc)
@@ -445,6 +464,12 @@ class linear_combination<Z2>
 #ifndef NDEBUG
   void check () const;
 #endif
+  
+  void write_self (writer &w) const
+  {
+    write (w, *m);
+    write (w, v);
+  }
   
   void show_self () const;
   void display_self () const { show_self (); newline (); }

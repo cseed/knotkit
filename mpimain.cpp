@@ -7,6 +7,8 @@
 #define CMD_DO 1
 #define CMD_DIE 2
 
+static const int block_size = 100;
+
 void
 master ()
 {
@@ -14,26 +16,29 @@ master ()
   
   work.append (knot_desc (TORUS, 0, 0));
   
-  for (int a = 1; a >= 0; a --)
-    for (unsigned i = 1; i <= 10; i ++)
-      for (unsigned j = 1; j <= rolfsen_crossing_knots (i); j += 4000)
+  for (unsigned i = 14; i >= 1; i --)
+    {
+      if (i <= 10)
 	{
-	  work.append (knot_desc (ROLFSEN, i, j));
+	  for (unsigned j = 1; j <= rolfsen_crossing_knots (i); j += block_size)
+	    {
+	      work.append (knot_desc (ROLFSEN, i, j));
+	    }
 	}
-  
-  for (int a = 1; a >= 0; a --)
-    for (unsigned i = 1; i <= 14; i ++)
-      for (unsigned j = 1; j <= htw_knots (i); j += 4000)
+      
+      for (unsigned j = 1; j <= htw_knots (i); j += block_size)
 	{
 	  work.append (knot_desc (HTW, i, j));
 	}
-  
-  for (int a = 1; a >= 0; a --)
-    for (unsigned i = 1; i <= 13; i ++)
-      for (unsigned j = 1; j <= mt_links (i); j += 4000)
+      
+      if (i <= 13)
 	{
-	  work.append (knot_desc (MT, i, j));
+	  for (unsigned j = 1; j <= mt_links (i); j += block_size)
+	    {
+	      work.append (knot_desc (MT, i, j));
+	    }
 	}
+    }
   
   int ntasks = num_tasks ();
   
@@ -80,9 +85,7 @@ master ()
 
 void
 compute_kh_sq (map<knot_desc,
-		   triple<multivariate_laurentpoly<Z>,
-			  multivariate_laurentpoly<Z>,
-			  multivariate_laurentpoly<Z> > > &knot_kh_sq,
+		   triple<ptr<const module<Z2> >, mod_map<Z2>, mod_map<Z2> > > &knot_kh_sq,
 	       knot_desc &desc)
 {
   knot_diagram kd = desc.diagram ();
@@ -96,6 +99,7 @@ compute_kh_sq (map<knot_desc,
   mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
   
   chain_complex_simplifier<Z2> s (c.khC, d, 1);
+  assert (s.new_d == 0);
   
   steenrod_square sq (c, d, s);
   mod_map<Z2> sq1 = sq.sq1 ();
@@ -104,18 +108,8 @@ compute_kh_sq (map<knot_desc,
   assert (sq1.compose (sq1) == 0);
   assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
   
-  multivariate_laurentpoly<Z> P = s.new_C->free_poincare_polynomial ();
-  
-  ptr<const free_submodule<Z2> > sq1_im = sq1.image ();
-  multivariate_laurentpoly<Z> sq1_P = sq1_im->free_poincare_polynomial ();
-  
-  ptr<const free_submodule<Z2> > sq2_im = sq2.image ();
-  multivariate_laurentpoly<Z> sq2_P = sq2_im->free_poincare_polynomial ();
-  
   knot_kh_sq.push (desc,
-		   triple<multivariate_laurentpoly<Z>,
-			  multivariate_laurentpoly<Z>,
-			  multivariate_laurentpoly<Z> > (P, sq1_P, sq2_P));
+		   triple<ptr<const module<Z2> >, mod_map<Z2>, mod_map<Z2> > (s.new_C, sq1, sq2));
 }
 
 void
@@ -136,9 +130,7 @@ slave ()
 	    desc.j = (knot_desc::table)recv_int ();
 	    
 	    map<knot_desc,
-	      triple<multivariate_laurentpoly<Z>,
-	             multivariate_laurentpoly<Z>,
-	             multivariate_laurentpoly<Z> > > knot_kh_sq;
+		triple<ptr<const module<Z2> >, mod_map<Z2>, mod_map<Z2> > > knot_kh_sq;
 	    
 	    char buf[1000];
 	    if (desc.t == TORUS)
@@ -167,7 +159,7 @@ slave ()
 			 j0);
 		
 		for (unsigned j = j0;
-		     j <= std::min (j0 + 4000,
+		     j <= std::min (j0 + block_size - 1,
 				    desc.table_crossing_knots ());
 		     j ++)
 		  {

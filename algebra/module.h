@@ -14,9 +14,14 @@ template<class R>
 class module : public refcounted
 {
  private:
+  friend class reader;
+  friend class writer;
+  
   unsigned id;
   
   static unsigned id_counter;
+  
+  static basedvector<ptr<const module<R> >, 1> id_module;
   
   static map<basedvector<unsigned, 1>,
     ptr<const direct_sum<R> > > direct_sum_idx;
@@ -28,8 +33,11 @@ class module : public refcounted
  public:
   module ()
   {
-    id = id_counter;
     id_counter ++;
+    id = id_counter;
+    
+    id_module.append (this);
+    assert (id_module.size () == id_counter);
   }
   module (const module &) = delete;
   virtual ~module () { }
@@ -48,6 +56,8 @@ class module : public refcounted
   
   // r < i <= n
   virtual R generator_ann (unsigned i) const = 0;
+  
+  set<grading> gradings () const;
   
   bool is_free () const { return dim () == free_rank (); }
   
@@ -143,11 +153,16 @@ class module : public refcounted
     factors.append (this);
   }
   
+  ptr<const free_submodule<R> > graded_piece (grading hq) const;
+  
+  void write_self (writer &w) const { w.write_mod<R> (this); }
   void show_self () const;
   void display_self () const;
 };
 
-template<class R> unsigned module<R>::id_counter = 1;
+template<class R> unsigned module<R>::id_counter = 0;
+
+template<class R> basedvector<ptr<const module<R> >, 1> module<R>::id_module;
 
 template<class R> map<basedvector<unsigned, 1>,
   ptr<const direct_sum<R> > > module<R>::direct_sum_idx;
@@ -542,6 +557,9 @@ class free_submodule : public module<R>
   
   linear_combination<R> restrict (linear_combination<R> v0) const;
   ptr<const free_submodule<R> > restrict_submodule (ptr<const free_submodule<R> > m) const;
+  
+  ptr<const free_submodule<R> > intersection (ptr<const free_submodule<R> > m) const;
+  ptr<const free_submodule<R> > plus (ptr<const free_submodule<R> > m) const;
 };
 
 template<class R> 
@@ -854,6 +872,15 @@ class mod_map
   mod_map (const map_builder<R> &b)
     : impl(new explicit_map_impl<R> (b.from, b.to, b.columns))
   { }
+  
+  mod_map (reader &r)
+  {
+    ptr<const module<R> > from = r.read_mod<R> ();
+    ptr<const module<R> > to = r.read_mod<R> ();
+    basedvector<linear_combination<R>, 1> columns (r);
+    impl = new explicit_map_impl<R> (from, to, columns);
+  }
+  
   ~mod_map () { }
   
   mod_map &operator = (const mod_map &m) { impl = m.impl; return *this; }
@@ -944,6 +971,14 @@ class mod_map
   
   // ???
   basedvector<linear_combination<R>, 1> explicit_columns () const;
+  
+  void write_self (writer &w) const
+  {
+    // write explicitly
+    write (w, *impl->from);
+    write (w, *impl->to);
+    write (w, explicit_columns ());
+  }
   
   void show_self () const;
   void display_self () const;
@@ -1445,6 +1480,35 @@ module<R>::free_delta_poincare_polynomial () const
   return r;
 }
 
+template<class R> set<grading> 
+module<R>::gradings () const
+{
+  set<grading> gs;
+  for (unsigned i = 1; i <= dim (); i ++)
+    gs += generator_grading (i);
+  return gs;
+}
+
+template<class R> ptr<const free_submodule<R> > 
+module<R>::graded_piece (grading hq) const
+{
+  basedvector<linear_combination<R>, 1> s;
+  for (unsigned i = 1; i <= dim (); i ++)
+    {
+      grading ihq = generator_grading (i);
+      if (ihq.h == hq.h
+	  && ihq.q == hq.q)
+	{
+	  linear_combination<R> v (this);
+	  v.muladd (1, i);
+	  s.append (v);
+	}
+    }
+  
+  mod_span<R> span (this, s);
+  return submodule (span);
+}
+
 template<class R> void
 module<R>::show_self () const
 {
@@ -1536,7 +1600,7 @@ mod_map<R>::restrict_from (ptr<const free_submodule<R> > new_from) const
   basedvector<linear_combination<R>, 1> v (new_from->dim ());
   for (unsigned i = 1; i <= new_from->dim (); i ++)
     v[i] = map (new_from->inject_generator (i));
-  return new explicit_map_impl<R> (new_from, impl->to, v);
+  return mod_map (IMPL, new explicit_map_impl<R> (new_from, impl->to, v));
 }
 
 template<class R> mod_map<R> 
@@ -1560,7 +1624,7 @@ mod_map<R>::restrict (ptr<const free_submodule<R> > new_from,
   basedvector<linear_combination<R>, 1> v (new_from->dim ());
   for (unsigned i = 1; i <= new_from->dim (); i ++)
     v[i] = new_to->restrict (map (new_from->inject_generator (i)));
-  return new explicit_map_impl<R> (new_from, new_to, v);
+  return mod_map (IMPL, new explicit_map_impl<R> (new_from, new_to, v));
 }
 
 template<class R> linear_combination<R>
@@ -1604,6 +1668,93 @@ free_submodule<R>::restrict_submodule (ptr<const free_submodule<R> > m) const
   
   mod_span<R> span2 (this, span);
   return this->submodule (span2);
+}
+
+template<class R> ptr<const free_submodule<R> >
+free_submodule<R>::intersection (ptr<const free_submodule<R> > m) const
+{
+  assert (parent == m->parent);
+  
+  unsigned md = m->dim (),
+    d = dim ();
+  
+  basedvector<linear_combination<R>, 1> intr;
+  
+  basedvector<linear_combination<R>, 1> hperp,
+    hproj;
+  basedvector<unsigned, 1> hpivots;
+  for (unsigned i = 1; i <= md; i ++)
+    {
+      linear_combination<R> perp (COPY, m->gens[i]),
+	proj (parent);
+      
+      for (unsigned j = 1; j <= d; j ++)
+	{
+	  unsigned k = pivots[j];
+	  if (perp % k)
+	    {
+	      const linear_combination<R> &g = gens[j];
+	      R c = g(k);
+	      R d = perp(k);
+	      
+	      assert (c | d);
+	      R q = d.div (c);
+	      
+	      perp.mulsub (q, g);
+	      proj.mulsub (q, g);
+	      
+	      assert (! (perp % k));
+	    }
+	}
+      
+      for (unsigned j = 1; j <= hpivots.size (); j ++)
+	{
+	  unsigned k = hpivots[j];
+	  if (perp % k)
+	    {
+	      const linear_combination<R> &h = hperp[j];
+	      R c = h(k);
+	      R d = perp(k);
+	      
+	      assert (c | d);
+	      R q = d.div (c);
+	      
+	      perp.mulsub (q, h);
+	      proj.mulsub (q, hproj[j]);
+	      
+	      assert (! (perp % k));
+	    }
+	  
+	}
+      
+      if (perp == 0)
+	intr.append (proj);
+      else
+	{
+	  hperp.append (perp);
+	  hproj.append (proj);
+	  hpivots.append (perp.head ().first);
+	}
+    }
+  
+  mod_span<R> span (parent, intr);
+  return parent->submodule (span);
+}
+
+template<class R> ptr<const free_submodule<R> >
+free_submodule<R>::plus (ptr<const free_submodule<R> > m) const
+{
+  assert (parent == m->parent);
+  
+  basedvector<linear_combination<R>, 1> s;
+  for (unsigned i = 1; i <= dim (); i ++)
+    s.append (gens[i]);
+  
+  for (unsigned i = 1; i <= m->dim (); i ++)
+    s.append (m->gens[i]);
+  
+  mod_span<R> span (parent, s);
+  return parent->submodule (span);
 }
 
 template<class R> bool
@@ -1655,7 +1806,7 @@ mod_map<R>::kernel () const
     to = impl->to;
   
   basedvector<linear_combination<R>, 1> from_xs (from->dim ());
-  for (unsigned i = 1; i <= to->dim (); i ++)
+  for (unsigned i = 1; i <= from->dim (); i ++)
     {
       linear_combination<R> x (from);
       x.muladd (1, i);
@@ -1833,5 +1984,61 @@ mod_map<R>::display_self () const
       printf (": ");
       show (column (i));
       newline ();
+    }
+}
+
+// ??? io
+
+template<class R> void
+writer::write_mod (ptr<const module<R> > m)
+{
+  pair<unsigned &, bool> p = aw->id_io_id.find (m->id_counter);
+  if (p.second)
+    {
+      write_int ((int)p.first);
+    }
+  else
+    {
+      ++ aw->io_id_counter;
+      unsigned io_id = aw->io_id_counter;
+      
+      p.first = io_id;
+      
+      write_int (- (int)io_id);
+      
+      unsigned n = m->dim (),
+	r = m->free_rank ();
+      write_unsigned (n);
+      write_unsigned (r);
+      for (unsigned i = 1; i <= n; i ++)
+	write (*this, m->generator_grading (i));
+      for (unsigned i = r + 1; i <= n; i ++)
+	write (*this, m->generator_ann (i));
+    }
+}
+
+template<class R> ptr<const module<R> > 
+reader::read_mod ()
+{
+  int io_id = read_int ();
+  if (io_id < 0)
+    {
+      unsigned n = read_unsigned ();
+      unsigned r = read_unsigned ();
+      basedvector<grading, 1> gr (n);
+      for (unsigned i = 1; i <= n; i ++)
+	gr[i] = grading (*this);
+      basedvector<R, 1> ann (n - r);
+      for (unsigned i = r + 1; i <= n; i ++)
+	ann[i - r] = R (*this);
+      
+      ptr<const module<R> > m = new explicit_module<R> (r, ann, gr);
+      ar->io_id_id.push ((unsigned)(-io_id), m->id);
+      return m;
+    }
+  else
+    {
+      unsigned id = ar->io_id_id(io_id);
+      return module<R>::id_module[id];
     }
 }

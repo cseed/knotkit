@@ -1,12 +1,18 @@
 
+template<class R> class module;
+
+class algebra_writer;
+class algebra_reader;
+
 class writer
 {
-  // don't use leb128 enconding.  for backward compatibility.
+ public:
   bool raw;
+  algebra_writer *aw;
   
  public:
   writer (const writer &) = delete;
-  writer (bool raw_ = false) : raw(raw_)  { }
+  writer (bool raw_ = false) : raw(raw_), aw(0) { }
   virtual ~writer () = default;
   
   writer &operator = (const writer &) = delete;
@@ -19,16 +25,18 @@ class writer
   void write_int (int x);
   void write_unsigned (unsigned x);
   void write_uint64 (uint64 x);
-  virtual void write_mpz (const mpz_t x);
+  
+  template<class R> void write_mod (ptr<const module<R> > m);
 };
 
 class reader
 {
   bool raw;
+  algebra_reader *ar;
   
  public:
   reader (const reader &) = delete;
-  reader (bool raw_) : raw(raw_) { }
+  reader (bool raw_) : raw(raw_), ar(0) { }
   virtual ~reader () = default;
   
   reader &operator = (const reader &) = delete;
@@ -60,6 +68,8 @@ class reader
   unsigned read_unsigned ();
   uint64 read_uint64 ();
   virtual void read_mpz (mpz_t x);
+  
+  template<class R> ptr<const module<R> > read_mod ();
 };
 
 extern FILE *open_file (const std::string &file, const char *mode);

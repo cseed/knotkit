@@ -278,6 +278,164 @@ int
 main ()
 {
 #if 0
+  knot_diagram kd (rolfsen_knot (8, 19));
+  show (kd); newline ();
+  
+  cube<Z2> c (kd);
+  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+  
+  chain_complex_simplifier<Z2> s (c.khC, d, 1);
+  
+  steenrod_square sq (c, d, s);
+  mod_map<Z2> sq1 = sq.sq1 ();
+  mod_map<Z2> sq2 = sq.sq2 ();
+  
+  assert (sq1.compose (sq1) == 0);
+  assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+  
+  display ("sq1:\n", sq1);
+  display ("sq2:\n", sq2);
+  
+  writer w ("sqtest.dat");
+  write (w, sq1);
+  write (w, sq2);
+#endif
+  
+#if 1
+#if 0
+  reader r ("sqtest.dat");
+  
+  knot_desc kd (knot_desc::ROLFSEN, 8, 19);
+  mod_map<Z2> sq1 (r);
+  mod_map<Z2> sq2 (r);
+  
+  ptr<const module<Z2> > H = sq1.domain ();
+  
+  display ("sq1:\n", sq1);
+  display ("sq2:\n", sq2);
+#endif
+  
+  for (unsigned i = 1; i <= 10; i ++)
+    for (unsigned j = 1; j <= rolfsen_crossing_knots (i);  j ++)
+      {
+#if 0
+	// (Knot Atlas) L10n18 
+	int xings[10][4] = {
+	  { 6, 1, 7, 2 },
+	  { 18, 7, 19, 8 },
+	  { 4,19,1,20 },
+	  { 5,12,6,13 },
+	  { 8,4,9,3 },
+	  { 13,17,14,16 },
+	  { 9,15,10,14 },
+	  { 15,11,16,10 },
+	  { 11,20,12,5 },
+	  { 2,18,3,17 },
+	};
+	knot_diagram kd (planar_diagram ("L10n18", 10, xings));
+#endif
+	
+	// (Knot Atlas) L10n102
+	int xings[10][4] = {
+	  { 6,1,7,2 }, { 10,3,11,4 }, { 14,7,15,8 }, { 8,13,5,14 }, { 11,18,12,19 }, { 15,20,16,17 }, { 19,16,20,9 }, { 17,12,18,13 }, { 2,5,3,6 }, { 4,9,1,10 },
+	};
+	knot_diagram kd (planar_diagram ("L10n102", 10, xings));
+	
+	// knot_diagram kd (rolfsen_knot (i, j));
+	// knot_diagram kd (mt_link (10, 0, 18));
+	
+	// show (kd); newline ();
+	printf ("%s  ", kd.name.c_str ());
+	
+	cube<Z2> c (kd);
+	mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+	
+	chain_complex_simplifier<Z2> s (c.khC, d, 1);
+	
+	steenrod_square sq (c, d, s);
+
+	mod_map<Z2> sq1 = sq.sq1 ();
+	mod_map<Z2> sq2 = sq.sq2 ();
+	
+	assert (sq1.compose (sq1) == 0);
+	assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+	
+	ptr<const module<Z2> > H = sq1.domain ();
+	
+	bool first = 1;
+  
+	// ???
+	set<grading> gs = H->gradings ();
+	for (set_const_iter<grading> i = gs; i; i ++)
+	  {
+	    grading hq = i.val (),
+	      h1q (hq.h + 1, hq.q),
+	      h2q (hq.h + 2, hq.q);
+      
+	    // printf ("(%d, %d):\n", hq.h, hq.q);
+      
+	    ptr<const free_submodule<Z2> > H_hq = H->graded_piece (hq),
+	      H_h1q = H->graded_piece (h1q),
+	      H_h2q = H->graded_piece (h2q);
+      
+	    mod_map<Z2> whole = sq2.restrict (H_hq, H_h2q),
+	      tail = sq1.restrict (H_hq, H_h1q),
+	      head = sq1.restrict (H_h1q, H_h2q);
+      
+	    ptr<const free_submodule<Z2> > whole_im = whole.image (),
+	      tail_ker = tail.kernel (),
+	      head_im = head.image ();
+	    ptr<const free_submodule<Z2> > inter = whole_im->intersection (head_im);
+      
+	    mod_map<Z2> whole_res = whole.restrict_from (tail_ker);
+	    ptr<const free_submodule<Z2> > whole_res_im = whole_res.image ();
+      
+	    ptr<const free_submodule<Z2> > res_inter = whole_res_im->intersection (head_im);
+      
+	    int r1 = whole_im->dim ();
+	    int r2 = whole_res_im->dim ();
+	    int r3 = inter->dim ();
+	    int r4 = res_inter->dim ();
+      
+	    if (r1 == 0
+		&& r2 == 0
+		&& r3 == 0
+		&& r4 == 0)
+	      continue;
+      
+	    // printf ("  r = (%d, %d, %d, %d)\n", r1, r2, r3, r4);
+      
+	    int s1 = r2 - r4,
+	      s2 = r1 - r2 - r3 + r4,
+	      s3 = r4,
+	      s4 = r3 - r4;
+
+	    if (first)
+	      {
+#if 0
+		show (kd);
+		printf (":  ");
+#endif
+		first = 0;
+	      }
+	    else
+	      printf (", ");
+	    printf ("(%d, %d) -> (%d, %d, %d, %d)",
+		    hq.h, hq.q,
+		    s1, s2, s3, s4);
+	  }
+	// if (!first)
+	  newline ();
+      }
+#endif
+
+#if 0
+  // knot_diagram kd (htw_knot (12, 0, 48));
+  knot_diagram kd (htw_knot (10, 1, 23));
+  show (kd); newline ();
+#endif
+  
+#if 0
   for (int a = 1; a >= 0; a --)
     for (unsigned i = 1; i <= 9; i ++)
       for (unsigned j = 1; j <= htw_knots (i, a); j ++)
@@ -350,7 +508,7 @@ main ()
   }
 #endif
   
-#if 1
+#if 0
   compute_show_kh_sq (knot_desc (knot_desc::ROLFSEN, 8, 19));
   
   map<knot_desc,

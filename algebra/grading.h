@@ -8,6 +8,12 @@ class grading
   grading () : h(0), q(0) { }
   grading (int h_, int q_) : h(h_), q(q_) { }
   grading (const grading &gr) : h(gr.h), q(gr.q) { }
+  grading (reader &r)
+  {
+    h = r.read_int ();
+    q = r.read_int ();
+  }
+  
   ~grading () { }
   
   grading &operator = (const grading &gr) { h = gr.h; q = gr.q; return *this; }
@@ -45,7 +51,13 @@ class grading
   }
   
   grading mirror_grading (unsigned nplus, unsigned nminus, bool torsion) const;
-  
+
+  void write_self (writer &w) const
+  {
+    w.write_int (h);
+    w.write_int (q);
+  }
+    
   void show_self () const;
   void display_self () const;
 };
