@@ -1992,7 +1992,7 @@ mod_map<R>::display_self () const
 template<class R> void
 writer::write_mod (ptr<const module<R> > m)
 {
-  pair<unsigned &, bool> p = aw->id_io_id.find (m->id_counter);
+  pair<unsigned &, bool> p = aw->id_io_id.find (m->id);
   if (p.second)
     {
       write_int ((int)p.first);

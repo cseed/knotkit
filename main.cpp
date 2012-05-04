@@ -204,15 +204,13 @@ compute_show_kh_sq (knot_desc desc
 
 void
 load (map<knot_desc,
-	  triple<multivariate_laurentpoly<Z>,
-		 multivariate_laurentpoly<Z>,
-		 multivariate_laurentpoly<Z> > > &knot_kh_sq,
+	  pair<mod_map<Z2>, mod_map<Z2> > > &knot_kh_sq,
       knot_desc desc)
 {
   char buf[1000];
   if (desc.t == knot_desc::TORUS)
     {
-      sprintf (buf, "kh_sq/T.dat");
+      sprintf (buf, "knot_kh_sq/T.dat");
     }
   else
     {
@@ -221,64 +219,163 @@ load (map<knot_desc,
       switch (desc.t)
 	{
 	case knot_desc::ROLFSEN:
-	  sprintf (buf, "kh_sq/%d_%d.dat", desc.i, j0);
+	  sprintf (buf, "knot_kh_sq/%d_%d.dat", desc.i, j0);
 	  break;
 
 	case knot_desc::HTW:
-	  sprintf (buf, "kh_sq/K%d_%d.dat", desc.i, j0);
+	  sprintf (buf, "knot_kh_sq/K%d_%d.dat", desc.i, j0);
 	  break;
 
 	case knot_desc::MT:
-	  sprintf (buf, "kh_sq/L%d_%d.dat", desc.i, j0);
+	  sprintf (buf, "knot_kh_sq/L%d_%d.dat", desc.i, j0);
 	  break;
 
 	default: abort ();
 	}
     }
   
+  struct stat stat_buf;
+  if (stat (buf, &stat_buf) != 0)
+    {
+      if (errno == ENOENT)
+	return;
+      
+      stderror ("stat: %s", buf);
+      exit (EXIT_FAILURE);
+    }
+  
   printf ("loading %s...\n", buf);
   
   reader r (buf);
   map<knot_desc,
-      triple<multivariate_laurentpoly<Z>,
-	     multivariate_laurentpoly<Z>,
-	     multivariate_laurentpoly<Z> > > m (r);
+      pair<mod_map<Z2>, mod_map<Z2> > > m (r);
   for (map<knot_desc,
-	   triple<multivariate_laurentpoly<Z>,
-		  multivariate_laurentpoly<Z>,
-		  multivariate_laurentpoly<Z> > >::const_iter i = m; i; i ++)
+	   pair<mod_map<Z2>, mod_map<Z2> > >::const_iter i = m; i; i ++)
     {
-      // ??? check computations agree!!
-      if (! (knot_kh_sq % i.key ()))
-	{
-#if 0
-	  assert (i.key ().t == desc.t);
-	  assert (i.key ().i == desc.i);
-	  assert (desc.j <= i.key ().j);
-	  assert (i.key ().j <= desc.j + 4000);
-	  
-	  if (i.key ().t == knot_desc::MT
-	      && i.key ().i == 11
-	      && (i.key ().j == 862
-		  || i.key ().j == 865))
-	    compute_show_kh_sq (i.key (),
-				i.val ().first,
-				i.val ().second,
-				i.val ().third);
-#endif
-	  
-	  knot_kh_sq.push (i.key (), i.val ());
-	}
+      knot_kh_sq.push (i.key (), i.val ());
     }
   
   printf ("done.\n");
 }
 
+static const int block_size = 100;
+
 int
 main ()
 {
 #if 0
-  knot_diagram kd (rolfsen_knot (8, 19));
+  map<knot_desc,
+      pair<mod_map<Z2>, mod_map<Z2> > > knot_kh_sq;
+  
+  for (unsigned i = 12; i >= 1; i --)
+    {
+      if (i <= 10)
+	{
+	  for (unsigned j = 1; j <= rolfsen_crossing_knots (i); j += block_size)
+	    {
+	      load (knot_kh_sq, knot_desc (knot_desc::ROLFSEN, i, j));
+	    }
+	}
+      
+      for (unsigned j = 1; j <= htw_knots (i); j += block_size)
+	{
+	  load (knot_kh_sq, knot_desc (knot_desc::HTW, i, j));
+	}
+      
+      if (i <= 13)
+	{
+	  for (unsigned j = 1; j <= mt_links (i); j += block_size)
+	    {
+	      load (knot_kh_sq, knot_desc (knot_desc::MT, i, j));
+	    }
+	}
+    }
+  
+  printf ("|knot_kh_sq| = %d\n", knot_kh_sq.card ());
+
+  for (map<knot_desc,
+	   pair<mod_map<Z2>, mod_map<Z2> > >::const_iter i = knot_kh_sq; i; i ++)
+    {
+      if (i.key ().t != knot_desc::ROLFSEN)
+	continue;
+      
+      mod_map<Z2> sq1 = i.val ().first;
+      mod_map<Z2> sq2 = i.val ().second;
+      
+      display ("sq1:\n", sq1);
+      display ("sq2:\n", sq2);
+      
+      printf ("%s  ", i.key ().name ().c_str ());
+      
+      assert (sq1.compose (sq1) == 0);
+      assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+      
+      ptr<const module<Z2> > H = sq1.domain ();
+      
+      map<grading, basedvector<unsigned, 1> > st;
+
+      bool first = 1;
+      set<grading> gs = H->gradings ();
+      for (set_const_iter<grading> i = gs; i; i ++)
+	{
+	  grading hq = i.val (),
+	    h1q (hq.h + 1, hq.q),
+	    h2q (hq.h + 2, hq.q);
+	  
+	  // printf ("(%d, %d):\n", hq.h, hq.q);
+	  
+	  ptr<const free_submodule<Z2> > H_hq = H->graded_piece (hq),
+	    H_h1q = H->graded_piece (h1q),
+	    H_h2q = H->graded_piece (h2q);
+	  
+	  mod_map<Z2> whole = sq2.restrict (H_hq, H_h2q),
+	    tail = sq1.restrict (H_hq, H_h1q),
+	    head = sq1.restrict (H_h1q, H_h2q);
+	  
+	  ptr<const free_submodule<Z2> > whole_im = whole.image (),
+	    tail_ker = tail.kernel (),
+	    head_im = head.image ();
+	  ptr<const free_submodule<Z2> > inter = whole_im->intersection (head_im);
+	  
+	  mod_map<Z2> whole_res = whole.restrict_from (tail_ker);
+	  ptr<const free_submodule<Z2> > whole_res_im = whole_res.image ();
+	  
+	  ptr<const free_submodule<Z2> > res_inter = whole_res_im->intersection (head_im);
+	  
+	  int r1 = whole_im->dim ();
+	  int r2 = whole_res_im->dim ();
+	  int r3 = inter->dim ();
+	  int r4 = res_inter->dim ();
+	  
+	  if (r1 == 0
+	      && r2 == 0
+	      && r3 == 0
+	      && r4 == 0)
+	    continue;
+	  
+	  // printf ("  r = (%d, %d, %d, %d)\n", r1, r2, r3, r4);
+	  
+#if 1
+	  int s1 = r2 - r4,
+	    s2 = r1 - r2 - r3 + r4,
+	    s3 = r4,
+	    s4 = r3 - r4;
+
+	  if (first)
+	    first = 0;
+	  else
+	    printf (", ");
+	  printf ("(%d, %d) -> (%d, %d, %d, %d)",
+		  hq.h, hq.q,
+		  s1, s2, s3, s4);
+#endif
+	}
+      
+    }
+#endif
+
+#if 1
+  knot_diagram kd (rolfsen_knot (5, 2));
   show (kd); newline ();
   
   cube<Z2> c (kd);
@@ -301,7 +398,7 @@ main ()
   write (w, sq2);
 #endif
   
-#if 1
+#if 0
 #if 0
   reader r ("sqtest.dat");
   
