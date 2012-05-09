@@ -1,7 +1,7 @@
 
 #include <knotkit.h>
 
-#define HOME "/Users/cotton/src/knotkit/"
+#define HOME "/Users/josh/Documents/code/knotkit/"
 
 bool verbose = 0;
 
