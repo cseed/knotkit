@@ -202,6 +202,29 @@ compute_show_kh_sq (knot_desc desc
 #endif
 }
 
+unsigned
+homological_width (ptr<const module<Z2> > H)
+{
+  int maxd = -1000,
+    mind = 1000;
+  set<grading> gs = H->gradings ();
+  for (set_const_iter<grading> gg = gs; gg; gg ++)
+    {
+      grading hq = gg.val ();
+      int d = 2 * hq.h - hq.q;
+      if (d < mind)
+	mind = d;
+      if (d > maxd)
+	maxd = d;
+    }
+  int dwidth = maxd - mind;
+  
+  unsigned hwidth = (dwidth / 2) + 1;
+  return hwidth;
+}
+
+basedvector<unsigned, 1> hwidth_knots;
+
 void
 load (map<knot_desc,
 	  pair<mod_map<Z2>, mod_map<Z2> > > &knot_kh_sq,
@@ -252,6 +275,17 @@ load (map<knot_desc,
   for (map<knot_desc,
 	   pair<mod_map<Z2>, mod_map<Z2> > >::const_iter i = m; i; i ++)
     {
+      mod_map<Z2> sq1 = i.val ().first;
+      ptr<const module<Z2> > H = sq1.domain ();
+      unsigned hwidth = homological_width (H);
+      hwidth_knots[hwidth] ++;
+      
+      if (hwidth == 2)
+	continue;
+      if (i.key ().t == knot_desc::MT
+	  && i.key ().diagram ().num_components () == 1)
+	continue;
+      
       knot_kh_sq.push (i.key (), i.val ());
     }
   
@@ -260,107 +294,71 @@ load (map<knot_desc,
 
 static const int block_size = 100;
 
-int
-main ()
+void
+show_st (map<knot_desc,
+	     pair<mod_map<Z2>, mod_map<Z2> > > knot_kh_sq,
+	 knot_desc desc)
 {
-#if 0
-  map<knot_desc,
-      pair<mod_map<Z2>, mod_map<Z2> > > knot_kh_sq;
+  pair<mod_map<Z2>, mod_map<Z2> > p = knot_kh_sq(desc);
   
-  for (unsigned i = 12; i >= 1; i --)
-    {
-      if (i <= 10)
-	{
-	  for (unsigned j = 1; j <= rolfsen_crossing_knots (i); j += block_size)
-	    {
-	      load (knot_kh_sq, knot_desc (knot_desc::ROLFSEN, i, j));
-	    }
-	}
-      
-      for (unsigned j = 1; j <= htw_knots (i); j += block_size)
-	{
-	  load (knot_kh_sq, knot_desc (knot_desc::HTW, i, j));
-	}
-      
-      if (i <= 13)
-	{
-	  for (unsigned j = 1; j <= mt_links (i); j += block_size)
-	    {
-	      load (knot_kh_sq, knot_desc (knot_desc::MT, i, j));
-	    }
-	}
-    }
+  mod_map<Z2> sq1 = p.first;
+  mod_map<Z2> sq2 = p.second;
   
-  printf ("|knot_kh_sq| = %d\n", knot_kh_sq.card ());
-
-  for (map<knot_desc,
-	   pair<mod_map<Z2>, mod_map<Z2> > >::const_iter i = knot_kh_sq; i; i ++)
+  printf ("%s  ", desc.name ().c_str ());
+  
+  assert (sq1.compose (sq1) == 0);
+  assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+  
+  ptr<const module<Z2> > H = sq1.domain ();
+  
+  map<grading, basedvector<int, 1> > st;
+  
+  bool first = 1;
+  set<grading> gs = H->gradings ();
+  for (set_const_iter<grading> gg = gs; gg; gg ++)
     {
-      if (i.key ().t != knot_desc::ROLFSEN)
+      grading hq = gg.val (),
+	h1q (hq.h + 1, hq.q),
+	h2q (hq.h + 2, hq.q);
+      
+      ptr<const free_submodule<Z2> > H_hq = H->graded_piece (hq),
+	H_h1q = H->graded_piece (h1q),
+	H_h2q = H->graded_piece (h2q);
+      
+      mod_map<Z2> S = sq2.restrict (H_hq, H_h2q),
+	A = sq1.restrict (H_hq, H_h1q),
+	B = sq1.restrict (H_h1q, H_h2q);
+      
+      ptr<const free_submodule<Z2> > S_im = S.image (),
+	A_ker = A.kernel (),
+	B_im = B.image ();
+      ptr<const free_submodule<Z2> > inter = S_im->intersection (B_im);
+      
+      mod_map<Z2> S_res = S.restrict_from (A_ker);
+      ptr<const free_submodule<Z2> > S_res_im = S_res.image ();
+      
+      ptr<const free_submodule<Z2> > res_inter = S_res_im->intersection (B_im);
+      
+      int r1 = S_im->dim ();
+      int r2 = S_res_im->dim ();
+      int r3 = inter->dim ();
+      int r4 = res_inter->dim ();
+      
+      if (r1 == 0
+	  && r2 == 0
+	  && r3 == 0
+	  && r4 == 0)
 	continue;
       
-      mod_map<Z2> sq1 = i.val ().first;
-      mod_map<Z2> sq2 = i.val ().second;
+      // printf ("  r = (%d, %d, %d, %d)\n", r1, r2, r3, r4);
       
-      display ("sq1:\n", sq1);
-      display ("sq2:\n", sq2);
+      int s1 = r2 - r4,
+	s2 = r1 - r2 - r3 + r4,
+	s3 = r4,
+	s4 = r3 - r4;
       
-      printf ("%s  ", i.key ().name ().c_str ());
-      
-      assert (sq1.compose (sq1) == 0);
-      assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
-      
-      ptr<const module<Z2> > H = sq1.domain ();
-      
-      map<grading, basedvector<unsigned, 1> > st;
-
-      bool first = 1;
-      set<grading> gs = H->gradings ();
-      for (set_const_iter<grading> i = gs; i; i ++)
+      if (s1 != 0)
 	{
-	  grading hq = i.val (),
-	    h1q (hq.h + 1, hq.q),
-	    h2q (hq.h + 2, hq.q);
-	  
-	  // printf ("(%d, %d):\n", hq.h, hq.q);
-	  
-	  ptr<const free_submodule<Z2> > H_hq = H->graded_piece (hq),
-	    H_h1q = H->graded_piece (h1q),
-	    H_h2q = H->graded_piece (h2q);
-	  
-	  mod_map<Z2> whole = sq2.restrict (H_hq, H_h2q),
-	    tail = sq1.restrict (H_hq, H_h1q),
-	    head = sq1.restrict (H_h1q, H_h2q);
-	  
-	  ptr<const free_submodule<Z2> > whole_im = whole.image (),
-	    tail_ker = tail.kernel (),
-	    head_im = head.image ();
-	  ptr<const free_submodule<Z2> > inter = whole_im->intersection (head_im);
-	  
-	  mod_map<Z2> whole_res = whole.restrict_from (tail_ker);
-	  ptr<const free_submodule<Z2> > whole_res_im = whole_res.image ();
-	  
-	  ptr<const free_submodule<Z2> > res_inter = whole_res_im->intersection (head_im);
-	  
-	  int r1 = whole_im->dim ();
-	  int r2 = whole_res_im->dim ();
-	  int r3 = inter->dim ();
-	  int r4 = res_inter->dim ();
-	  
-	  if (r1 == 0
-	      && r2 == 0
-	      && r3 == 0
-	      && r4 == 0)
-	    continue;
-	  
-	  // printf ("  r = (%d, %d, %d, %d)\n", r1, r2, r3, r4);
-	  
-#if 1
-	  int s1 = r2 - r4,
-	    s2 = r1 - r2 - r3 + r4,
-	    s3 = r4,
-	    s4 = r3 - r4;
-
 	  if (first)
 	    first = 0;
 	  else
@@ -368,13 +366,406 @@ main ()
 	  printf ("(%d, %d) -> (%d, %d, %d, %d)",
 		  hq.h, hq.q,
 		  s1, s2, s3, s4);
+	}
+    }
+  
+  newline ();
+}
+
+int
+main ()
+{
+#if 0
+  knot_diagram kd (mt_link (10, 0, 9));
+  cube<Z2> c (kd);
 #endif
+  
+#if 0
+  for (unsigned i = 1; i <= 10; i ++)
+    for (unsigned j = 1; j <= mt_links (i, 0); j ++)
+      {
+	knot_diagram kd (mt_link (i, 0, j));
+	kd.marked_edge = 1;
+	
+	cube<Z2> c (kd, 1);
+	sseq ss = compute_szabo_sseq (c);
+	ss.texshow (stdout, kd.name);
+      }
+#endif
+  
+#if 0
+#if 1
+  for (unsigned i = 10; i <= 10; i ++)
+    for (unsigned j = 124; j <= rolfsen_crossing_knots (i); j ++)
+      {
+	knot_diagram kd (rolfsen_knot (i, j));
+#endif
+#if 0
+  for (unsigned i = 1; i <= 10; i ++)
+    for (unsigned j = 1; j <= mt_links (i, 0); j ++)
+      {
+#endif
+#if 0
+  for (unsigned i = 11; i <= 11; i ++)
+    for (unsigned j = 1; j <= htw_knots (i, 0); j ++)
+      {
+#endif
+	// knot_diagram kd (htw_knot (i, 0, j));
+	// knot_diagram kd (mt_link (i, 0, j));
+	kd.marked_edge = 1;
+	
+	show (kd); newline ();
+  
+	cube<Z2> c (kd, 1);
+	
+#if 0
+	mod_map<Z2> d1 = c.compute_d (1, 0, 0, 0, 0);
+  
+	chain_complex_simplifier<Z2> s (c.khC, d1, 1);
+	assert (s.new_d == 0);
+#endif
+  
+	sseq ss = compute_szabo_sseq (c);
+  
+	multivariate_laurentpoly<Z> Phat = 
+	  ss.pages[ss.pages.size ()].delta_poincare_polynomial (ss.bounds);
+	
+	typedef spanning_tree_complex<Z2>::R R;
+	
+	spanning_tree_complex<Z2> spanc (kd);
+	mod_map<R> d2 = spanc.twisted_d2 ();
+	mod_map<R> d2U = spanc.twisted_d2Un (1);
+	
+	chain_complex_simplifier<R> s2 (spanc.C, d2, 2);
+	assert (s2.new_d == 0);
+	
+	mod_map<R> H_d2U = s2.pi.compose (d2U).compose (s2.iota);
+	assert (H_d2U.compose (H_d2U) == 0);
+	
+	ptr<const module<R> > ker = H_d2U.kernel ();
+	ptr<const module<R> > quot = s2.new_C->quotient (H_d2U.image ());
+        
+        multivariate_laurentpoly<Z> Pminus1
+	    = ker->free_delta_poincare_polynomial (),
+	  PminusU = quot->free_delta_poincare_polynomial ();
+	
+	if (PminusU != Pminus1)
+	  {
+	    display ("  HFhat: ", Phat);
+	    // display ("  HF-: ", Pminus);
+	    display ("  HF- (1): ", Pminus1);
+	    display ("  HF- (U): ", PminusU);
+	  }
+      }
+#endif
+  
+#if 1
+  hwidth_knots = basedvector<unsigned, 1> (10);
+  for (unsigned i = 1; i <= hwidth_knots.size (); i ++)
+    hwidth_knots[i] = 0;
+  
+  map<knot_desc,
+      pair<mod_map<Z2>, mod_map<Z2> > > knot_kh_sq;
+  
+  for (unsigned i = 14; i >= 1; i --)
+    {
+#if 0
+      if (i <= 10)
+	{
+	  for (unsigned j = 1; j <= rolfsen_crossing_knots (i); j += block_size)
+	    {
+	      load (knot_kh_sq, knot_desc (knot_desc::ROLFSEN, i, j));
+	    }
+	}
+#endif
+      
+      for (unsigned j = 1; j <= htw_knots (i); j += block_size)
+	{
+	  load (knot_kh_sq, knot_desc (knot_desc::HTW, i, j));
+	}
+
+      if (i <= 13)
+	{
+	  for (unsigned j = 1; j <= mt_links (i); j += block_size)
+	    {
+	      load (knot_kh_sq, knot_desc (knot_desc::MT, i, j));
+	    }
 	}
       
+      if (i == 14)
+	{
+	  for (unsigned j = 1; j <= mt_links (14, 0); j += block_size)
+	    {
+	      load (knot_kh_sq, knot_desc (knot_desc::MT, 14, mt_links (14, 1) + j));
+	    }
+	}
     }
+  
+  unsigned total_knots = 0;
+  printf ("hwidth_knots:\n");
+  for (unsigned i = 1; i <= hwidth_knots.size (); i ++)
+    {
+      printf ("  % 2d: %d\n", i, hwidth_knots[i]);
+      total_knots += hwidth_knots[i];
+    }
+  printf ("total_knots = %d\n", total_knots);
+  
+  printf ("|knot_kh_sq| = %d\n", knot_kh_sq.card ());
+  
+#if 1
+  map<pair<multivariate_laurentpoly<Z>,
+	   map<grading, unsigned> >,
+      pair<knot_desc,
+	   map<grading, basedvector<int, 1> > > > P_sq1_knot_st;
+  
+  set<multivariate_laurentpoly<Z> > Ps;
+  basedvector<unsigned, 1> collisons (10);
+  for (unsigned i = 1; i <= 10; i ++)
+    collisons[i] = 0;
+  
+  for (map<knot_desc,
+	   pair<mod_map<Z2>, mod_map<Z2> > >::const_iter i = knot_kh_sq; i; i ++)
+    {
+      show_st (knot_kh_sq, i.key ());
+      
+      mod_map<Z2> sq1 = i.val ().first;
+      mod_map<Z2> sq2 = i.val ().second;
+      
+#if 0
+      display ("sq1:\n", sq1);
+      display ("sq2:\n", sq2);
+#endif
+      
+      printf ("%s  ", i.key ().name ().c_str ());
+      
+      assert (sq1.compose (sq1) == 0);
+      assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+      
+      ptr<const module<Z2> > H = sq1.domain ();
+      unsigned hwidth = homological_width (H);
+      
+      map<grading, basedvector<int, 1> > st;
+      map<grading, unsigned> sq1_ranks;
+      
+      bool first = 1;
+      
+      set<grading> gs = H->gradings ();
+      
+      for (set_const_iter<grading> gg = gs; gg; gg ++)
+	{
+	  grading hq = gg.val (),
+	    h1q (hq.h + 1, hq.q),
+	    h2q (hq.h + 2, hq.q),
+	    h3q (hq.h + 3, hq.q);
+	  
+	  // printf ("(%d, %d):\n", hq.h, hq.q);
+	  
+	  ptr<const free_submodule<Z2> > H_hq = H->graded_piece (hq),
+	    H_h1q = H->graded_piece (h1q),
+	    H_h2q = H->graded_piece (h2q),
+	    H_h3q = H->graded_piece (h3q);
+	  
+	  mod_map<Z2> S = sq2.restrict (H_hq, H_h2q),
+	    T = sq2.restrict (H_h1q, H_h3q),
+	    A = sq1.restrict (H_hq, H_h1q),
+	    B = sq1.restrict (H_h1q, H_h2q),
+	    C = sq1.restrict (H_h2q, H_h3q);
+	  
+	  ptr<const free_submodule<Z2> > Sker = S.kernel (),
+	    Sim = S.image (),
+	    Tker = T.kernel (),
+	    Tim = T.image (),
+	    Aker = A.kernel (),
+	    Aim = A.image (),
+	    Bker = B.kernel (),
+	    Bim = B.image (),
+	    Cker = C.kernel (),
+	    Cim = C.image ();
+	  
+	  sq1_ranks.push (hq, Aim->dim ());
+	  
+	  mod_map<Z2> ArSker = A.restrict_from (Sker);
+	  mod_map<Z2> SrAker = S.restrict_from (Aker);
+	  
+	  mod_map<Z2> TrAim = T.restrict_from (Aim);
+	  mod_map<Z2> TrBker = T.restrict_from (Bker);
+	  mod_map<Z2> BrTker = B.restrict_from (Tker);
+	  
+	  mod_map<Z2> CrSim = C.restrict_from (Sim);
+	  
+	  ptr<const free_submodule<Z2> > ArSker_im = ArSker.image ();
+	  ptr<const free_submodule<Z2> > SrAker_im = SrAker.image ();
+	  
+	  ptr<const free_submodule<Z2> > TrAim_im = TrAim.image ();
+	  ptr<const free_submodule<Z2> > TrBker_im = TrBker.image ();
+	  ptr<const free_submodule<Z2> > BrTker_im = BrTker.image ();
+	  
+	  ptr<const free_submodule<Z2> > CrSim_im = CrSim.image ();
+	  
+	  mod_map<Z2> CrSrAker_im = C.restrict_from (SrAker_im);
+	  mod_map<Z2> TrArSker_im = T.restrict_from (ArSker_im);
+	  
+	  ptr<const free_submodule<Z2> > CrSrAker_im_im = CrSrAker_im.image ();
+	  ptr<const free_submodule<Z2> > TrArSker_im_im = TrArSker_im.image ();
+	  
+	  ptr<const free_submodule<Z2> > Aker_cap_Sker = Aker->intersection (Sker);
+	  
+	  ptr<const free_submodule<Z2> > Aim_cap_Tker = Aim->intersection (Tker);
+	  ptr<const free_submodule<Z2> > Bker_cap_Tker = Bker->intersection (Tker);
+	  ptr<const free_submodule<Z2> > ArSker_im_cap_Tker = ArSker_im->intersection (Tker);
+	  
+	  ptr<const free_submodule<Z2> > Sim_cap_Bim = Sim->intersection (Bim);
+	  ptr<const free_submodule<Z2> > Sim_cap_BrTker_im = Sim->intersection (BrTker_im);
+	  ptr<const free_submodule<Z2> > Sim_cap_Cker = Sim->intersection (Cker);
+	  ptr<const free_submodule<Z2> > SrAker_im_cap_Bim = SrAker_im->intersection (Bim);
+	  ptr<const free_submodule<Z2> > SrAker_im_cap_BrTker_im = SrAker_im->intersection (BrTker_im);
+	  ptr<const free_submodule<Z2> > SrAker_im_cap_Cker = SrAker_im->intersection (Cker);
+	  
+	  ptr<const free_submodule<Z2> > Tim_cap_Cim = Tim->intersection (Cim);
+	  ptr<const free_submodule<Z2> > TrAim_im_cap_Cim = TrAim_im->intersection (Cim);
+	  ptr<const free_submodule<Z2> > TrBker_im_cap_Cim = TrBker_im->intersection (Cim);
+	  ptr<const free_submodule<Z2> > TrArSker_im_im_cap_Cim = TrBker_im->intersection (Cim);
+	  
+	  ptr<const free_submodule<Z2> > Tim_cap_CrSim_im = Tim->intersection (CrSim_im);
+	  ptr<const free_submodule<Z2> > TrAim_im_cap_CrSim_im = TrAim_im->intersection (CrSim_im);
+	  ptr<const free_submodule<Z2> > TrBker_im_cap_CrSim_im = TrBker_im->intersection (CrSim_im);
+	  ptr<const free_submodule<Z2> > TrArSker_im_im_cap_CrSim_im = TrBker_im->intersection (CrSim_im);
+
+	  ptr<const free_submodule<Z2> > Tim_cap_CrSrAker_im_im = Tim->intersection (CrSrAker_im_im);
+	  ptr<const free_submodule<Z2> > TrAim_im_cap_CrSrAker_im_im = TrAim_im->intersection (CrSrAker_im_im);
+	  ptr<const free_submodule<Z2> > TrBker_im_cap_CrSrAker_im_im = TrBker_im->intersection (CrSrAker_im_im);
+	  ptr<const free_submodule<Z2> > TrArSker_im_im_cap_CrSrAker_im_im = TrBker_im->intersection (CrSrAker_im_im);
+	  
+	  basedvector<int, 1> v;
+	  
+	  v.append (Sker->dim ());
+	  v.append (Sim->dim ());
+	  v.append (Tker->dim ());
+	  v.append (Tim->dim ());
+	  
+	  v.append (Aker->dim ());
+	  v.append (Aim->dim ());
+	  v.append (Bker->dim ());
+	  v.append (Bim->dim ());
+	  v.append (Cker->dim ());
+	  v.append (Cim->dim ());
+	  
+	  v.append (ArSker_im->dim ());
+	  v.append (SrAker_im->dim ());
+	  
+	  v.append (TrAim_im->dim ());
+	  v.append (TrBker_im->dim ());
+	  v.append (BrTker_im->dim ());
+	  
+	  v.append (CrSim_im->dim ());
+	  
+	  v.append (CrSrAker_im_im->dim ());
+	  v.append (TrArSker_im_im->dim ());
+	  
+	  v.append (Aker_cap_Sker->dim ());
+	  
+	  v.append (Aim_cap_Tker->dim ());
+	  v.append (Bker_cap_Tker->dim ());
+	  v.append (ArSker_im_cap_Tker->dim ());
+	  
+	  v.append (Sim_cap_Bim->dim ());
+	  v.append (Sim_cap_BrTker_im->dim ());
+	  v.append (Sim_cap_Cker->dim ());
+	  v.append (SrAker_im_cap_Bim->dim ());
+	  v.append (SrAker_im_cap_BrTker_im->dim ());
+	  v.append (SrAker_im_cap_Cker->dim ());
+	  
+	  v.append (Tim_cap_Cim->dim ());
+	  v.append (TrAim_im_cap_Cim->dim ());
+	  v.append (TrBker_im_cap_Cim->dim ());
+	  v.append (TrArSker_im_im_cap_Cim->dim ());
+	  
+	  v.append (Tim_cap_CrSim_im->dim ());
+	  v.append (TrAim_im_cap_CrSim_im->dim ());
+	  v.append (TrBker_im_cap_CrSim_im->dim ());
+	  v.append (TrArSker_im_im_cap_CrSim_im->dim ());
+
+	  v.append (Tim_cap_CrSim_im->dim ());
+	  v.append (TrAim_im_cap_CrSim_im->dim ());
+	  v.append (TrBker_im_cap_CrSim_im->dim ());
+	  v.append (TrArSker_im_im_cap_CrSim_im->dim ());
+	  
+	  st.push (hq, v);
+	}
+      newline ();
+      
+      multivariate_laurentpoly<Z> P = H->free_poincare_polynomial ();
+      pair<pair<knot_desc,
+		map<grading, basedvector<int, 1> > > &,
+	   bool> p = P_sq1_knot_st.find (pair<multivariate_laurentpoly<Z>,
+					      map<grading, unsigned> > (P, sq1_ranks));
+      if (p.second)
+	{
+	  collisons[hwidth] ++;
+	  Ps += P;
+	  
+	  if (p.first.second != st)
+	    {
+	      printf ("DIFFER:\n");
+	      printf ("hwidth = %d\n", hwidth);
+	      
+	      show_st (knot_kh_sq, p.first.first);
+	      show_st (knot_kh_sq, i.key ());
+
+	      printf ("Kh[");
+	      planar_diagram (p.first.first.diagram ()).show_knottheory ();
+	      printf (", Modulus -> Null][q,t] === Kh[");
+	      planar_diagram (i.key ().diagram ()).show_knottheory ();
+	      printf (", Modulus -> Null][q,t]\n");
+	      
+#if 0
+	      printf ("%s:\n", 
+		      p.first.first.name ().c_str ());
+	      for (map<grading, basedvector<int, 1> >::const_iter j = p.first.second; j; j ++)
+		{
+		  printf ("  (%d, %d) -> [",
+			  j.key ().h, j.key ().q);
+		  for (unsigned k = 1; k <= j.val ().size (); k ++)
+		    {
+		      if (k > 1)
+			printf (",");
+		      printf ("%d", j.val ()[k]);
+		    }
+		  newline ();
+		}
+	      printf ("%s:\n",
+		      i.key ().name ().c_str ());
+	      for (map<grading, basedvector<int, 1> >::const_iter j = st; j; j ++)
+		{
+		  printf ("  (%d, %d) -> [",
+			  j.key ().h, j.key ().q);
+		  for (unsigned k = 1; k <= j.val ().size (); k ++)
+		    {
+		      if (k > 1)
+			printf (",");
+		      printf ("%d", j.val ()[k]);
+		    }
+		  newline ();
+		}
+#endif
+	    }
+	}
+      else
+	{
+	  p.first.first = i.key ();
+	  p.first.second = st;
+	}
+    }
+  
+  printf ("groups = %d\n", Ps.card ());
+  printf ("collisons:\n");
+  for (unsigned i = 1; i <= 10; i ++)
+    printf ("  % 2d: %d\n", i, collisons[i]);
+  
+#endif
 #endif
 
-#if 1
+#if 0
   knot_diagram kd (rolfsen_knot (5, 2));
   show (kd); newline ();
   

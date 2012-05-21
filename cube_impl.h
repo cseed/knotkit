@@ -410,11 +410,59 @@ cube<R>::cube (knot_diagram &kd_, bool markedp_only_)
   
   // printf ("smoothings:\n");
   
+  unsigned max = 0;
+  
   smoothing s (kd);
   for (unsigned i = 0; i < n_resolutions; i ++)
     {
       smallbitset state (n_crossings, i);
       s.init (kd, state);
+      
+#if 1
+      unsigned fromstate = i;
+      smoothing &from_s = s;
+      
+      unsigned n_zerocrossings = n_crossings - unsigned_bitcount (fromstate);
+      unsigned n_cobordisms = ((unsigned)1) << n_zerocrossings;
+      for (unsigned j = 0; j < n_cobordisms; j ++)
+	{
+	  unsigned tostate = unsigned_pack (n_crossings, fromstate, j);
+	  unsigned crossings = tostate & ~fromstate;
+	  
+	  smoothing to_s (kd, smallbitset (n_crossings, tostate));
+	  
+	  set<unsigned> starting_circles,
+	    ending_circles;
+	  for (unsigned_const_iter k = crossings; k; k ++)
+	    {
+	      unsigned c = k.val ();
+	      
+	      unsigned starting_from = s.ept_circle (kd, kd.crossings[c][2]),
+		starting_to = s.ept_circle (kd, kd.crossings[c][4]);
+	      starting_circles += starting_from;
+	      starting_circles += starting_to;
+	      
+	      unsigned ending_from = to_s.ept_circle (kd, kd.crossings[c][2]),
+		ending_to = to_s.ept_circle (kd, kd.crossings[c][4]);
+	      ending_circles += ending_from;
+	      ending_circles += ending_to;
+	    }
+	  if (starting_circles.card () == 1
+	      && ending_circles.card () == 1)
+	    {
+	      unsigned k = unsigned_bitcount (crossings);
+	      if (k > max)
+		max = k;
+	      
+#if 0
+	      s.show_self (kd, state);
+	      printf (" crossings ");  show (smallbitset (n_crossings, crossings));
+	      newline ();
+#endif
+	    }
+	}
+#endif
+      
       resolution_circles[i] = s.n_circles;
       resolution_generator1[i] = n_generators + 1;
       n_generators += s.num_generators (markedp_only);
@@ -424,6 +472,8 @@ cube<R>::cube (knot_diagram &kd_, bool markedp_only_)
       newline ();
 #endif
     }
+  
+  printf ("max = %d\n", max);
   
   // printf ("(cube) n_generators = %d\n", n_generators);
   khC = new base_module<R, khC_generators<R> > (khC_generators<R> (*this));

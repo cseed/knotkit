@@ -782,6 +782,12 @@ std::string
 knot_desc::name () const
 {
   char buf[1000];
+
+#if 0
+  sprintf (buf, "knot_desc(%d, %d, %d)", (int)t, i, j);
+  return buf;
+#endif
+  
   switch (t)
     {
     case ROLFSEN:

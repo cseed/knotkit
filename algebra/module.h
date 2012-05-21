@@ -21,7 +21,7 @@ class module : public refcounted
   
   static unsigned id_counter;
   
-  static basedvector<ptr<const module<R> >, 1> id_module;
+  static map<unsigned, ptr<const module<R> > > reader_id_module;
   
   static map<basedvector<unsigned, 1>,
     ptr<const direct_sum<R> > > direct_sum_idx;
@@ -35,9 +35,6 @@ class module : public refcounted
   {
     id_counter ++;
     id = id_counter;
-    
-    id_module.append (this);
-    assert (id_module.size () == id_counter);
   }
   module (const module &) = delete;
   virtual ~module () { }
@@ -162,7 +159,7 @@ class module : public refcounted
 
 template<class R> unsigned module<R>::id_counter = 0;
 
-template<class R> basedvector<ptr<const module<R> >, 1> module<R>::id_module;
+template<class R> map<unsigned, ptr<const module<R> > > module<R>::reader_id_module;
 
 template<class R> map<basedvector<unsigned, 1>,
   ptr<const direct_sum<R> > > module<R>::direct_sum_idx;
@@ -507,7 +504,9 @@ class explicit_module : public module<R>
 		   basedvector<R, 1> ann_,
 		   basedvector<grading, 1> hq_)
     : r(r_), ann(ann_), hq(hq_)
-  { }
+  {
+    assert (hq.size () == r + ann.size ());
+  }
   
   explicit explicit_module (unsigned r_, basedvector<grading, 1> hq_) : r(r_), hq(hq_) { }
   ~explicit_module () { }
@@ -952,6 +951,7 @@ class mod_map
   
   // inj : im -> to
   ptr<const free_submodule<R> > image () const;
+  ptr<const free_submodule<R> > image (basedvector<linear_combination<R>, 1> vs) const;
   
   ptr<const quotient_module<R> > cokernel () const;
   
@@ -1874,6 +1874,15 @@ mod_map<R>::image () const
   return impl->to->submodule (span);
 }
 
+template<class R> ptr<const free_submodule<R> >
+mod_map<R>::image (basedvector<linear_combination<R>, 1> vs) const
+{
+  mod_span<R> span (impl->from, vs);
+  ptr<const free_submodule<R> > s = impl->from->submodule (span);
+  mod_map<R> r = restrict_from (s);
+  return r.image ();
+}
+
 template<class R> ptr<const quotient_module<R> > 
 mod_map<R>::cokernel () const
 {
@@ -2034,11 +2043,13 @@ reader::read_mod ()
       
       ptr<const module<R> > m = new explicit_module<R> (r, ann, gr);
       ar->io_id_id.push ((unsigned)(-io_id), m->id);
+      module<R>::reader_id_module.push (m->id, m);
+      
       return m;
     }
   else
     {
       unsigned id = ar->io_id_id(io_id);
-      return module<R>::id_module[id];
+      return module<R>::reader_id_module(id);
     }
 }
