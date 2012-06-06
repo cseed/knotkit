@@ -410,8 +410,6 @@ cube<R>::cube (knot_diagram &kd_, bool markedp_only_)
   
   // printf ("smoothings:\n");
   
-  unsigned max = 0;
-  
   smoothing s (kd);
   for (unsigned i = 0; i < n_resolutions; i ++)
     {
@@ -451,8 +449,6 @@ cube<R>::cube (knot_diagram &kd_, bool markedp_only_)
 	      && ending_circles.card () == 1)
 	    {
 	      unsigned k = unsigned_bitcount (crossings);
-	      if (k > max)
-		max = k;
 	      
 #if 0
 	      s.show_self (kd, state);
@@ -472,8 +468,6 @@ cube<R>::cube (knot_diagram &kd_, bool markedp_only_)
       newline ();
 #endif
     }
-  
-  printf ("max = %d\n", max);
   
   // printf ("(cube) n_generators = %d\n", n_generators);
   khC = new base_module<R, khC_generators<R> > (khC_generators<R> (*this));

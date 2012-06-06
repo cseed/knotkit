@@ -372,9 +372,132 @@ show_st (map<knot_desc,
   newline ();
 }
 
+void
+sage_show (std::string prefix,
+	   map<grading, basedvector<unsigned, 1> > hq_gens,
+	   ptr<const module<Z2> > H)
+{
+  printf ("%s_hom={", prefix.c_str ());
+  bool first = 1;
+  for (map<grading, basedvector<unsigned, 1> >::const_iter i = hq_gens; i; i ++)
+    {
+      if (first)
+	first = 0;
+      else
+	printf (", ");
+      printf ("(%d, %d): %d", i.key ().h, i.key ().q, i.val ().size ());
+    }      
+  printf ("}\n");
+}
+
+void
+sage_show (std::string prefix,
+	   map<grading, basedvector<unsigned, 1> > hq_gens,
+	   std::string name,
+	   grading delta,
+	   mod_map<Z2> f)
+{
+  printf ("%s_%s={", prefix.c_str (), name.c_str ());
+  
+  bool first = 1;
+  for (map<grading, basedvector<unsigned, 1> >::const_iter i = hq_gens; i; i ++)
+    {
+      grading from_hq = i.key ();
+      basedvector<unsigned, 1> from_gens = i.val ();
+      
+      grading to_hq = from_hq + delta;
+      if (hq_gens % to_hq)
+	{
+	  basedvector<unsigned, 1> to_gens = hq_gens(to_hq);
+	  
+	  if (first)
+	    first = 0;
+	  else
+	    printf (", ");
+	  printf ("(%d, %d): [", from_hq.h, from_hq.q);
+	  bool first2 = 1;
+	  for (unsigned j = 1; j <= from_gens.size (); j ++)
+	    {
+	      unsigned gj = from_gens[j];
+	      
+	      if (first2)
+		first2 = 0;
+	      else
+		printf (", ");
+	      printf ("(");
+	      for (unsigned k = 1; k <= to_gens.size (); k ++)
+		{
+		  unsigned gk = to_gens[k];
+		  
+		  if (k > 1)
+		    printf (", ");
+		  if (f[gj](gk) == 1)
+		    printf ("1");
+		  else
+		    {
+		      assert (f[gj](gk) == 0);
+		      printf ("0");
+		    }
+		}
+	      printf (")");
+	    }
+	  printf ("]");
+	}
+    }
+  printf ("}\n");
+}
+
+void
+sage_show_khsq (std::string prefix,
+		ptr<const module<Z2> > H,
+		mod_map<Z2> sq1,
+		mod_map<Z2> sq2)
+{
+  unsigned n = H->dim ();
+  
+  map<grading, basedvector<unsigned, 1> > hq_gens;
+  for (unsigned i = 1; i <= H->dim (); i ++)
+    hq_gens[H->generator_grading (i)].append (i);
+  
+  unsigned t = 0;
+  for (map<grading, basedvector<unsigned, 1> >::const_iter i = hq_gens; i; i ++)
+    t += i.val ().size ();
+  assert (t == n);
+  
+  sage_show (prefix, hq_gens, H);
+  sage_show (prefix, hq_gens, "sq1", grading (1, 0), sq1);
+  sage_show (prefix, hq_gens, "sq2", grading (2, 0), sq2);
+  newline ();
+}
+
+void
+test_sage_show ()
+{
+  knot_diagram kd (mt_link (11, 0, 449));
+  show (kd); newline ();
+  
+  planar_diagram pd (kd);
+  pd.display_knottheory ();
+  
+  cube<Z2> c (kd);
+  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+  
+  chain_complex_simplifier<Z2> s (c.khC, d, 1);
+  
+  steenrod_square sq (c, d, s);
+  mod_map<Z2> sq1 = sq.sq1 ();
+  mod_map<Z2> sq2 = sq.sq2 ();
+  
+  // display ("sq2:\n", sq2);
+  
+  sage_show_khsq ("L11n449", sq1.domain (), sq1, sq2);
+}
+
 int
 main ()
 {
+  test_sage_show ();
+  
 #if 0
   knot_diagram kd (mt_link (10, 0, 9));
   cube<Z2> c (kd);
@@ -459,7 +582,7 @@ main ()
       }
 #endif
   
-#if 1
+#if 0
   hwidth_knots = basedvector<unsigned, 1> (10);
   for (unsigned i = 1; i <= hwidth_knots.size (); i ++)
     hwidth_knots[i] = 0;
