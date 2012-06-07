@@ -278,13 +278,15 @@ load (map<knot_desc,
       mod_map<Z2> sq1 = i.val ().first;
       ptr<const module<Z2> > H = sq1.domain ();
       unsigned hwidth = homological_width (H);
-      hwidth_knots[hwidth] ++;
+      // hwidth_knots[hwidth] ++;
       
+#if 0
       if (hwidth == 2)
 	continue;
       if (i.key ().t == knot_desc::MT
 	  && i.key ().diagram ().num_components () == 1)
 	continue;
+#endif
       
       knot_kh_sq.push (i.key (), i.val ());
     }
@@ -373,31 +375,33 @@ show_st (map<knot_desc,
 }
 
 void
-sage_show (std::string prefix,
+sage_show (FILE *fp,
+	   std::string prefix,
 	   map<grading, basedvector<unsigned, 1> > hq_gens,
 	   ptr<const module<Z2> > H)
 {
-  printf ("%s_hom={", prefix.c_str ());
+  fprintf (fp, "%s_hom={", prefix.c_str ());
   bool first = 1;
   for (map<grading, basedvector<unsigned, 1> >::const_iter i = hq_gens; i; i ++)
     {
       if (first)
 	first = 0;
       else
-	printf (", ");
-      printf ("(%d, %d): %d", i.key ().h, i.key ().q, i.val ().size ());
+	fprintf (fp, ", ");
+      fprintf (fp, "(%d, %d): %d", i.key ().h, i.key ().q, i.val ().size ());
     }      
-  printf ("}\n");
+  fprintf (fp, "}\n");
 }
 
 void
-sage_show (std::string prefix,
+sage_show (FILE *fp,
+	   std::string prefix,
 	   map<grading, basedvector<unsigned, 1> > hq_gens,
 	   std::string name,
 	   grading delta,
 	   mod_map<Z2> f)
 {
-  printf ("%s_%s={", prefix.c_str (), name.c_str ());
+  fprintf (fp, "%s_%s={", prefix.c_str (), name.c_str ());
   
   bool first = 1;
   for (map<grading, basedvector<unsigned, 1> >::const_iter i = hq_gens; i; i ++)
@@ -413,8 +417,8 @@ sage_show (std::string prefix,
 	  if (first)
 	    first = 0;
 	  else
-	    printf (", ");
-	  printf ("(%d, %d): [", from_hq.h, from_hq.q);
+	    fprintf (fp, ", ");
+	  fprintf (fp, "(%d, %d): [", from_hq.h, from_hq.q);
 	  bool first2 = 1;
 	  for (unsigned j = 1; j <= from_gens.size (); j ++)
 	    {
@@ -423,32 +427,33 @@ sage_show (std::string prefix,
 	      if (first2)
 		first2 = 0;
 	      else
-		printf (", ");
-	      printf ("(");
+		fprintf (fp, ", ");
+	      fprintf (fp, "(");
 	      for (unsigned k = 1; k <= to_gens.size (); k ++)
 		{
 		  unsigned gk = to_gens[k];
 		  
 		  if (k > 1)
-		    printf (", ");
+		    fprintf (fp, ", ");
 		  if (f[gj](gk) == 1)
-		    printf ("1");
+		    fprintf (fp, "1");
 		  else
 		    {
 		      assert (f[gj](gk) == 0);
-		      printf ("0");
+		      fprintf (fp, "0");
 		    }
 		}
-	      printf (")");
+	      fprintf (fp, ")");
 	    }
-	  printf ("]");
+	  fprintf (fp, "]");
 	}
     }
-  printf ("}\n");
+  fprintf (fp, "}\n");
 }
 
 void
-sage_show_khsq (std::string prefix,
+sage_show_khsq (FILE *fp,
+		std::string prefix,
 		ptr<const module<Z2> > H,
 		mod_map<Z2> sq1,
 		mod_map<Z2> sq2)
@@ -464,10 +469,10 @@ sage_show_khsq (std::string prefix,
     t += i.val ().size ();
   assert (t == n);
   
-  sage_show (prefix, hq_gens, H);
-  sage_show (prefix, hq_gens, "sq1", grading (1, 0), sq1);
-  sage_show (prefix, hq_gens, "sq2", grading (2, 0), sq2);
-  newline ();
+  sage_show (fp, prefix, hq_gens, H);
+  sage_show (fp, prefix, hq_gens, "sq1", grading (1, 0), sq1);
+  sage_show (fp, prefix, hq_gens, "sq2", grading (2, 0), sq2);
+  fprintf (fp, "\n");
 }
 
 void
@@ -490,13 +495,101 @@ test_sage_show ()
   
   // display ("sq2:\n", sq2);
   
-  sage_show_khsq ("L11n449", sq1.domain (), sq1, sq2);
+  sage_show_khsq (stdout, "L11n449", sq1.domain (), sq1, sq2);
+}
+
+void
+dump_sage ()
+{
+  char buf[1000];
+  
+#if 0
+  for (unsigned i = 10; i >= 1; i --)
+    {
+      if (i <= 10)
+	{
+	  for (unsigned j = 1; j <= rolfsen_crossing_knots (i); j += block_size)
+	    {
+	      load (knot_kh_sq, knot_desc (knot_desc::ROLFSEN, i, j));
+	    }
+	}
+      ...
+    }
+#endif
+  
+  for (unsigned i = 12; i >= 1; i --)
+    {
+      map<knot_desc,
+	  pair<mod_map<Z2>, mod_map<Z2> > > knot_kh_sq;
+      
+#if 0
+      sprintf (buf, "K%d.sage", i);
+      
+      FILE *fp = fopen (buf, "w");
+      if (fp == 0)
+	{
+	  stderror ("fopen: %s", buf);
+	  exit (EXIT_FAILURE);
+	}
+      
+      for (unsigned j = 1; j <= htw_knots (i); j += block_size)
+	{
+	  load (knot_kh_sq, knot_desc (knot_desc::HTW, i, j));
+	}
+      
+      for (map<knot_desc,
+	     pair<mod_map<Z2>, mod_map<Z2> > >::const_iter k = knot_kh_sq; k; k ++)
+	{
+	  sprintf (buf, "K%s", k.key ().name ().c_str ());
+	  sage_show_khsq (fp, buf, k.val ().first.domain (), k.val ().first, k.val ().second);
+	}
+      
+      fclose (fp);
+#endif
+
+#if 1
+      sprintf (buf, "L%d.sage", i);
+      
+      FILE *fp = fopen (buf, "w");
+      if (fp == 0)
+	{
+	  stderror ("fopen: %s", buf);
+	  exit (EXIT_FAILURE);
+	}
+      
+      if (i <= 13)
+	{
+	  for (unsigned j = 1; j <= mt_links (i); j += block_size)
+	    {
+	      load (knot_kh_sq, knot_desc (knot_desc::MT, i, j));
+	    }
+	}
+      
+      if (i == 14)
+	{
+	  for (unsigned j = 1; j <= mt_links (14, 0); j += block_size)
+	    {
+	      load (knot_kh_sq, knot_desc (knot_desc::MT, 14, mt_links (14, 1) + j));
+	    }
+	}
+      
+      for (map<knot_desc,
+	     pair<mod_map<Z2>, mod_map<Z2> > >::const_iter k = knot_kh_sq; k; k ++)
+	{
+	  sprintf (buf, "K%s", k.key ().name ().c_str ());
+	  sage_show_khsq (fp, buf, k.val ().first.domain (), k.val ().first, k.val ().second);
+	}
+      
+      fclose (fp);
+#endif
+    }
 }
 
 int
 main ()
 {
-  test_sage_show ();
+  // test_sage_show ();
+  dump_sage ();
   
 #if 0
   knot_diagram kd (mt_link (10, 0, 9));
