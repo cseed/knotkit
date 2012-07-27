@@ -54,12 +54,12 @@ class Z2
     return Z2 (1);
   }
   
-  triple<Z2, Z2, Z2> extended_gcd (Z2 x) const
+  tuple<Z2, Z2, Z2> extended_gcd (Z2 x) const
   {
     if (v)
-      return triple<Z2, Z2, Z2> (Z2 (1), Z2 (1), Z2 (0));
+      return make_tuple (Z2 (1), Z2 (1), Z2 (0));
     else
-      return triple<Z2, Z2, Z2> (Z2 (1), Z2 (0), Z2 (1));
+      return make_tuple (Z2 (1), Z2 (0), Z2 (1));
   }
   
   static void show_ring () { printf ("Z2"); }

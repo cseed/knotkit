@@ -32,6 +32,7 @@ class Zp
   }
   
   bool operator == (const Zp &x) const { return v == x.v; }
+  bool operator != (const Zp &x) const { return !operator == (x); }
   
   bool operator == (int x) const { return operator == (Zp (x)); }
   bool operator != (int x) const { return !operator == (x); }
@@ -56,11 +57,11 @@ class Zp
   
   Zp recip () const
   {
-    triple<unsigned, int, int> t = unsigned_extended_gcd (v, p);
-    assert (t.first == 1);
-    assert ((int)t.first == t.second*(int)v  + t.third*(int)p);
+    tuple<unsigned, int, int> t = unsigned_extended_gcd (v, p);
+    assert (get<0> (t) == 1);
+    assert ((int)get<0> (t) == get<1> (t)*(int)v  + get<2> (t)*(int)p);
     
-    return Zp (t.second);
+    return Zp (get<1> (t));
   }
   
   Zp &operator += (const Zp &x)
@@ -92,12 +93,12 @@ class Zp
   
   Zp div (const Zp &d) const { return operator / (d); }
   
-  triple<Zp, Zp, Zp> extended_gcd (const Zp &x) const
+  tuple<Zp, Zp, Zp> extended_gcd (const Zp &x) const
   {
     if (v)
-      return triple<Zp, Zp, Zp> (v, 1, 0);
+      return make_tuple (v, Zp (1), Zp (0));
     else
-      return triple<Zp, Zp, Zp> (x, 0, 1);
+      return make_tuple (x, Zp (0), Zp (1));
   }
   
   Zp gcd (const Zp &x) const

@@ -1,149 +1,45 @@
 
-/* wrap for std::set */
-
-template<class T> class set_iter;
-template<class T> class set_const_iter;
+/* wrapper for std::set */
 
 template<class T>
-class set
+class set : public set_wrapper<std::set<T>, T>
 {
- private:
-  friend class set_iter<T>;
-  friend class set_const_iter<T>;
-  
-  class set_impl : public refcounted
-  {
-  public:
-    std::set<T> t;
-  };
-  
-  ptr<set_impl> impl;
+  typedef set_wrapper<std::set<T>, T> base;
   
  public:
-  typedef set_iter<T> iter;
-  typedef set_const_iter<T> const_iter;
-  
- public:
-  set () : impl(new set_impl) { }
-  set (unsigned dummy_size) : impl(new set_impl) { }
-  set (const set &s) : impl(s.impl) { }
-  set (copy, const set &s) : impl(new set_impl) { impl->t = std::set<T> (s.impl->t); }
-  set (reader &r);
+  set () { }
+  set (unsigned dummy_size) : base(dummy_size) { }
+  set (const set &m) : base(m) { }
+  set (copy, const set &m) : base(COPY, m) { }
+  set (reader &r) : base(r) { }
   ~set () { }
   
-  set &operator = (const set &s) { impl = s.impl; return *this; }
-  
-  T pop ()
-  {
-    typename std::set<T>::const_iterator i = impl->t.begin ();
-    assert (i != impl->t.end ());
-    T tmp = *i;
-    impl->t.erase (i);
-    return tmp;
-  }
-  
-  bool is_empty () const { return impl->t.empty (); }
-  unsigned card () const { return impl->t.size (); }
-  const T &head () const;
-  const T &tail () const;
+  set &operator = (const set &m) { base::operator = (m); return *this; }
   
   bool operator == (const set &s) const;
+  bool operator != (const set &s) const { return !operator == (s); }
   bool operator < (const set &s) const;
   bool operator <= (const set &s) const;
   
-  void clear () { impl->t.clear (); }
-  void push (const T &v) { assert (impl->t.find (v) == impl->t.end ()); impl->t.insert (v); }
   bool toggle (const T &v);
-  void operator += (const T &v) { impl->t.insert (v); }
-  void operator -= (const T &v) { impl->t.erase (v); }
-  void yank (const T &v) { assert (operator % (v)); impl->t.erase (v); }
   
-  set &operator |= (const set<T> &s);
-  set &operator &= (const set<T> &s);
-  set &operator ^= (const set<T> &s);
-  
-  bool operator % (const T &v) const { return impl->t.find (v) != impl->t.end (); }
-  bool operator () (const T &v) const { return operator % (v); }
-  
-  void write_self (writer &w) const;
-  hash_t hash_self () const;
+  set &operator |= (const set &s);
+  set &operator &= (const set &s);
+  set &operator ^= (const set &s);
 };
 
 template<class T>
-class set_iter
-{
-  set<T> &s;
-  typename std::set<T>::const_iterator i, end;
-  bool deleted;
-  
- public:
-  set_iter (set<T> &s_) : s(s_), i(s_.impl->t.begin ()), end(s_.impl->t.end ()), deleted(0) { }
-  ~set_iter () { }
-  
-  void del ()
-  {
-    assert (!deleted);
-    typename std::set<T>::const_iterator iprev = i ++;
-    s.impl->t.erase (iprev);
-    deleted = 1;
-  }
-  
-  const T &val () const { assert (!deleted); return *i; }
-  operator bool () const { assert (!deleted); return i != end; }
-  set_iter &operator ++ () { if (deleted) deleted = 0; else i ++; return *this; }
-  void operator ++ (int) { operator ++ (); }
-};
+  using set_iter = set_wrapper_iter<std::set<T>, T>;
 
 template<class T>
-class set_const_iter
-{
-  typename std::set<T>::const_iterator i, end;
-  
- public:
-  set_const_iter (const set<T> &s) : i(s.impl->t.begin ()), end(s.impl->t.end ()) { }
-  ~set_const_iter () { }
-  
-  const T &val () const { return *i; }
-  operator bool () const { return i != end; }
-  set_const_iter &operator ++ () { i ++; return *this; }
-  void operator ++ (int) { i ++; }
-};
-
-template<class T>
-set<T>::set (reader &r)
-{
-  unsigned n;
-  read (r, n);
-  T x;
-  for (unsigned i = 0; i < n; i ++)
-    {
-      read (r, x);
-      push (x);
-    }
-}
-
-template<class T> const T &
-set<T>::head () const
-{
-  set_const_iter<T> i = *this;
-  assert (i);
-  return i.val ();
-}
-
-template<class T> const T &
-set<T>::tail () const
-{
-  typename std::set<T>::const_reverse_iterator i = impl->t.rbegin ();
-  assert (i != impl->t.rend ());
-  return *i;
-}  
+  using set_const_iter = set_wrapper_const_iter<std::set<T>, T>;
 
 template<class T> bool
 set<T>::operator == (const set &s) const
 {
-  typename std::set<T>::const_iterator i = impl->t.begin (),
+  typename std::set<T>::const_iterator i = this->impl->t.begin (),
     j = s.impl->t.begin (),
-    iend = impl->t.end (),
+    iend = this->impl->t.end (),
     jend = s.impl->t.end ();
   
   while (i != iend && j != jend && *i == *j)
@@ -155,9 +51,9 @@ set<T>::operator == (const set &s) const
 template<class T> bool
 set<T>::operator < (const set &s) const
 {
-  typename std::set<T>::const_iterator i = impl->t.begin (),
+  typename std::set<T>::const_iterator i = this->impl->t.begin (),
     j = s.impl->t.begin (),
-    iend = impl->t.end (),
+    iend = this->impl->t.end (),
     jend = s.impl->t.end ();
   
   while (i != iend && j != jend && *i == *j)
@@ -169,9 +65,9 @@ set<T>::operator < (const set &s) const
 template<class T> bool
 set<T>::operator <= (const set &s) const
 {
-  typename std::set<T>::const_iterator i = impl->t.begin (),
+  typename std::set<T>::const_iterator i = this->impl->t.begin (),
     j = s.impl->t.begin (),
-    iend = impl->t.end (),
+    iend = this->impl->t.end (),
     jend = s.impl->t.end ();
   
   while (i != iend && j != jend && *i == *j)
@@ -184,56 +80,56 @@ set<T>::operator <= (const set &s) const
 template<class T> bool
 set<T>::toggle (const T &v)
 {
-  typename std::set<T>::const_iterator i = impl->t.lower_bound (v),
-    end = impl->t.end ();
+  typename std::set<T>::const_iterator i = this->impl->t.lower_bound (v),
+    end = this->impl->t.end ();
   if (i != end && *i == v)
     {
-      impl->t.erase (i);
+      this->impl->t.erase (i);
       return 1;
     }
   else
     {
-      if (i == impl->t.begin ())
-	impl->t.insert (v);
+      if (i == this->impl->t.begin ())
+	this->impl->t.insert (v);
       else
 	{
 	  typename std::set<T>::const_iterator j = --i;
 	  assert (*j < v);
-	  impl->t.insert (j, v);
+	  this->impl->t.insert (j, v);
 	}
       return 0;
     }
 }
 
 template<class T> set<T> &
-set<T>::operator |= (const set<T> &s)
+set<T>::operator |= (const set &s)
 {
   std::set<T> news;
-  std::set_union (impl->t.begin (), impl->t.end (),
+  std::set_union (this->impl->t.begin (), this->impl->t.end (),
 		  s.impl->t.begin (), s.impl->t.end (),
 		  inserter (news, news.begin ()));
-  impl->t = news;
+  this->impl->t = news;
   return *this;
 }
 
 template<class T> set<T> &
-set<T>::operator &= (const set<T> &s)
+set<T>::operator &= (const set &s)
 {
   std::set<T> news;
-  std::set_intersection (impl->t.begin (), impl->t.end (),
+  std::set_intersection (this->impl->t.begin (), this->impl->t.end (),
 			 s.impl->t.begin (), s.impl->t.end (),
 			 inserter (news, news.begin ()));
-  impl->t = news;
+  this->impl->t = news;
   return *this;
 }
 
 template<class T> set<T> &
-set<T>::operator ^= (const set<T> &s)
+set<T>::operator ^= (const set &s)
 {
 #if 0
   printf ("before:\n");
   printf ("this:");
-  for (typename std::set<T>::const_iterator i = impl->t.begin (); i != impl->t.end (); i ++)
+  for (typename std::set<T>::const_iterator i = this->impl->t.begin (); i != this->impl->t.end (); i ++)
     printf (" %d", *i);
   printf ("\n");
   printf ("s:");
@@ -243,25 +139,25 @@ set<T>::operator ^= (const set<T> &s)
 #endif
   
 #if 1
-  typename std::set<T>::const_iterator i = impl->t.begin (),
-    iend = impl->t.end (),
+  typename std::set<T>::const_iterator i = this->impl->t.begin (),
+    iend = this->impl->t.end (),
     j = s.impl->t.begin (),
     jend = s.impl->t.end ();
   
   while (i != iend && j != jend && *i == *j)
     {
-      impl->t.erase (i);
-      i = impl->t.begin ();
+      this->impl->t.erase (i);
+      i = this->impl->t.begin ();
       j ++;
     }
   
   if (i == iend)
-    impl->t.insert (j, jend);
+    this->impl->t.insert (j, jend);
   else
     {
       if (j != jend && *j < *i)
 	{
-	  i = impl->t.insert (*j).first;
+	  i = this->impl->t.insert (*j).first;
 	  j ++;
 	}
       
@@ -274,14 +170,14 @@ set<T>::operator ^= (const set<T> &s)
 	    {
 	      while (j != jend)
 		{
-		  iprev = impl->t.insert (iprev, *j);
+		  iprev = this->impl->t.insert (iprev, *j);
 		  j ++;
 		}
 	      break;
 	    }
 	  else if (*i == *j)
 	    {
-	      impl->t.erase (i);
+	      this->impl->t.erase (i);
 	      i = iprev;
 	      j ++;
 	    }
@@ -289,12 +185,12 @@ set<T>::operator ^= (const set<T> &s)
 	    {
 	      while (j != jend && *j < *i)
 		{
-		  iprev = impl->t.insert (iprev, *j);
+		  iprev = this->impl->t.insert (iprev, *j);
 		  j ++;
 		}
 	      if (j != jend && *j == *i)
 		{
-		  impl->t.erase (i);
+		  this->impl->t.erase (i);
 		  i = iprev;
 		  j ++;
 		}
@@ -305,37 +201,19 @@ set<T>::operator ^= (const set<T> &s)
   
 #if 0
   std::set<T> news;
-  std::set_symmetric_difference (impl->t.begin (), impl->t.end (),
+  std::set_symmetric_difference (this->impl->t.begin (), this->impl->t.end (),
 				 s.impl->t.begin (), s.impl->t.end (),
 				 inserter (news, news.begin ()));
-  impl->t = news;
+  this->impl->t = news;
 #endif
   
 #if 0
   printf ("after:\n");
   printf ("this:");
-  for (typename std::set<T>::const_iterator i = impl->t.begin (); i != impl->t.end (); i ++)
+  for (typename std::set<T>::const_iterator i = this->impl->t.begin (); i != this->impl->t.end (); i ++)
     printf (" %d", *i);
   printf ("\n");
 #endif
   
   return *this;
-}
-
-template<class T> void
-set<T>::write_self (writer &w) const
-{
-  write (w, card ());
-  for (const_iter i = *this; i; i ++)
-    write (w, i.val ());
-}
-
-template<class T> hash_t
-set<T>::hash_self () const
-{
-  hash_t h = hash (card ());
-  unsigned j = 0;
-  for (const_iter i = *this; i && j < 10; i ++, j ++)
-    h = hash_combine (h, hash (i.val ()));
-  return h;
 }

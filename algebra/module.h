@@ -31,10 +31,10 @@ class module : public refcounted
     id = id_counter;
     id_counter ++;
   }
-  module (const module &); // doesn't exist
+  module (const module &) = delete;
   virtual ~module () { }
   
-  module &operator = (const module &); // doesn't exist
+  module &operator = (const module &) = delete;
   
  public:
   // the number of generators; n
@@ -466,11 +466,11 @@ class base_module : public module<R>
   G g;
   
  public:
-  base_module (); // doesn't exist
+  base_module () = delete;
   base_module (const G &g_) : g(g_) { }
   ~base_module () { }
   
-  base_module &operator = (const base_module &); // doesn't exist
+  base_module &operator = (const base_module &) = delete;
   
   unsigned dim () const { return g.dim (); }
   unsigned free_rank () const { return g.free_rank (); }
@@ -487,7 +487,7 @@ class explicit_module : public module<R>
   basedvector<grading, 1> hq;
   
  public:
-  explicit_module (); // doesn't exist
+  explicit_module () = delete;
   explicit_module (unsigned r_,
 		   basedvector<R, 1> ann_,
 		   basedvector<grading, 1> hq_)
@@ -497,7 +497,7 @@ class explicit_module : public module<R>
   explicit explicit_module (unsigned r_, basedvector<grading, 1> hq_) : r(r_), hq(hq_) { }
   ~explicit_module () { }
   
-  explicit_module &operator = (const explicit_module &); // doesn't exist
+  explicit_module &operator = (const explicit_module &) = delete;
   
   unsigned dim () const { return r + ann.size (); }
   unsigned free_rank () const { return r; }
@@ -525,7 +525,7 @@ class free_submodule : public module<R>
   { }
   ~free_submodule () { }
   
-  free_submodule &operator = (const free_submodule &); // doesn't exist
+  free_submodule &operator = (const free_submodule &) = delete;
   
   ptr<const module<R> > parent_module () const { return parent; }
   
@@ -562,13 +562,13 @@ class quotient_module : public module<R>
   basedvector<map<unsigned, R>, 1> pi;
   
  public:
-  quotient_module (const quotient_module &); // doesn't exist
+  quotient_module (const quotient_module &) = delete;
   quotient_module (ptr<const module<R> > parent_)
     : parent(parent_)
   { }
   ~quotient_module () { }
   
-  quotient_module &operator = (const quotient_module &); // doesn't exsit
+  quotient_module &operator = (const quotient_module &) = delete;
   
   ptr<const module<R> > parent_module () const { return parent; }
   
@@ -617,7 +617,7 @@ class map_impl : public refcounted
   ptr<const module<R> > to;
   
  public:
-  map_impl (const map_impl &); // doesn't exist
+  map_impl (const map_impl &) = delete;
   map_impl (ptr<const module<R> > fromto)
     : from(fromto), to(fromto)
   { }
@@ -626,7 +626,7 @@ class map_impl : public refcounted
   { }
   virtual ~map_impl () { }
   
-  map_impl &operator = (const map_impl &); // doesn't exist
+  map_impl &operator = (const map_impl &) = delete;
   
   virtual linear_combination<R> column (unsigned i) const = 0;
   
@@ -867,6 +867,7 @@ class mod_map
       }
     return 1;
   }
+  bool operator != (const mod_map &m) const { return !operator == (m); }
   
   bool operator == (int x) const
   {
@@ -1095,16 +1096,16 @@ quotient_helper<R>::improve_pivot_row (unsigned i, unsigned j, unsigned i2)
     }
 #endif
   
-  triple<R, R, R> t = rc.extended_gcd (r2c);
-  assert (t.first == rc*t.second + t.third*r2c);
+  tuple<R, R, R> t = rc.extended_gcd (r2c);
+  assert (get<0> (t) == rc*get<1> (t) + get<2> (t)*r2c);
   
-  rows[i] = r*t.second + r2*t.third;
-  rows[i2] = (rc.div (t.first))*r2 - (r2c.div (t.first))*r;
+  rows[i] = r*get<1> (t) + r2*get<2> (t);
+  rows[i2] = (rc.div (get<0> (t)))*r2 - (r2c.div (get<0> (t)))*r;
   
-  assert ((rc | r2c) == rc.divides (t.first));
-  assert (!rc.divides (t.first) || rows[i2](j) == 0);
+  assert ((rc | r2c) == rc.divides (get<0> (t)));
+  assert (!rc.divides (get<0> (t)) || rows[i2](j) == 0);
   
-  return !rc.divides (t.first);
+  return !rc.divides (get<0> (t));
 }
 
 template<class R> bool
@@ -1149,8 +1150,8 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
     }
 #endif
   
-  triple<R, R, R> t = rc.extended_gcd (rc2);
-  assert (t.first == rc*t.second + t.third*rc2);
+  tuple<R, R, R> t = rc.extended_gcd (rc2);
+  assert (get<0> (t) == rc*get<1> (t) + get<2> (t)*rc2);
   
   for (unsigned k = 1; k <= rows.size (); k ++)
     {
@@ -1158,9 +1159,9 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
       R rkc = rk(j),
 	rkc2 = rk(j2);
       
-      rk.set_coeff (rkc*t.second + rkc2*t.third,
+      rk.set_coeff (rkc*get<1> (t) + rkc2*get<2> (t),
 		    j);
-      rk.set_coeff (rkc2*(rc.div (t.first)) - rkc*(rc2.div (t.first)),
+      rk.set_coeff (rkc2*(rc.div (get<0> (t))) - rkc*(rc2.div (get<0> (t))),
 		    j2);
     }
   
@@ -1169,8 +1170,8 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
   
   assert (g.hq () == g2.hq ());
   
-  generators[j] = (rc.div (t.first)) * g + (rc2.div (t.first)) * g2;
-  generators[j2] = t.second * g2 - t.third * g;
+  generators[j] = (rc.div (get<0> (t))) * g + (rc2.div (get<0> (t))) * g2;
+  generators[j2] = get<1> (t) * g2 - get<2> (t) * g;
   
  #if 0
   for (unsigned k = 1; k <= rows.size (); k ++)
@@ -1189,8 +1190,8 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
       R d = ginv(j),
 	d2 = ginv(j2);
       
-      ginv.set_coeff (t.second*d + t.third*d2, j);
-      ginv.set_coeff (rc.div (t.first) * d2 - rc2.div (t.first) * d, j2);
+      ginv.set_coeff (get<1> (t)*d + get<2> (t)*d2, j);
+      ginv.set_coeff (rc.div (get<0> (t)) * d2 - rc2.div (get<0> (t)) * d, j2);
     }
   
 #if 0
@@ -1207,10 +1208,10 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
     }
 #endif
   
-  assert ((rc | rc2) == rc.divides (t.first));
-  assert (!rc.divides (t.first) || r(j2) == 0);
+  assert ((rc | rc2) == rc.divides (get<0> (t)));
+  assert (!rc.divides (get<0> (t)) || r(j2) == 0);
   
-  return !rc.divides (t.first);
+  return !rc.divides (get<0> (t));
 }
 
 template<class R> void
@@ -1595,7 +1596,7 @@ free_submodule<R>::restrict_submodule (ptr<const free_submodule<R> > m) const
     span[i] = restrict (m->inject_generator (i));
   
   mod_span<R> span2 (this, span);
-  return submodule (span2);
+  return this->submodule (span2);
 }
 
 template<class R> bool
@@ -1672,11 +1673,11 @@ mod_map<R>::kernel () const
 	  R to_xc = to_x(i);
 	  if (! (to_vc | to_xc))
 	    {
-	      triple<R, R, R> t = to_vc.extended_gcd (to_xc);
-	      assert (t.first == to_vc*t.second + t.third*to_xc);
+	      tuple<R, R, R> t = to_vc.extended_gcd (to_xc);
+	      assert (get<0> (t) == to_vc*get<1> (t) + get<2> (t)*to_xc);
 	      
-	      to_v = t.second*to_v + t.third*to_x;
-	      from_v = t.second*from_v + t.third*from_x;
+	      to_v = get<1> (t)*to_v + get<2> (t)*to_x;
+	      from_v = get<1> (t)*from_v + get<2> (t)*from_x;
 	      
 	      assert (to_v(i) != 0);
 	    }
@@ -1770,10 +1771,10 @@ mod_span<R>::mod_span (ptr<const module<R> > mod,
 	  
 	  if (! (vc | xc))
 	    {
-	      triple<R, R, R> t = vc.extended_gcd (xc);
-	      assert (t.first == vc*t.second + t.third*xc);
+	      tuple<R, R, R> t = vc.extended_gcd (xc);
+	      assert (get<0> (t) == vc*get<1> (t) + get<2> (t)*xc);
 	      
-	      v = t.second*v + t.third*x;
+	      v = get<1> (t)*v + get<2> (t)*x;
 	      
 	      assert (v(i) != 0);
 	    }

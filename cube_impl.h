@@ -9,7 +9,7 @@ public:
   khC_generators (const cube<R> &c_) : c(c_) { }
   ~khC_generators () { }
   
-  khC_generators &operator = (const khC_generators &); // doesn't exist
+  khC_generators &operator = (const khC_generators &) = delete;
   
   unsigned dim () const { return c.n_generators; }
   unsigned free_rank () const { return c.n_generators; }
@@ -187,10 +187,10 @@ class d_rules : public map_rules
 {
 public:
   d_rules () { }
-  d_rules (const d_rules &); // doesn't exist
+  d_rules (const d_rules &) = delete;
   ~d_rules () { }
   
-  d_rules &operator = (const d_rules &); // doesn't exist
+  d_rules &operator = (const d_rules &) = delete;
   
   void map (basedvector<pair<unsigned, unsigned>, 1> &out,
 	    resolution_diagram_builder &rdb) const
@@ -214,10 +214,10 @@ class twin_arrows_P_rules : public map_rules
 {
 public:
   twin_arrows_P_rules () { }
-  twin_arrows_P_rules (const twin_arrows_P_rules &); // doesn't exist
+  twin_arrows_P_rules (const twin_arrows_P_rules &) = delete;
   ~twin_arrows_P_rules () { }
   
-  twin_arrows_P_rules &operator = (const twin_arrows_P_rules &); // doesn't exist
+  twin_arrows_P_rules &operator = (const twin_arrows_P_rules &) = delete;
   
   void map (basedvector<pair<unsigned, unsigned>, 1> &out,
 	    resolution_diagram_builder &rdb) const
@@ -676,10 +676,10 @@ class twisted_barE_rules : public twisted_map_rules
 {
 public:
   twisted_barE_rules () { }
-  twisted_barE_rules (const twisted_barE_rules &); // doesn't exist
+  twisted_barE_rules (const twisted_barE_rules &) = delete;
   ~twisted_barE_rules () { }
   
-  twisted_barE_rules &operator = (const twisted_barE_rules &); // doesn't exist
+  twisted_barE_rules &operator = (const twisted_barE_rules &) = delete;
   
   void map (basedvector<triple<unsigned, unsigned, set<unsigned> >, 1> &out,
 	    resolution_diagram_builder &rdb) const

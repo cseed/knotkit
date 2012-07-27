@@ -60,14 +60,14 @@ test_ring (int p)
 	  
 	  if (x != 0 && x | y)
 	    {
-	      R q = y.div (x);
+	      R q = y.divide_exact (x);
 	      assert (y == q * x);
 	    }
 	  
 	  if (x != 0 || y != 0)
 	    {
-	      triple<R, R, R> t = x.extended_gcd (y);
-	      assert (t.first == t.second*x + t.third*y);
+	      tuple<R, R, R> t = x.extended_gcd (y);
+	      assert (get<0> (t) == get<1> (t)*x + get<2> (t)*y);
 	    }
 	  
 	  for (int k = -n; k <= n; k ++)
@@ -127,6 +127,97 @@ rank_lte (multivariate_laurentpoly<Z> p,
 int
 main ()
 {
+  basedvector<int, 1> v (4);
+  v[1] = 2;
+  v[2] = -1;
+  v[3] = 0xbf32813;
+  v[4] = -352182;
+
+  vector<int> sleb (512);
+  for (unsigned i = 0; i < 512; i ++)
+    sleb[i] = ((int)i << 23);
+
+  printf ("sleb:\n");
+  for (unsigned i = 0; i < 512; i ++)
+    printf ("  %d\n", sleb[i]);
+  
+  vector<unsigned> uleb (512);
+  for (unsigned i = 0; i < 512; i ++)
+    uleb[i] = ((unsigned)i << 23);
+  
+  printf ("uleb:\n");
+  for (unsigned i = 0; i < 512; i ++)
+    printf ("  %u\n", uleb[i]);
+  
+  polynomial<Z> one (1);
+  polynomial<Z> x (1, 1);
+  polynomial<Z> bigp (Z (367521));
+  
+  polynomial<Z> t = x + bigp*one;
+  polynomial<Z> p = (t*t*t + t*t + t + one)*(bigp*t*t + bigp*bigp*t + bigp*bigp*bigp)*(bigp*bigp*t*t*t + bigp*t*t + t + one);
+  display ("p: ", p);
+  
+  {
+    file_writer w ("test.dat");
+    write (w, v);
+    write (w, p);
+    write (w, sleb);
+    write (w, uleb);
+  }
+  
+  {
+    gzfile_writer w ("test.2.dat.gz");
+    write (w, v);
+    write (w, p);
+    write (w, sleb);
+    write (w, uleb);
+  }
+  
+  system ("gzip -cd test.2.dat.gz > test.2.dat");
+  
+  {
+    file_reader r ("test.dat");
+    basedvector<int, 1> v2 (r);
+    polynomial<Z> p2 (r);
+    
+    vector<int> sleb2 (r);
+    printf ("sleb2:\n");
+    for (unsigned i = 0; i < 512; i ++)
+      printf ("  %d\n", sleb2[i]);
+    
+    vector<unsigned> uleb2 (r);
+    assert (v == v2);
+    assert (p == p2);
+    assert (sleb == sleb2);
+    assert (uleb == uleb2);
+  }
+  
+  system ("gzip -c9 test.dat > test.dat.gz");
+  
+  {
+    gzfile_reader r ("test.dat.gz");
+    basedvector<int, 1> v2 (r);
+    polynomial<Z> p2 (r);
+    vector<int> sleb2 (r);
+    vector<unsigned> uleb2 (r);
+    assert (v == v2);
+    assert (p == p2);
+    assert (sleb == sleb2);
+    assert (uleb == uleb2);
+  }
+  
+#if 0
+  
+#if 0
+  test_ring<Z> (0);
+  test_ring<polynomial<Z> > (0);
+  
+  test_field<Z2> ();
+  test_field<Zp<7> > ();
+  test_field<Q> ();
+  // test_field<fraction_field<Zp<7> > > ();
+#endif
+  
 #if 0
   for (unsigned i = 1; i <= 10; i ++)
     for (unsigned j = 1; j <= rolfsen_crossing_knots (i); j ++)
@@ -178,4 +269,5 @@ main ()
 	if (! rank_lte (E3_p, tt_p))
 	  printf (" > rank E2 > rank tt!!\n");
       }
+#endif
 }

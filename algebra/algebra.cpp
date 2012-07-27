@@ -39,43 +39,43 @@ int64_gcd (int64 a, int64 b)
 		     (uint64)std::abs (b));
 }
 
-static triple<unsigned, int, int>
+static tuple<unsigned, int, int>
 extended_gcd_1 (int a, int b)
 {
   if (b == 0)
-    return triple<unsigned, int, int> (a, 1, 0);
+    return tuple<unsigned, int, int> (a, 1, 0);
   
   unsigned t = a % b;
   if (!t)
-    return triple<unsigned, int, int> (b, 0, 1);
+    return make_tuple (b, 0, 1);
   else
     {
-      triple<unsigned, int, int> s = unsigned_extended_gcd (b, t);
+      tuple<unsigned, int, int> s = unsigned_extended_gcd (b, t);
       
-      unsigned d = s.first;
-      int x = s.third,
-	y = s.second - s.third * (a / b);
+      unsigned d = get<0> (s);
+      int x = get<2> (s),
+	y = get<1> (s) - get<2> (s) * (a / b);
       
       assert ((int)d == a*x + b*y);
       
-      return triple<unsigned, int, int> (d, x, y);
+      return make_tuple (d, x, y);
     }
 }
 
-triple<unsigned, int, int>
+tuple<unsigned, int, int>
 unsigned_extended_gcd (unsigned a, unsigned b)
 {
   return extended_gcd_1 ((int)a, (int)b);
 }
 
-triple<unsigned, int, int>
+tuple<unsigned, int, int>
 extended_gcd (int a, int b)
 {
-  triple<unsigned, int, int> t = extended_gcd_1 (std::abs (a),
-						 std::abs (b));
-  unsigned d = t.first;
-  int x = t.second,
-    y = t.third;
+  tuple<unsigned, int, int> t = extended_gcd_1 (std::abs (a),
+						std::abs (b));
+  unsigned d = get<0> (t);
+  int x = get<1> (t),
+    y = get<2> (t);
   if (a < 0)
     x *= -1;
   if (b < 0)
@@ -83,7 +83,7 @@ extended_gcd (int a, int b)
   
   assert ((int)d == a*x + b*y);
   
-  return triple<unsigned, int, int> (d, x, y);
+  return make_tuple (d, x, y);
 }
 
 unsigned

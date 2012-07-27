@@ -82,10 +82,10 @@ public:
   
 public:
   dt_layout (const dt_code &dt, knot_diagram &kd_);
-  dt_layout (const dt_layout &); //  doesn't exist
+  dt_layout (const dt_layout &) = delete;
   ~dt_layout () { }
 
-  dt_layout &operator = (const dt_layout &); // doesn't exist
+  dt_layout &operator = (const dt_layout &) = delete;
   
   unsigned find_crossing (unsigned prevc, unsigned previ, unsigned target,
 			  bool under, unsigned dir);

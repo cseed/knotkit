@@ -2,12 +2,13 @@
 BISON = /opt/local/bin/bison
 FLEX = /opt/local/bin/flex
 
-CXX = g++
+# CXX = g++
+CXX = clang++ -fno-color-diagnostics --stdlib=libc++ --std=c++11
 
 INCLUDES = -I/opt/local/include -I.
 
-# OPTFLAGS = -g
-OPTFLAGS = -O2 -g
+OPTFLAGS = -g
+# OPTFLAGS = -O2 -g
 # OPTFLAGS = -O2 -DNDEBUG
 
 LDFLAGS = -L/opt/local/lib
@@ -38,7 +39,7 @@ ALGEBRA_HEADERS = algebra/algebra.h algebra/grading.h algebra/module.h \
 KNOTKIT_HEADERS = knotkit.h planar_diagram.h dt_code.h knot_diagram.h \
   smoothing.h cobordism.h cube.h spanning_tree_complex.h cube_impl.h sseq.h
 
-LIBS = -lgmp
+LIBS = -lgmp -lz
 
 all: gss
 

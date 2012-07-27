@@ -41,6 +41,7 @@ public:
   
   polynomial (const polynomial &p) : coeffs(p.coeffs) { }
   polynomial (copy, const polynomial &p) : coeffs(COPY, p.coeffs) { }
+  polynomial (reader &r) : coeffs(r) { }
   ~polynomial () { }
   
   polynomial &operator = (const polynomial &p) { coeffs = p.coeffs; return *this; }
@@ -64,7 +65,16 @@ public:
   unsigned degree () const;
   bool is_unit () const;
   
-  bool operator == (polynomial p) const
+  polynomial recip () const
+  {
+    assert (coeffs.card () != 1);
+    
+    pair<unsigned, T> p = coeffs.head ();
+    assert (p.first == 0);
+    return polynomial (p.second.recip ());
+  }
+  
+  bool operator == (const polynomial &p) const
   {
 #ifndef NDEBUG
     check ();
@@ -72,6 +82,7 @@ public:
 #endif
     return coeffs == p.coeffs;
   }
+  bool operator != (const polynomial &p) const { return !operator == (p); }
   
   bool operator == (int x) const
   {
@@ -112,27 +123,33 @@ public:
     return r;
   }
   
-  polynomial operator - (polynomial p) const
+  polynomial operator - (const polynomial &p) const
   {
     polynomial r (COPY, *this);
     r -= p;
     return r;
   }
   
-  polynomial operator * (polynomial p) const;
+  polynomial operator * (const polynomial &p) const;
   
-  pair<polynomial, polynomial> divide_with_remainder (polynomial d) const;
+  bool divides (const polynomial &num) const;
+  bool operator | (const polynomial &num) const { return divides (num); }
   
-  polynomial mod (polynomial d) const;
-  bool divides (polynomial d) const;
-  polynomial divide_exact (polynomial d) const;
+  tuple<polynomial, polynomial> divide_with_remainder (const polynomial &denom) const;
   
-  polynomial gcd (polynomial b) const;
+  polynomial mod (const polynomial &denom) const;
+  
+  polynomial divide_exact (const polynomial &denom) const;
+  
+  polynomial gcd (const polynomial &b) const;
+  polynomial lcm (const polynomial &b) const;
+  tuple<polynomial, polynomial, polynomial> extended_gcd (const polynomial &b) const;
   
 #ifndef NDEBUG
   void check () const;
 #endif
   
+  void write_self (writer &w) const { write (w, coeffs); }
   static void show_ring () { T::show_ring (); printf ("[x]"); }
   void display_self () const { show_self (); newline (); }
   void show_self () const;
@@ -197,7 +214,7 @@ polynomial<T>::operator *= (T s)
 }
 
 template<class T> polynomial<T>
-polynomial<T>::operator * (polynomial p) const
+polynomial<T>::operator * (const polynomial &p) const
 {
   polynomial r;
   
@@ -213,14 +230,15 @@ polynomial<T>::operator * (polynomial p) const
   return r;
 }
 
-template<class T> pair<polynomial<T>, polynomial<T> > 
-polynomial<T>::divide_with_remainder (polynomial d) const
+template<class T> tuple<polynomial<T>, polynomial<T> > 
+polynomial<T>::divide_with_remainder (const polynomial &d) const
 {
+  // num = *this
   assert (d != 0);
   
   polynomial r (COPY, *this);
   polynomial q;
-
+  
   pair<unsigned, T> d_leading_term = d.coeffs.tail ();
   for (;;)
     {
@@ -240,43 +258,78 @@ polynomial<T>::divide_with_remainder (polynomial d) const
   assert (r == 0 || r.degree () < d.degree ());
   // assert (*this == q*d + r);
   
-  return pair<polynomial, polynomial> (q, r);
+  return make_tuple (q, r);
 }
 
 template<class T> polynomial<T>
-polynomial<T>::mod (polynomial d) const
+polynomial<T>::mod (const polynomial &denom) const
 {
-  pair<polynomial<T>, polynomial<T> > qr = divide_with_remainder (d);
-  return qr.second;
+  polynomial q, r;
+  tie (q, r) = divide_with_remainder (denom);
+  return r;
 }
 
 template<class T> bool
-polynomial<T>::divides (polynomial d) const
+polynomial<T>::divides (const polynomial &num) const
 {
-  pair<polynomial<T>, polynomial<T> > qr = divide_with_remainder (d);
-  return qr.second == 0;
+  // denom = *this
+  polynomial q, r;
+  tie (q, r) = num.divide_with_remainder (*this);
+  return r == 0;
 }
 
 template<class T> polynomial<T>
-polynomial<T>::divide_exact (polynomial d) const
+polynomial<T>::divide_exact (const polynomial &denom) const
 {
-  pair<polynomial<T>, polynomial<T> > qr = divide_with_remainder (d);
-  assert (qr.second == 0);
-  return qr.first;
+  polynomial q, r;
+  tie (q, r) = divide_with_remainder (denom);
+  assert (r == 0);
+  return q;
 }
 
 template<class T> polynomial<T>
-polynomial<T>::gcd (polynomial b) const
+polynomial<T>::gcd (const polynomial &b) const
 {
   polynomial a = *this;
-  
   while (b != 0)
     {
-      pair<polynomial<T>, polynomial<T> > a_qr = a.divide_with_remainder (b);
+      polynomial r;
+      tie (ignore, r) = a.divide_with_remainder (b);
       a = b;
-      b = a_qr.second;
+      b = r;
     }
   return a;
+}
+
+template<class T> polynomial<T>
+polynomial<T>::lcm (const polynomial &b) const
+{
+  // a = *this
+  return divide_exact (gcd (b)) * b;
+}
+
+template<class T> tuple<polynomial<T>, polynomial<T>, polynomial<T> >
+polynomial<T>::extended_gcd (const polynomial &b) const
+{
+  // a = *this
+  if (b == 0)
+    return make_tuple (*this, polynomial (1), polynomial (0));
+  
+  polynomial q, r;
+  tie (q, r) = divide_with_remainder (b);
+  if (r == 0)
+    return make_tuple (b, polynomial (0), polynomial (1));
+  else
+    {
+      polynomial d, s, t;
+      
+      tie (d, s, t) = b.extended_gcd (r);
+      
+      polynomial s2 = t,
+	t2 = s - t*q;
+      
+      return make_tuple (d, s2, t2);
+    }
 }
 
 #ifndef NDEBUG
@@ -380,7 +433,8 @@ class polynomial<Z2>
     return *this;
   }
   
-  bool operator == (polynomial p) const { return coeffs == p.coeffs; }
+  bool operator == (const polynomial &p) const { return coeffs == p.coeffs; }
+  bool operator != (const polynomial &p) const { return !operator == (p); }
   
   bool operator == (int x) const
   {
@@ -443,4 +497,3 @@ class polynomial<Z2>
   void display_self () const { show_self (); newline (); }
   void show_self () const;
 };
-

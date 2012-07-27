@@ -42,10 +42,10 @@ class refcounted
   
  public:
   refcounted () : refcount(0) { }
-  refcounted (const refcounted &rc); // doesn't exist
+  refcounted (const refcounted &rc) = delete;
   ~refcounted () { }
   
-  refcounted &operator = (const refcounted &rc); // doesn't exist
+  refcounted &operator = (const refcounted &rc) = delete;
 };
 
 template<class T>

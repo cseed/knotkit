@@ -1,10 +1,173 @@
 
 #include <lib/lib.h>
 
+void
+writer::write_int (int x)
+{
+  uint8 buf[5];
+  unsigned n = 0;
+  
+  bool more = 1;
+  while (more)
+    {
+      uint8 b = (uint8)(x & 0x7f);
+      x >>= 7;
+      
+      if ((x == 0
+	   && ! (b & 0x40))
+	  || (x == -1
+	      && (b & 0x40) == 0x40))
+	more = 0;
+      else
+	b |= 0x80;
+      
+      assert (n < 5);
+      buf[n] = b;
+      n ++;
+    }
+  
+  write_raw (buf, sizeof buf[0], n);
+}
+
+void
+writer::write_unsigned (unsigned x)
+{
+  uint8 buf[5];
+  unsigned n = 0;
+  
+  bool more = 1;
+  while (more)
+    {
+      uint8 b = (uint8)(x & 0x7f);
+      x >>= 7;
+      
+      if ((x == 0
+	   && ! (b & 0x40)))
+	more = 0;
+      else
+	b |= 0x80;
+      
+      assert (n < 5);
+      buf[n] = b;
+      n ++;
+    }
+  
+  write_raw (buf, sizeof buf[0], n);
+}
+
+void
+writer::write_uint64 (uint64 x)
+{
+  uint8 buf[10];
+  unsigned n = 0;
+  
+  bool more = 1;
+  while (more)
+    {
+      uint8 b = (uint8)(x & 0x7f);
+      x >>= 7;
+      
+      if ((x == 0
+	   && ! (b & 0x40)))
+	more = 0;
+      else
+	b |= 0x80;
+
+      assert (n < 10);
+      buf[n] = b;
+      n ++;
+    }
+  
+  write_raw (buf, sizeof buf[0], n);
+}
+
+void
+writer::write_mpz (const mpz_t x)
+{
+  size_t count;
+  void *buf = mpz_export (nullptr, &count, -1, 1, -1, 0, x);
+  
+  write_unsigned ((unsigned)count);
+  write_raw (buf, 1, count);
+  
+  free (buf);
+}
+
+int
+reader::read_int ()
+{
+  int x = 0;
+  int shift = 0;
+  for (;;)
+    {
+      uint8 b = read_uint8 ();
+      x |= ((int)(b & 0x7f) << shift);
+      shift += 7;
+      if (! (b & 0x80))
+	{
+	  if (shift < int_bits
+	      && (b & 0x40))
+	    x = (x << (int_bits - shift)) >> (int_bits - shift);
+	  break;
+	}
+    }
+  return x;
+}
+
+unsigned
+reader::read_unsigned ()
+{
+  unsigned x = 0;
+  unsigned shift = 0;
+  for (;;)
+    {
+      uint8 b = read_uint8 ();
+      x |= ((unsigned)(b & 0x7f) << shift);
+      shift += 7;
+      if (! (b & 0x80))
+	break;
+    }
+  return x;
+}
+
+uint64
+reader::read_uint64 ()
+{
+  uint64 x = 0;
+  uint64 shift = 0;
+  for (;;)
+    {
+      uint8 b = read_uint8 ();
+      x |= ((uint64)(b & 0x7f) << shift);
+      shift += 7;
+      if (! (b & 0x80))
+	break;
+    }
+  return x;
+}
+
+void
+reader::read_mpz (mpz_t x)
+{
+  unsigned count = read_unsigned ();
+  void *p = malloc (count);
+  if (!p)
+    {
+      stderror ("malloc");
+      exit (EXIT_FAILURE);
+    }
+  
+  read_raw (p, 1, count);
+  
+  mpz_import (x, count, -1, 1, -1, 0, p);
+  
+  free (p);
+}
+
 FILE *open_file (const std::string &file, const char *mode)
 {
   FILE *fp = fopen (file.c_str (), mode);
-  if (fp == 0)
+  if (!fp)
     {
       stderror ("fopen: %s", file.c_str ());
       exit (EXIT_FAILURE);
@@ -17,41 +180,32 @@ void close_file (FILE *fp)
   fclose (fp);
 }
 
-
-writer::writer (const std::string &file)
-  : fp(0)
+gzFile
+open_gzfile (const std::string &file, const char *mode)
 {
-  fp = open_file (file, "w");
-}
-
-writer::~writer ()
-{
-  if (fp)
+  gzFile gzfp = gzopen (file.c_str (), mode);
+  if (!gzfp)
     {
-      fclose (fp);
-      fp = 0;
+      stderror ("gzopen: %s", file.c_str ());
+      exit (EXIT_FAILURE);
     }
+  return gzfp;
 }
 
-reader::reader (const std::string &file)
-  : fp(0)
+extern void close_gzfile (gzFile gzfp)
 {
-  fp = open_file (file, "r");
-}
-
-reader::~reader ()
-{
-  if (fp)
+  int r = gzclose (gzfp);
+  if (r != Z_OK)
     {
-      fclose (fp);
-      fp = 0;
+      stderror ("gzclose");
+      exit (EXIT_FAILURE);
     }
 }
 
 void
-writer::write_char (char x)
+file_writer::write_raw (const void *p, size_t itemsize, size_t nitems)
 {
-  if (fwrite (&x, sizeof x, 1, fp) != 1)
+  if (fwrite (p, itemsize, nitems, fp) != nitems)
     {
       stderror ("fwrite");
       exit (EXIT_FAILURE);
@@ -59,103 +213,35 @@ writer::write_char (char x)
 }
 
 void
-writer::write_bool (bool x)
+file_reader::read_raw (void *p, size_t itemsize, size_t nitems)
 {
-  if (fwrite (&x, sizeof x, 1, fp) != 1)
+  if (fread (p, itemsize, nitems, fp) != nitems)
     {
-      stderror ("fwrite");
+      stderror ("fread");
       exit (EXIT_FAILURE);
     }
 }
 
 void
-writer::write_int (int x)
+gzfile_writer::write_raw (const void *p, size_t itemsize, size_t nitems)
 {
-  if (fwrite (&x, sizeof x, 1, fp) != 1)
+  unsigned nbytes = itemsize*nitems;
+  if (gzwrite (gzfp, p, nbytes) != nbytes)
     {
-      stderror ("fwrite");
+      stderror ("gzwrite");
       exit (EXIT_FAILURE);
     }
 }
 
 void
-writer::write_unsigned (unsigned x)
+gzfile_reader::read_raw (void *p, size_t itemsize, size_t nitems)
 {
-  if (fwrite (&x, sizeof x, 1, fp) != 1)
-    {
-      stderror ("fwrite");
-      exit (EXIT_FAILURE);
-    }
-}
-
-void
-writer::write_uint64 (uint64 x)
-{
-  if (fwrite (&x, sizeof x, 1, fp) != 1)
-    {
-      stderror ("fwrite");
-      exit (EXIT_FAILURE);
-    }
-}
-
-bool
-reader::read_bool ()
-{
-  bool x;
-  if (fread (&x, sizeof x, 1, fp) != 1)
+  unsigned nbytes = itemsize*nitems;
+  if (gzread (gzfp, p, nbytes) != nitems)
     {
       stderror ("fread");
       exit (EXIT_FAILURE);
     }
-  return x;
-}
-
-char
-reader::read_char ()
-{
-  char x;
-  if (fread (&x, sizeof x, 1, fp) != 1)
-    {
-      stderror ("fread");
-      exit (EXIT_FAILURE);
-    }
-  return x;
-}
-
-int
-reader::read_int ()
-{
-  int x;
-  if (fread (&x, sizeof x, 1, fp) != 1)
-    {
-      stderror ("fread");
-      exit (EXIT_FAILURE);
-    }
-  return x;
-}
-
-unsigned
-reader::read_unsigned ()
-{
-  unsigned x;
-  if (fread (&x, sizeof x, 1, fp) != 1)
-    {
-      stderror ("fread");
-      exit (EXIT_FAILURE);
-    }
-  return x;
-}
-
-uint64
-reader::read_uint64 ()
-{
-  uint64 x;
-  if (fread (&x, sizeof x, 1, fp) != 1)
-    {
-      stderror ("fread");
-      exit (EXIT_FAILURE);
-    }
-  return x;
 }
 
 void
@@ -164,12 +250,7 @@ read (reader &r, std::string &s)
   unsigned n = r.read_unsigned ();
   
   char buf[n + 1];
-  unsigned k = fread (buf, sizeof (char), n + 1, r.fp);
-  if (k != n + 1)
-    {
-      stderror ("fread");
-      exit (EXIT_FAILURE);
-    }
+  r.read_raw (buf, sizeof (char), n + 1);
   assert (buf[n] == 0);
   
   s = std::string (buf);
@@ -181,9 +262,5 @@ write (writer &w, const std::string &s)
   unsigned n = s.length ();
   w.write_unsigned (n);
   
-  if (fwrite (s.c_str (), sizeof (char), n + 1, w.fp) != n + 1)
-    {
-      stderror ("fwrite");
-      exit (EXIT_FAILURE);
-    }
+  w.write_raw (s.c_str (), sizeof (char), n + 1);
 }

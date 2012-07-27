@@ -3,10 +3,10 @@ class map_rules
 {
  public:
   map_rules () { }
-  map_rules (const map_rules &); // doesn't exist
+  map_rules (const map_rules &) = delete;
   virtual ~map_rules () { }
   
-  map_rules &operator = (const map_rules &);  // doesn't exist
+  map_rules &operator = (const map_rules &) = delete;
   
   virtual void map (basedvector<pair<unsigned, unsigned>, 1> &out,
 		    resolution_diagram_builder &rdb) const = 0;
@@ -77,10 +77,10 @@ class twisted_map_rules
 {
  public:
   twisted_map_rules () { }
-  twisted_map_rules (const twisted_map_rules &); // doesn't exist
+  twisted_map_rules (const twisted_map_rules &) = delete;
   virtual ~twisted_map_rules () { }
   
-  map_rules &operator = (const twisted_map_rules &);  // doesn't exist
+  map_rules &operator = (const twisted_map_rules &) = delete;
   
   virtual void map (basedvector<triple<unsigned, unsigned, set<unsigned> >, 1> &out,
 		    resolution_diagram_builder &rdb) const = 0;
@@ -100,10 +100,10 @@ class twisted_cube
     : c(c_)
   { }
   
-  twisted_cube (const twisted_cube &); // doesn't exist
+  twisted_cube (const twisted_cube &) = delete;
   ~twisted_cube () { }
   
-  twisted_cube &operator = (const twisted_cube &); // doesn't exist
+  twisted_cube &operator = (const twisted_cube &) = delete;
   
   mod_map<R> compute_twisted_map (basedvector<int, 1> edge_weight,
 				  unsigned dh,

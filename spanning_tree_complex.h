@@ -39,7 +39,7 @@ public:
   tree_generators (const spanning_tree_complex<F> &c_) : c(c_) { }
   ~tree_generators () { }
   
-  tree_generators &operator = (const tree_generators &); // doesn't exist
+  tree_generators &operator = (const tree_generators &) = delete;
   
   unsigned dim () const { return c.trees.size (); }
   unsigned free_rank () const { return c.trees.size (); }

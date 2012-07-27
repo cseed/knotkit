@@ -1,5 +1,5 @@
 
-/* wrapper for stl map */
+/* wrapper for std::map */
 
 template<class K, class V>
 class map : public map_wrapper<std::map<K, V>, K, V>
@@ -17,3 +17,9 @@ class map : public map_wrapper<std::map<K, V>, K, V>
   
   map &operator = (const map &m) { base::operator = (m); return *this; }
 };
+
+template<class K, class V>
+using map_iter = map_wrapper_iter<std::map<K, V>, K, V>;
+
+template<class K, class V>
+using map_const_iter = map_wrapper_const_iter<std::map<K, V>, K, V>;

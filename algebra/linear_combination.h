@@ -55,6 +55,7 @@ class linear_combination
     lc3 -= lc2;
     return lc3 == 0;
   }
+  bool operator != (const linear_combination &lc) const { return !operator == (lc); }
   
   bool operator == (int x) const
   {

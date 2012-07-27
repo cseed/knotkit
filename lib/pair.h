@@ -17,6 +17,7 @@ class pair
   pair &operator = (const pair &p) { first = p.first; second = p.second; return *this; }
   
   bool operator == (const pair &p) const { return first == p.first && second == p.second; }
+  bool operator != (const pair &p) const { return !operator == (p); }
   bool operator < (const pair &p) const { return (first < p.first
 						  || (first == p.first && second < p.second)); }
   
@@ -67,6 +68,8 @@ public:
   {
     return first == t.first && second == t.second && third == t.third;
   }
+  bool operator != (const triple &t) const { return !operator == (t); }
+  
   bool operator < (const triple &t) const
   {
     if (first < t.first)

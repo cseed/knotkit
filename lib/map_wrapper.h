@@ -1,5 +1,5 @@
 
-/* wrapper for stl maps */
+/* wrapper for STL maps */
 
 template<class M, class K, class V> class map_wrapper_iter;
 template<class M, class K, class V> class map_wrapper_const_iter;
@@ -7,10 +7,10 @@ template<class M, class K, class V> class map_wrapper_const_iter;
 template<class M, class K, class V>
 class map_wrapper
 {
- private:
   friend class map_wrapper_iter<M, K, V>;
   friend class map_wrapper_const_iter<M, K, V>;
-  
+
+ protected:
   class map_impl : public refcounted
   {
   public:
@@ -130,6 +130,7 @@ class map_wrapper
   }
   
   bool operator == (const map_wrapper &m) const;
+  bool operator != (const map_wrapper &m) const { return !operator == (m); }
   bool operator < (const map_wrapper &m) const;
   
   void write_self (writer &w) const;
@@ -222,19 +223,19 @@ template<class M, class K, class V>
 class map_wrapper_iter
 {
  private:
-  map_wrapper<M, K, V> &m;
+  ptr<typename map_wrapper<M, K, V>::map_impl> impl;
   typename M::iterator i, end;
   bool deleted;
   
  public:
-  map_wrapper_iter (map_wrapper<M, K, V> &m_) : m(m_), i(m_.impl->t.begin ()), end(m_.impl->t.end ()), deleted(0) { }
+  map_wrapper_iter (map_wrapper<M, K, V> &m) : impl(m.impl), i(m.impl->t.begin ()), end(m.impl->t.end ()), deleted(0) { }
   ~map_wrapper_iter () { }
   
   void del ()
   {
     assert (!deleted);
     typename M::iterator iprev = i ++;
-    m.impl->t.erase (iprev);
+    impl->t.erase (iprev);
     deleted = 1;
   }
   
@@ -249,10 +250,11 @@ template<class M, class K, class V>
 class map_wrapper_const_iter
 {
  private:
+  ptr<const typename map_wrapper<M, K, V>::map_impl> impl;
   typename M::const_iterator i, end;
   
  public:
-  map_wrapper_const_iter (const map_wrapper<M, K, V> &m) : i(m.impl->t.begin ()), end(m.impl->t.end ()) { }
+  map_wrapper_const_iter (const map_wrapper<M, K, V> &m) : impl(m.impl), i(m.impl->t.begin ()), end(m.impl->t.end ()) { }
   ~map_wrapper_const_iter () { }
   
   const K &key () const { return i->first; }

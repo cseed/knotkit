@@ -34,6 +34,7 @@ class sseq_bounds
     && minq == b.minq
     && maxq == b.maxq;
   }
+  bool operator != (const sseq_bounds &b) const { return !operator == (b); }
 };
 
 class sseq_page
@@ -52,6 +53,8 @@ class sseq_page
   ~sseq_page () { }
   
   bool operator == (const sseq_page &pg) const { return rank == pg.rank && im_rank == pg.im_rank; }
+  bool operator != (const sseq_page &pg) const { return !operator == (pg); }
+  
   bool equal_as_spaces (const sseq_page &pg) const { return rank == pg.rank; }
   
   unsigned total_rank () const;
@@ -95,6 +98,9 @@ class sseq
   unsigned homological_width () const { return pages[1].homological_width (bounds); }
   
   bool operator == (const sseq &ss) const { return bounds == ss.bounds && pages == ss.pages; }
+  bool operator != (const sseq &ss) const { return !operator == (ss); }
+
+  
   bool equal_as_spaces (const sseq &ss) const;
   
   void texshow (FILE *fp, std::string name);
@@ -121,7 +127,7 @@ public:
   { }
   ~simplified_complex_generators () { }
   
-  simplified_complex_generators &operator = (const simplified_complex_generators &); // doesn't exist
+  simplified_complex_generators &operator = (const simplified_complex_generators &) = delete;
   
   unsigned dim () const { return new_n; }
   unsigned free_rank () const { return new_n; }
