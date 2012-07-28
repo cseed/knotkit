@@ -124,6 +124,7 @@ class set_wrapper_const_iter
 
 template<class S, class T>
 set_wrapper<S, T>::set_wrapper (reader &r)
+  : impl(new set_wrapper_impl)
 {
   unsigned n;
   read (r, n);

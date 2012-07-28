@@ -269,7 +269,7 @@ load (map<knot_desc,
   
   printf ("loading %s...\n", buf);
   
-  reader r (buf);
+  file_reader r (buf, 1);
   map<knot_desc,
       pair<mod_map<Z2>, mod_map<Z2> > > m (r);
   for (map<knot_desc,
@@ -592,6 +592,41 @@ main ()
   dump_sage ();
   
 #if 0
+  knot_diagram kd (rolfsen_knot (8, 19));
+  show (kd); newline ();
+  
+  cube<Z2> c (kd);
+  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+  
+  chain_complex_simplifier<Z2> s (c.khC, d, 1);
+  
+  steenrod_square sq (c, d, s);
+  mod_map<Z2> sq1 = sq.sq1 ();
+  mod_map<Z2> sq2 = sq.sq2 ();
+  
+  assert (sq1.compose (sq1) == 0);
+  assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+  
+  display ("sq1:\n", sq1);
+  display ("sq2:\n", sq2);
+  
+  {
+    file_writer w ("sqtest.dat");
+    write (w, sq1);
+    write (w, sq2);
+  }
+  
+  {
+    file_reader r ("sqtest.dat");
+    mod_map<Z2> sq1p (r);
+    mod_map<Z2> sq2p (r);
+    display ("sq1p:\n", sq1p);
+    display ("sq2p:\n", sq2p);
+  }
+  
+#endif
+
+#if 0
   knot_diagram kd (mt_link (10, 0, 9));
   cube<Z2> c (kd);
 #endif
@@ -728,7 +763,7 @@ main ()
   
   printf ("|knot_kh_sq| = %d\n", knot_kh_sq.card ());
   
-#if 1
+#if 0
   map<pair<multivariate_laurentpoly<Z>,
 	   map<grading, unsigned> >,
       pair<knot_desc,
@@ -982,30 +1017,6 @@ main ()
 #endif
 
 #if 0
-  knot_diagram kd (rolfsen_knot (5, 2));
-  show (kd); newline ();
-  
-  cube<Z2> c (kd);
-  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
-  
-  chain_complex_simplifier<Z2> s (c.khC, d, 1);
-  
-  steenrod_square sq (c, d, s);
-  mod_map<Z2> sq1 = sq.sq1 ();
-  mod_map<Z2> sq2 = sq.sq2 ();
-  
-  assert (sq1.compose (sq1) == 0);
-  assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
-  
-  display ("sq1:\n", sq1);
-  display ("sq2:\n", sq2);
-  
-  writer w ("sqtest.dat");
-  write (w, sq1);
-  write (w, sq2);
-#endif
-  
-#if 0
 #if 0
   reader r ("sqtest.dat");
   
@@ -1165,6 +1176,7 @@ main ()
 	  assert (sq1.compose (sq1) == 0);
 	  assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
 	}
+#endif
   
 #if 0
   typedef Z2 R;

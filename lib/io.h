@@ -12,8 +12,8 @@ class writer
   
  public:
   writer (const writer &) = delete;
-  writer (bool raw_ = false) : raw(raw_), aw(0) { }
-  virtual ~writer () = default;
+  writer (bool raw_);
+  virtual ~writer ();
   
   writer &operator = (const writer &) = delete;
   
@@ -26,6 +26,8 @@ class writer
   void write_unsigned (unsigned x);
   void write_uint64 (uint64 x);
   
+  virtual void write_mpz (const mpz_t x);
+  
   template<class R> void write_mod (ptr<const module<R> > m);
 };
 
@@ -36,8 +38,8 @@ class reader
   
  public:
   reader (const reader &) = delete;
-  reader (bool raw_) : raw(raw_), ar(0) { }
-  virtual ~reader () = default;
+  reader (bool raw_);
+  virtual ~reader ();
   
   reader &operator = (const reader &) = delete;
   
@@ -67,6 +69,7 @@ class reader
   int read_int ();
   unsigned read_unsigned ();
   uint64 read_uint64 ();
+  
   virtual void read_mpz (mpz_t x);
   
   template<class R> ptr<const module<R> > read_mod ();

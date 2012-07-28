@@ -2,6 +2,17 @@
 // #include <lib/lib.h>
 #include <algebra/algebra.h>
 
+writer::writer (bool raw_)
+  : raw(raw_),
+    aw(new algebra_writer)
+{
+}
+
+writer::~writer ()
+{
+  delete aw;
+}
+
 void
 writer::write_int (int x)
 {
@@ -109,6 +120,17 @@ writer::write_mpz (const mpz_t x)
   write_raw (buf, 1, count);
   
   free (buf);
+}
+
+reader::reader (bool raw_)
+  : raw(raw_),
+    ar(new algebra_reader)
+{
+}
+
+reader::~reader ()
+{
+  delete ar;
 }
 
 int

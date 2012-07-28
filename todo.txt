@@ -40,6 +40,7 @@ general:
    (e.g. knot_diagram, resolution_diagram, etc.)  -- this is the right
    semantics.
  - clean up/delete setcommon, mapcommon
+ - incorporate sage dump into standard classes
 
 c++11:
  - make vector wrap std::vector (probably faster)

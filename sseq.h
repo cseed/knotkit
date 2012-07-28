@@ -106,6 +106,7 @@ class sseq
   void texshow (FILE *fp, std::string name);
 };
 
+#if 0
 template<class R> class simplified_complex_generators
 {
   unsigned new_n;
@@ -376,6 +377,7 @@ chain_complex_simplifier<R>::chain_complex_simplifier (ptr<const module<R> > C_,
 #endif
     }
 }
+#endif
 
 class sseq_builder
 {
