@@ -10,6 +10,7 @@
 #include <gmp.h>
 #include <zlib.h>
 
+#include <initializer_list>
 #include <set>
 #include <map>
 #include <string>
@@ -167,6 +168,7 @@ using std::get;
 using std::make_tuple;
 using std::tie;
 using std::ignore;
+using std::initializer_list;
 
 #include <lib/pair.h>
 

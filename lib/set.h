@@ -8,13 +8,14 @@ class set : public set_wrapper<std::set<T>, T>
   
  public:
   set () { }
-  set (unsigned dummy_size) : base(dummy_size) { }
   set (const set &m) : base(m) { }
   set (copy, const set &m) : base(COPY, m) { }
+  set (initializer_list<T> il) : base(il) { }
   set (reader &r) : base(r) { }
   ~set () { }
   
   set &operator = (const set &m) { base::operator = (m); return *this; }
+  set &operator = (initializer_list<T> il) { base::operator = (il); }
   
   bool operator == (const set &s) const;
   bool operator != (const set &s) const { return !operator == (s); }

@@ -27,7 +27,8 @@ KNOTKIT_OBJS = planar_diagram.o dt_code.o knot_diagram.o cube.o spanning_tree_co
 COMMON_OBJS = $(KNOTKIT_OBJS) $(ALGEBRA_OBJS) $(LIB_OBJS) 
 
 LIB_HEADERS = lib/lib.h lib/show.h lib/refcount.h lib/pair.h lib/maybe.h lib/vector.h \
-  lib/set.h lib/ullmanset.h lib/bitset.h lib/smallbitset.h lib/setcommon.h \
+  lib/set_wrapper.h lib/set.h lib/hashset.h \
+  lib/ullmanset.h lib/bitset.h lib/smallbitset.h lib/setcommon.h \
   lib/map_wrapper.h lib/map.h lib/hashmap.h lib/ullmanmap.h lib/mapcommon.h \
   lib/unionfind.h lib/priority_queue.h lib/io.h \
   lib/directed_multigraph.h

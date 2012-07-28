@@ -127,6 +127,47 @@ rank_lte (multivariate_laurentpoly<Z> p,
 int
 main ()
 {
+#if 0
+  ullmanset<1> empty;
+  assert (empty.size () == 0);
+  assert (empty.card () == 0);
+  assert (empty.is_empty ());
+  
+  ullmanset<1> empty2;
+  assert (empty == empty2);
+
+  ullmanset<1> emptycopy (COPY, empty);
+  assert (emptycopy == empty);
+  
+  ullmanset<1> s (50, {1,2,5,5,2,1,3,4});
+  assert (s.card () == 5);
+  
+  ullmanset<1> scopy (COPY, s);
+  assert (scopy == s);
+  
+  printf ("s:");
+  for (int x : s)
+    printf (" %d", x);
+  newline ();
+#endif
+  
+  map<unsigned, const char *> m = { { 5, "foo" }, { 11, "bar" } };
+  
+  hashmap<unsigned, const char *> m2 = { { 5, "foo" }, { 11, "bar" }, { 37, "baz" } };
+  for (std::pair<unsigned, const char *> i : m2)
+    {
+      printf ("%d -> %s\n", i.first, i.second);
+    }
+  
+#if 0
+  set<unsigned> s {1,2,5,5,2,1,3,4};
+  printf ("s:");
+  for (int x : s)
+    printf (" %d", x);
+  newline ();
+#endif
+  
+#if 0
   basedvector<int, 1> v (4);
   v[1] = 2;
   v[2] = -1;
@@ -205,6 +246,7 @@ main ()
     assert (sleb == sleb2);
     assert (uleb == uleb2);
   }
+#endif
   
 #if 0
   

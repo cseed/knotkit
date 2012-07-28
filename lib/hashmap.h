@@ -10,10 +10,16 @@ class hashmap : public map_wrapper<std::unordered_map<K, V, hasher<K> >, K, V>
   hashmap () { }
   hashmap (const hashmap &m) : base(m) { }
   hashmap (copy, const hashmap &m) : base(COPY, m) { }
+  hashmap (initializer_list<std::pair<const K, V> > il) : base(il) { }
   hashmap (reader &r) : base(r) { }
   ~hashmap () { }
   
   hashmap &operator = (const hashmap &m) { base::operator = (m); return *this; }
+  hashmap &operator = (initializer_list<std::pair<const K, V> > il)
+  {
+    base::operator = (il);
+    return *this;
+  }
 };
 
 template<class K, class V>

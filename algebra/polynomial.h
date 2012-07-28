@@ -106,6 +106,7 @@ public:
   polynomial &operator *= (polynomial p) { return operator = (*this * p); }
   polynomial &operator *= (T s);
   
+  // ??? rename
   polynomial &add_term (T c, unsigned e)
   {
     T &c2 = coeffs[e];

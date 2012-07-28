@@ -10,10 +10,12 @@ class hashset : public set_wrapper<std::unordered_set<T, hasher<T> >, T>
   hashset () { }
   hashset (const hashset &m) : base(m) { }
   hashset (copy, const hashset &m) : base(COPY, m) { }
+  hashset (initializer_list<T> il) : base(il) { }
   hashset (reader &r) : base(r) { }
   ~hashset () { }
   
   hashset &operator = (const hashset &m) { base::operator = (m); return *this; }
+  hashset &operator = (initializer_list<T> il) { base::operator = (il); return *this; }
 };
 
 template<class T>

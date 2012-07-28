@@ -15,6 +15,15 @@ class set_wrapper
   {
   public:
     S t;
+    
+  public:
+    set_wrapper_impl () = default;
+    set_wrapper_impl (const set_wrapper_impl &) = delete;
+    set_wrapper_impl (const S &t_) : t(t_) { }
+    set_wrapper_impl (initializer_list<T> il) : t(il) { }
+    ~set_wrapper_impl () = default;
+    
+    set_wrapper_impl &operator = (const set_wrapper_impl &) = delete;
   };
   
   ptr<set_wrapper_impl> impl;
@@ -25,13 +34,25 @@ class set_wrapper
   
  public:
   set_wrapper () : impl(new set_wrapper_impl) { }
-  set_wrapper (unsigned dummy_size) : impl(new set_wrapper_impl) { }
   set_wrapper (const set_wrapper &s) : impl(s.impl) { }
-  set_wrapper (copy, const set_wrapper &s) : impl(new set_wrapper_impl) { impl->t = S (s.impl->t); }
+  set_wrapper (copy, const set_wrapper &s)
+    : impl(new set_wrapper_impl (s.impl->t))
+  { }
+  set_wrapper (initializer_list<T> il)
+    : impl(new set_wrapper_impl (il))
+  { }
   set_wrapper (reader &r);
   ~set_wrapper () { }
   
   set_wrapper &operator = (const set_wrapper &s) { impl = s.impl; return *this; }
+  set_wrapper &operator = (initializer_list<T> li)
+  {
+    impl->t = li;
+  }
+  
+  // range-based for
+  typename S::const_iterator begin () const { return impl->t.begin (); }
+  typename S::const_iterator end () const { return impl->t.end (); }
   
   T pop ()
   {
