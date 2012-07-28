@@ -1,9 +1,12 @@
 
 class writer
 {
+  // don't use leb128 enconding.  for backward compatibility.
+  bool raw;
+  
  public:
   writer (const writer &) = delete;
-  writer () = default;
+  writer (bool raw_ = false) : raw(raw_)  { }
   virtual ~writer () = default;
   
   writer &operator = (const writer &) = delete;
@@ -16,14 +19,16 @@ class writer
   void write_int (int x);
   void write_unsigned (unsigned x);
   void write_uint64 (uint64 x);
-  void write_mpz (const mpz_t x);
+  virtual void write_mpz (const mpz_t x);
 };
 
 class reader
 {
+  bool raw;
+  
  public:
   reader (const reader &) = delete;
-  reader () = default;
+  reader (bool raw_) : raw(raw_) { }
   virtual ~reader () = default;
   
   reader &operator = (const reader &) = delete;
@@ -54,7 +59,7 @@ class reader
   int read_int ();
   unsigned read_unsigned ();
   uint64 read_uint64 ();
-  void read_mpz (mpz_t x);
+  virtual void read_mpz (mpz_t x);
 };
 
 extern FILE *open_file (const std::string &file, const char *mode);
@@ -69,8 +74,9 @@ class file_writer : public writer
   FILE *fp;
   
  public:
-  file_writer (const std::string &file)
-    : fp(open_file (file, "w"))
+  file_writer (const std::string &file, bool raw = false)
+    : writer(raw),
+      fp(open_file (file, "w"))
   {
   }
   file_writer (const file_writer &) = delete;
@@ -79,6 +85,7 @@ class file_writer : public writer
   file_writer &operator = (const file_writer &) = delete;
   
   void write_raw (const void *p, size_t itemsize, size_t nitems);
+  void write_mpz (const mpz_t x);
 };
 
 class file_reader : public reader
@@ -87,8 +94,9 @@ class file_reader : public reader
   FILE *fp;
   
  public:
-  file_reader (const std::string &file)
-    : fp(open_file (file, "r"))
+  file_reader (const std::string &file, bool raw = false)
+    : reader(raw),
+      fp(open_file (file, "r"))
   {
   }
   file_reader (const file_reader &) = delete;
@@ -97,6 +105,7 @@ class file_reader : public reader
   file_reader &operator = (const file_reader &) = delete;
   
   void read_raw (void *p, size_t itemsize, size_t nitems);
+  void read_mpz (mpz_t x);
 };
 
 class gzfile_writer : public writer
@@ -106,7 +115,8 @@ class gzfile_writer : public writer
   
  public:
   gzfile_writer (const std::string &file)
-    : gzfp(open_gzfile (file, "w9"))
+    : writer(false),
+      gzfp(open_gzfile (file, "w9"))
   {
   }
   gzfile_writer (const gzfile_writer &) = delete;
@@ -124,7 +134,8 @@ class gzfile_reader : public reader
   
  public:
   gzfile_reader (const std::string &file)
-    : gzfp(open_gzfile (file, "r"))
+    : reader(false),
+      gzfp(open_gzfile (file, "r"))
   {
   }
   gzfile_reader (const gzfile_reader &) = delete;

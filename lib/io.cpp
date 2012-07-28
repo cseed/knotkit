@@ -4,86 +4,103 @@
 void
 writer::write_int (int x)
 {
-  uint8 buf[5];
-  unsigned n = 0;
-  
-  bool more = 1;
-  while (more)
+  if (raw)
+    write_raw (&x, sizeof x, 1);
+  else
     {
-      uint8 b = (uint8)(x & 0x7f);
-      x >>= 7;
+      uint8 buf[5];
+      unsigned n = 0;
       
-      if ((x == 0
-	   && ! (b & 0x40))
-	  || (x == -1
-	      && (b & 0x40) == 0x40))
-	more = 0;
-      else
-	b |= 0x80;
+      bool more = 1;
+      while (more)
+	{
+	  uint8 b = (uint8)(x & 0x7f);
+	  x >>= 7;
       
-      assert (n < 5);
-      buf[n] = b;
-      n ++;
+	  if ((x == 0
+	       && ! (b & 0x40))
+	      || (x == -1
+		  && (b & 0x40) == 0x40))
+	    more = 0;
+	  else
+	    b |= 0x80;
+      
+	  assert (n < 5);
+	  buf[n] = b;
+	  n ++;
+	}
+      
+      write_raw (buf, sizeof buf[0], n);
     }
-  
-  write_raw (buf, sizeof buf[0], n);
 }
 
 void
 writer::write_unsigned (unsigned x)
 {
-  uint8 buf[5];
-  unsigned n = 0;
-  
-  bool more = 1;
-  while (more)
+  if (raw)
+    write_raw (&x, sizeof x, 1);
+  else
     {
-      uint8 b = (uint8)(x & 0x7f);
-      x >>= 7;
-      
-      if ((x == 0
-	   && ! (b & 0x40)))
-	more = 0;
-      else
-	b |= 0x80;
-      
-      assert (n < 5);
-      buf[n] = b;
-      n ++;
-    }
+      uint8 buf[5];
+      unsigned n = 0;
   
-  write_raw (buf, sizeof buf[0], n);
+      bool more = 1;
+      while (more)
+	{
+	  uint8 b = (uint8)(x & 0x7f);
+	  x >>= 7;
+      
+	  if ((x == 0
+	       && ! (b & 0x40)))
+	    more = 0;
+	  else
+	    b |= 0x80;
+      
+	  assert (n < 5);
+	  buf[n] = b;
+	  n ++;
+	}
+  
+      write_raw (buf, sizeof buf[0], n);
+    }
 }
 
 void
 writer::write_uint64 (uint64 x)
 {
-  uint8 buf[10];
-  unsigned n = 0;
-  
-  bool more = 1;
-  while (more)
+  if (raw)
+    write_raw (&x, sizeof x, 1);
+  else
     {
-      uint8 b = (uint8)(x & 0x7f);
-      x >>= 7;
-      
-      if ((x == 0
-	   && ! (b & 0x40)))
-	more = 0;
-      else
-	b |= 0x80;
-
-      assert (n < 10);
-      buf[n] = b;
-      n ++;
-    }
+      uint8 buf[10];
+      unsigned n = 0;
   
-  write_raw (buf, sizeof buf[0], n);
+      bool more = 1;
+      while (more)
+	{
+	  uint8 b = (uint8)(x & 0x7f);
+	  x >>= 7;
+      
+	  if ((x == 0
+	       && ! (b & 0x40)))
+	    more = 0;
+	  else
+	    b |= 0x80;
+
+	  assert (n < 10);
+	  buf[n] = b;
+	  n ++;
+	}
+  
+      write_raw (buf, sizeof buf[0], n);
+    }
 }
 
 void
 writer::write_mpz (const mpz_t x)
 {
+  assert (!raw);
+  
   size_t count;
   void *buf = mpz_export (nullptr, &count, -1, 1, -1, 0, x);
   
@@ -97,20 +114,27 @@ int
 reader::read_int ()
 {
   int x = 0;
-  int shift = 0;
-  for (;;)
+  
+  if (raw)
+    read_raw (&x, sizeof x, 1);
+  else
     {
-      uint8 b = read_uint8 ();
-      x |= ((int)(b & 0x7f) << shift);
-      shift += 7;
-      if (! (b & 0x80))
+      int shift = 0;
+      for (;;)
 	{
-	  if (shift < int_bits
-	      && (b & 0x40))
-	    x = (x << (int_bits - shift)) >> (int_bits - shift);
-	  break;
+	  uint8 b = read_uint8 ();
+	  x |= ((int)(b & 0x7f) << shift);
+	  shift += 7;
+	  if (! (b & 0x80))
+	    {
+	      if (shift < int_bits
+		  && (b & 0x40))
+		x = (x << (int_bits - shift)) >> (int_bits - shift);
+	      break;
+	    }
 	}
     }
+  
   return x;
 }
 
@@ -118,15 +142,22 @@ unsigned
 reader::read_unsigned ()
 {
   unsigned x = 0;
-  unsigned shift = 0;
-  for (;;)
+  
+  if (raw)
+    read_raw (&x, sizeof x, 1);
+  else
     {
-      uint8 b = read_uint8 ();
-      x |= ((unsigned)(b & 0x7f) << shift);
-      shift += 7;
-      if (! (b & 0x80))
-	break;
+      unsigned shift = 0;
+      for (;;)
+	{
+	  uint8 b = read_uint8 ();
+	  x |= ((unsigned)(b & 0x7f) << shift);
+	  shift += 7;
+	  if (! (b & 0x80))
+	    break;
+	}
     }
+  
   return x;
 }
 
@@ -134,21 +165,30 @@ uint64
 reader::read_uint64 ()
 {
   uint64 x = 0;
-  uint64 shift = 0;
-  for (;;)
+
+  if (raw)
+    read_raw (&x, sizeof x, 1);
+  else
     {
-      uint8 b = read_uint8 ();
-      x |= ((uint64)(b & 0x7f) << shift);
-      shift += 7;
-      if (! (b & 0x80))
-	break;
+      uint64 shift = 0;
+      for (;;)
+	{
+	  uint8 b = read_uint8 ();
+	  x |= ((uint64)(b & 0x7f) << shift);
+	  shift += 7;
+	  if (! (b & 0x80))
+	    break;
+	}
     }
+  
   return x;
 }
 
 void
 reader::read_mpz (mpz_t x)
 {
+  assert (!raw);
+  
   unsigned count = read_unsigned ();
   void *p = malloc (count);
   if (!p)
@@ -213,6 +253,12 @@ file_writer::write_raw (const void *p, size_t itemsize, size_t nitems)
 }
 
 void
+file_writer::write_mpz (const mpz_t x)
+{
+  mpz_out_raw (fp, x);
+}
+
+void
 file_reader::read_raw (void *p, size_t itemsize, size_t nitems)
 {
   if (fread (p, itemsize, nitems, fp) != nitems)
@@ -220,6 +266,12 @@ file_reader::read_raw (void *p, size_t itemsize, size_t nitems)
       stderror ("fread");
       exit (EXIT_FAILURE);
     }
+}
+
+void
+file_reader::read_mpz (mpz_t x)
+{
+  mpz_inp_raw (x, fp);
 }
 
 void
