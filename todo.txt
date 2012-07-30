@@ -41,6 +41,10 @@ general:
    semantics.
  - clean up/delete setcommon, mapcommon
  - incorporate sage dump into standard classes
+ - update use of tuples in steenrod square
+
+ - test mutation invariance, other questions of Robert and Sucharit
+ - write paper
 
 c++11:
  - make vector wrap std::vector (probably faster)
@@ -52,6 +56,11 @@ c++11:
  - standardize use of {} for initializers
  - initializer_list for container types
  - support for iterator
+
+ - compress Steenrod square data
+ - get mpimain running again, run 15 xing mutants
+
+ - simplifications to run (5, 8) with symmetries.
 
 notes:
 

@@ -294,6 +294,56 @@ load (map<knot_desc,
   printf ("done.\n");
 }
 
+void
+load (map<knot_desc,
+	  pair<mod_map<Z2>, mod_map<Z2> > > &knot_kh_sq,
+      const char *file)
+{
+  char buf[1000];
+  sprintf (buf, "knot_kh_sq/%s", file);
+  
+  printf ("loading %s...\n", buf);
+  
+  struct stat stat_buf;
+  if (stat (buf, &stat_buf) != 0)
+    {
+      if (errno == ENOENT)
+	{
+	  printf ("%s does not exist.\n", buf);
+	  return;
+	}
+      
+      stderror ("stat: %s", buf);
+      exit (EXIT_FAILURE);
+    }
+  
+  file_reader r (buf, 1);
+  map<knot_desc,
+      pair<mod_map<Z2>, mod_map<Z2> > > m (r);
+  for (map<knot_desc,
+	   pair<mod_map<Z2>, mod_map<Z2> > >::const_iter i = m; i; i ++)
+    {
+#if 0
+      mod_map<Z2> sq1 = i.val ().first;
+      ptr<const module<Z2> > H = sq1.domain ();
+      unsigned hwidth = homological_width (H);
+      // hwidth_knots[hwidth] ++;
+#endif
+      
+#if 0
+      if (hwidth == 2)
+	continue;
+      if (i.key ().t == knot_desc::MT
+	  && i.key ().diagram ().num_components () == 1)
+	continue;
+#endif
+      
+      knot_kh_sq.push (i.key (), i.val ());
+    }
+  
+  printf ("done.\n");
+}
+
 static const int block_size = 100;
 
 void
@@ -585,9 +635,70 @@ dump_sage ()
     }
 }
 
+void
+convert_knot_sq ()
+{
+  FILE *fp = open_file ("L14.files", "r");
+  char buf[1000];
+  
+  gzfile_writer w ("L14_sq.dat.gz");
+  w.write_unsigned (76516);
+  
+  set<knot_desc> keys;
+  while (fgets (buf, 1000, fp))
+    {
+      char *p = strchr (buf, '\n');
+      if (p)
+	{
+	  assert (p[1] == 0);
+	  *p = 0;
+	}
+      
+      map<knot_desc,
+	  pair<mod_map<Z2>, mod_map<Z2> > > knot_sq;
+      load (knot_sq, buf);
+      
+      for (map<knot_desc,
+	     pair<mod_map<Z2>, mod_map<Z2> > >::const_iter k = knot_sq; k; k ++)
+	{
+	  write (w, k.key ());
+	  write (w, k.val ());
+	}
+    }
+  
+  // write (w, knot_sq);
+}
+
+void
+test_knot_sq ()
+{
+  const char *knot_sq_files[] = {
+    "knot_sq/rolfsen_sq.dat.gz",
+    "knot_sq/Ksmall_sq.dat.gz",
+    "knot_sq/K11_sq.dat.gz",
+    "knot_sq/K12_sq.dat.gz",
+    "knot_sq/Lsmall_sq.dat.gz",
+    "knot_sq/L11_sq.dat.gz",
+    "knot_sq/L12_sq.dat.gz",
+    0,
+  };
+  
+  for (unsigned i = 0; knot_sq_files[i] != 0; i ++)
+    {
+      gzfile_reader r (knot_sq_files[i]);
+      map<knot_desc,
+	  pair<mod_map<Z2>, mod_map<Z2> > > knot_sq (r);
+      printf ("|knot_sq| = %d\n", knot_sq.card ());
+    }
+}
+
 int
 main ()
 {
+  // convert_knot_sq ();
+  test_knot_sq ();
+  return 0;
+  
   // test_sage_show ();
   dump_sage ();
   
