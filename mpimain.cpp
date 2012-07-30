@@ -1,4 +1,4 @@
-s
+
 #include <knotkit.h>
 
 #include <mpi.h>
@@ -14,8 +14,13 @@ master ()
 {
   basedvector<knot_desc, 1> work;
   
-  work.append (knot_desc (TORUS, 0, 0));
+  basedvector<basedvector<unsigned, 1>, 1> groups = mutant_knot_groups (15);
   
+  for (unsigned i = 1; i <= groups.size (); i ++)
+    for (unsigned j = 1; j <= groups[i].size (); j ++)
+      work.append (knot_desc (knot_desc::HTW, 15, groups[i][j]));
+  
+#if 0
   for (unsigned i = 14; i >= 1; i --)
     {
       if (i <= 10)
@@ -39,6 +44,7 @@ master ()
 	    }
 	}
     }
+#endif
   
   int ntasks = num_tasks ();
   
@@ -81,10 +87,8 @@ master ()
     }
 }
 
-void
-compute_kh_sq (map<knot_desc,
-		   triple<ptr<const module<Z2> >, mod_map<Z2>, mod_map<Z2> > > &knot_kh_sq,
-	       knot_desc &desc)
+pair<mod_map<Z2>, mod_map<Z2> > 
+compute_kh_sq (const knot_desc &desc)
 {
   knot_diagram kd = desc.diagram ();
   
@@ -105,9 +109,8 @@ compute_kh_sq (map<knot_desc,
   
   assert (sq1.compose (sq1) == 0);
   assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
-  
-  knot_kh_sq.push (desc,
-		   triple<ptr<const module<Z2> >, mod_map<Z2>, mod_map<Z2> > (s.new_C, sq1, sq2));
+
+  return pair<mod_map<Z2>, mod_map<Z2> > (sq1, sq2);
 }
 
 void
@@ -129,61 +132,15 @@ slave ()
 	    
 	    printf ("[% 2d] CMD_DO %s\n", rank, desc.name ().c_str ());
 	    
-	    map<knot_desc,
-		triple<ptr<const module<Z2> >, mod_map<Z2>, mod_map<Z2> > > knot_kh_sq;
-	    
 	    char buf[1000];
-	    if (desc.t == knot_desc::TORUS)
-	      {
-		sprintf (buf, "T.dat");
-		
-		for (unsigned t = 3; t <= 16; t ++)   // twists
-		  for (unsigned s = 2; s <= t; s ++) // strands
-		    {
-		      if ((s - 1) * t > 18)
-			continue;
-		      
-		      desc.i = s;
-		      desc.j = t;
-		      
-		      compute_kh_sq (knot_kh_sq, desc);
-		    }
-	      }
-	    else
-	      {
-		unsigned j0 = desc.j;
-		
-		switch (desc.t)
-		  {
-		  case knot_desc::ROLFSEN:
-		    sprintf (buf, "%d_%d.dat", desc.i, j0);
-		    break;
-		    
-		  case knot_desc::HTW:
-		    sprintf (buf, "K%d_%d.dat", desc.i, j0);
-		    break;
-		    
-		  case knot_desc::MT:
-		    sprintf (buf, "L%d_%d.dat", desc.i, j0);
-		    break;
-		    
-		  default: abort ();
-		  }
-		
-		for (unsigned j = j0;
-		     j <= std::min (j0 + block_size - 1,
-				    desc.table_crossing_knots ());
-		     j ++)
-		  {
-		    desc.j = j;
-		    
-		    compute_kh_sq (knot_kh_sq, desc);
-		  }
-	      }
+	    sprintf (buf, "incoming/K%d_%d.dat", desc.i, desc.j);
+	    
+	    pair<mod_map<Z2>, mod_map<Z2> > p = compute_kh_sq (knot_kh_sq, desc);
 	    
 	    {
 	      writer w (buf);
-	      write (w, knot_kh_sq);
+	      write (w, p.first);
+	      write (w, p.second);
 	    }
 	    
 	    send_int (0, 0);
