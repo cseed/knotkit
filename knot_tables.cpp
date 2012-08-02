@@ -1,7 +1,7 @@
 
 #include <knotkit.h>
 
-#define HOME "/Users/cotton/src/knotkit/"
+#define HOME "/u/cseed/src/knotkit/"
 
 bool verbose = 0;
 
@@ -642,7 +642,7 @@ braid (unsigned n_strands, const basedvector<int, 1> &twists)
     last_twist[i] = 0;
   for (unsigned i = 1; i <= twists.size (); i ++)
     {
-      unsigned t = std::abs (twists[i]);
+      unsigned t = abs (twists[i]);
       last_twist[t] = i;
       last_twist[t + 1] = i;
     }
@@ -657,7 +657,7 @@ braid (unsigned n_strands, const basedvector<int, 1> &twists)
   
   for (unsigned i = 1; i <= twists.size (); i ++)
     {
-      unsigned t = std::abs (twists[i]);
+      unsigned t = abs (twists[i]);
       unsigned e1 = strands[t],
 	e4 = strands[t + 1];
       unsigned e2, e3;

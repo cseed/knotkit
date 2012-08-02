@@ -3,6 +3,7 @@
 /gss
 /main
 /testsurfaces
-/serial.cmd*
+/serial.cmd.[eo]*
+/parallel.cmd.[eo]*
 /save
 */save

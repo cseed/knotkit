@@ -692,12 +692,53 @@ test_knot_sq ()
     }
 }
 
+pair<mod_map<Z2>, mod_map<Z2> > 
+compute_kh_sq (const knot_desc &desc)
+{
+}
+
 int
 main ()
 {
+#if 1
+  knot_desc desc;
+  desc.t = knot_desc::HTW;
+  desc.i = 15;
+  desc.j = 15020;
+  
+  char buf[1000];
+  sprintf (buf, "/scratch/network/cseed/incoming/K%d_%d.dat.gz",
+	   desc.i, desc.j);
+  
+  desc = knot_desc (knot_desc::ROLFSEN, 3, 1);
+
+  knot_diagram kd = desc.diagram ();
+
+  cube<Z2> c (kd);
+  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+  
+  chain_complex_simplifier<Z2> s (c.khC, d, 1);
+  assert (s.new_d == 0);
+  
+  steenrod_square sq (c, d, s);
+  mod_map<Z2> sq1 = sq.sq1 ();
+  mod_map<Z2> sq2 = sq.sq2 ();
+  
+  assert (sq1.compose (sq1) == 0);
+  assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+
+#if 1
+  {
+    file_writer w (buf);
+    write (w, sq1);
+    write (w, sq2);
+  }
+#endif
+#endif
+  return 0;
+  
   // convert_knot_sq ();
   test_knot_sq ();
-  return 0;
   
   // test_sage_show ();
   dump_sage ();

@@ -87,32 +87,6 @@ master ()
     }
 }
 
-pair<mod_map<Z2>, mod_map<Z2> > 
-compute_kh_sq (const knot_desc &desc)
-{
-  knot_diagram kd = desc.diagram ();
-  
-  unsigned rank = self_rank ();
-  
-  printf ("[% 2d] %s\n", rank, kd.name.c_str ());
-  fflush (stdout);
-  
-  cube<Z2> c (kd);
-  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
-  
-  chain_complex_simplifier<Z2> s (c.khC, d, 1);
-  assert (s.new_d == 0);
-  
-  steenrod_square sq (c, d, s);
-  mod_map<Z2> sq1 = sq.sq1 ();
-  mod_map<Z2> sq2 = sq.sq2 ();
-  
-  assert (sq1.compose (sq1) == 0);
-  assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
-
-  return pair<mod_map<Z2>, mod_map<Z2> > (sq1, sq2);
-}
-
 void
 slave ()
 {
@@ -127,21 +101,35 @@ slave ()
 	  {
 	    knot_desc desc;
 	    desc.t = (knot_desc::table)recv_int ();
-	    desc.i = (knot_desc::table)recv_int ();
-	    desc.j = (knot_desc::table)recv_int ();
+	    desc.i = (unsigned)recv_int ();
+	    desc.j = (unsigned)recv_int ();
 	    
 	    printf ("[% 2d] CMD_DO %s\n", rank, desc.name ().c_str ());
 	    
 	    char buf[1000];
-	    sprintf (buf, "incoming/K%d_%d.dat", desc.i, desc.j);
+	    sprintf (buf, "/scratch/network/cseed/incoming/K%d_%d.dat.gz",
+		     desc.i, desc.j);
 	    
-	    pair<mod_map<Z2>, mod_map<Z2> > p = compute_kh_sq (knot_kh_sq, desc);
+	    // desc = knot_desc (knot_desc::ROLFSEN, 3, 1);
 	    
-	    {
-	      writer w (buf);
-	      write (w, p.first);
-	      write (w, p.second);
-	    }
+	    knot_diagram kd = desc.diagram ();
+	    
+	    cube<Z2> c (kd);
+	    mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+	    
+	    chain_complex_simplifier<Z2> s (c.khC, d, 1);
+	    assert (s.new_d == 0);
+	    
+	    steenrod_square sq (c, d, s);
+	    mod_map<Z2> sq1 = sq.sq1 ();
+	    mod_map<Z2> sq2 = sq.sq2 ();
+	    
+	    assert (sq1.compose (sq1) == 0);
+	    assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+	    
+	    file_writer w (buf);
+	    write (w, sq1);
+	    write (w, sq2);
 	    
 	    send_int (0, 0);
 	  }

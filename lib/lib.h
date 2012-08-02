@@ -1,5 +1,6 @@
 
 #include <assert.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -38,6 +39,8 @@ typedef unsigned long ulong;
 
 typedef long long int64;
 typedef unsigned long long uint64;
+
+inline int64 abs64 (int64 x) { return llabs (x); }
 
 typedef size_t hash_t;
 

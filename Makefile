@@ -3,16 +3,16 @@ BISON = /opt/local/bin/bison
 FLEX = /opt/local/bin/flex
 
 # CXX = g++
-# CXX = mpic++
-CXX = clang++ -fno-color-diagnostics --stdlib=libc++ --std=c++11
+CXX = OMPI_CXX=clang++ mpic++ -fno-color-diagnostics --stdlib=libc++ --std=c++11 -I/u/cseed/llvm-3.1/lib/c++/v1
+# CXX = clang++ -fno-color-diagnostics --stdlib=libc++ --std=c++11
 
 INCLUDES = -I/opt/local/include -I.
 
 # OPTFLAGS = -g
-OPTFLAGS = -O2 -g
-# OPTFLAGS = -O2 -DNDEBUG
+# OPTFLAGS = -O2 -g
+OPTFLAGS = -O2 -DNDEBUG
 
-LDFLAGS = -L/opt/local/lib
+LDFLAGS = -L/opt/local/lib -L/u/cseed/llvm-3.1/lib
 # LDFLAGS = -pg -L/opt/local/lib
 
 CXXFLAGS = $(OPTFLAGS) -Wall -Wno-unused $(INCLUDES)
@@ -95,7 +95,7 @@ parser_files: \
 .PHONY: clean
 clean:
 	rm -f *.o lib/*.o algebra/*.o knot_parser/*.o rd_parser/*.o
-	rm -f main gss
+	rm -f main gss mpimain
 	rm -f gmon.out
 
 .PHONY: realclean
