@@ -133,15 +133,26 @@ slave ()
 	    printf ("[% 2d] CMD_DO %s\n", rank, desc.name ().c_str ());
 	    
 	    char buf[1000];
-	    sprintf (buf, "incoming/K%d_%d.dat", desc.i, desc.j);
+	    sprintf (buf, "/scratch/network/cseed/incoming/K%d_%d.dat", desc.i, desc.j);
 	    
-	    pair<mod_map<Z2>, mod_map<Z2> > p = compute_kh_sq (knot_kh_sq, desc);
-	    
-	    {
-	      writer w (buf);
-	      write (w, p.first);
-	      write (w, p.second);
-	    }
+	    struct stat stat_buf;
+	    if (stat (buf, &stat_buf) != 0)
+	      {
+		if (errno == ENOENT)
+		  {
+		    pair<mod_map<Z2>, mod_map<Z2> > p = compute_kh_sq (knot_kh_sq, desc);
+		    writer w (buf);
+		    write (w, p.first);
+		    write (w, p.second);
+		  }
+		else
+		  {
+		    stderror ("stat: %s", buf);
+		    exit (EXIT_FAILURE);
+		  }
+	      }
+	    else
+	      printf ("skip %s: exists.\n", buf);
 	    
 	    send_int (0, 0);
 	  }
