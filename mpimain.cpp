@@ -110,26 +110,38 @@ slave ()
 	    sprintf (buf, "/scratch/network/cseed/incoming/K%d_%d.dat.gz",
 		     desc.i, desc.j);
 	    
-	    // desc = knot_desc (knot_desc::ROLFSEN, 3, 1);
+	    struct stat stat_buf;
+	    if (stat (buf, &stat_buf) != 0)
+	      {
+		if (errno == ENOENT)
+		  {
+		    knot_diagram kd = desc.diagram ();
 	    
-	    knot_diagram kd = desc.diagram ();
+		    cube<Z2> c (kd);
+		    mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
 	    
-	    cube<Z2> c (kd);
-	    mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+		    chain_complex_simplifier<Z2> s (c.khC, d, 1);
+		    assert (s.new_d == 0);
 	    
-	    chain_complex_simplifier<Z2> s (c.khC, d, 1);
-	    assert (s.new_d == 0);
-	    
-	    steenrod_square sq (c, d, s);
-	    mod_map<Z2> sq1 = sq.sq1 ();
-	    mod_map<Z2> sq2 = sq.sq2 ();
-	    
-	    assert (sq1.compose (sq1) == 0);
-	    assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
-	    
-	    file_writer w (buf);
-	    write (w, sq1);
-	    write (w, sq2);
+		    steenrod_square sq (c, d, s);
+		    mod_map<Z2> sq1 = sq.sq1 ();
+		    mod_map<Z2> sq2 = sq.sq2 ();
+		    
+		    assert (sq1.compose (sq1) == 0);
+		    assert (sq2.compose (sq2) + sq1.compose (sq2).compose (sq1) == 0);
+		    
+		    gzfile_writer w (buf);
+		    write (w, sq1);
+		    write (w, sq2);
+		  }
+		else
+		  {
+		    stderror ("stat: %s", buf);
+		    exit (EXIT_FAILURE);
+		  }
+	      }
+	    else
+	      printf ("skip %s: exists.\n", buf);
 	    
 	    send_int (0, 0);
 	  }
