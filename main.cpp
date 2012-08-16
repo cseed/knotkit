@@ -695,11 +695,93 @@ test_knot_sq ()
 pair<mod_map<Z2>, mod_map<Z2> > 
 compute_kh_sq (const knot_desc &desc)
 {
+  abort ();
+}
+
+template<class R> pair<ptr<const module<R> >, mod_map<R> >
+FU_complex (ptr<const module<R> > CF,
+	    mod_map<R> dF,
+	    mod_map<R> dU)
+{
+  unsigned n = CF->dim ();
+  
+  basedvector<grading, 1> hq (n * 2);
+  for (unsigned i = 1; i <= n; i ++)
+    hq[i] = hq[n + i] = CF->generator_grading (i);
+  
+  ptr<const module<R> > CFU = new explicit_module<R> (2 * n,
+							basedvector<R, 1> (),
+							hq);
+  map_builder<R> b (CFU);
+  for (unsigned i = 1; i <= n; i ++)
+    {
+      for (linear_combination_const_iter<R> j = dF[i]; j; j ++)
+	{
+	  b[i].muladd (j.val (), j.key ());
+	  b[n + i].muladd (j.val (), n + j.key ());
+	}
+      for (linear_combination_const_iter<R> j = dU[i]; j; j ++)
+	{
+	  b[i].muladd (j.val (), n + j.key ());
+	}
+    }
+  mod_map<R> dFU (b);
+  // assert (dFU.compose (dFU) == 0);
+  // dFU.check_sseq_graded ();
+  return pair<ptr<const module<R> >, mod_map<R> > (CFU, dFU);
+}
+
+void
+compute_twistedU ()
+{
+#if 0
+  for (unsigned i = 1; i <= 11; i ++)
+    for (unsigned j = 1; j <= htw_knots (i, 0); j ++)
+      {
+	knot_diagram kd (htw_knot (i, 0, j));
+      ...}
+#endif
+  for (unsigned i = 1; i <= 10; i ++)
+    for (unsigned j = 1; j <= mt_links (i, 0); j ++)
+      {
+	knot_diagram kd (mt_link (i, 0, j));
+	
+	kd.marked_edge = 1;
+	show (kd); newline ();
+	
+	typedef spanning_tree_complex<Z2>::R R;
+	
+	spanning_tree_complex<Z2> c (kd);
+	ptr<const module<R> > C = c.C;
+	
+	mod_map<R> d2 = c.twisted_d2 ();
+	assert (d2.compose (d2) == 0);
+	
+	mod_map<R> d2U = c.twisted_d2Un (1);
+	assert (d2.compose (d2U) == d2U.compose (d2));
+	
+	chain_complex_simplifier<R> s (C, d2, 2);
+	assert (s.new_d == 0);
+	printf ("|s.new_C| = %d\n", s.new_C->dim ());
+	
+	pair<ptr<const module<R> >, mod_map<R> > p = FU_complex (C, d2, d2U);
+	ptr<const module<R> > CFU = p.first;
+	mod_map<R> dFU = p.second;
+	
+	chain_complex_simplifier<R> s2 (CFU, dFU, 2);
+	assert (s2.new_d == 0);
+	printf ("|s2.new_C| = %d\n", s2.new_C->dim ());
+	
+	if (s2.new_C->dim () < 2 * s.new_C->dim ())
+	  printf (" > EXAMPLE\n");
+      }
 }
 
 int
 main ()
 {
+  compute_twistedU ();
+  
 #if 1
   knot_desc desc;
   desc.t = knot_desc::HTW;

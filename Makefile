@@ -3,14 +3,14 @@ BISON = /opt/local/bin/bison
 FLEX = /opt/local/bin/flex
 
 # CXX = g++
-CXX = OMPI_CXX=clang++ mpic++ -fno-color-diagnostics --stdlib=libc++ --std=c++11 -I/u/cseed/llvm-3.1/lib/c++/v1
-# CXX = clang++ -fno-color-diagnostics --stdlib=libc++ --std=c++11
+# CXX = OMPI_CXX=clang++ mpic++ -fno-color-diagnostics --stdlib=libc++ --std=c++11 -I/u/cseed/llvm-3.1/lib/c++/v1
+CXX = clang++ -fno-color-diagnostics --stdlib=libc++ --std=c++11
 
 INCLUDES = -I/opt/local/include -I.
 
 # OPTFLAGS = -g
-# OPTFLAGS = -O2 -g
-OPTFLAGS = -O2 -DNDEBUG
+OPTFLAGS = -O2 -g
+# OPTFLAGS = -O2 -DNDEBUG
 
 LDFLAGS = -L/opt/local/lib -L/u/cseed/llvm-3.1/lib
 # LDFLAGS = -pg -L/opt/local/lib
