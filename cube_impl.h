@@ -356,6 +356,96 @@ cube<R>::H_i (unsigned c)
   return H_c;
 }
 
+template<class R> mod_map<R>
+cube<R>::compute_dinv (unsigned c)
+{
+  map_builder<R> p (khC);
+  for (unsigned i = 0; i < n_resolutions; i ++)
+    {
+      if (!unsigned_bittest (i, c))
+	continue;
+      
+      smoothing from_s (kd, smallbitset (n_crossings, i));
+      
+      unsigned i2 = unsigned_bitclear (i, c);
+      smoothing to_s (kd, smallbitset (n_crossings, i2));
+      
+      basedvector<unsigned, 1> from_circle_edge_rep (from_s.n_circles);
+      for (unsigned j = 1; j <= kd.num_edges (); j ++)
+	from_circle_edge_rep[from_s.edge_circle[j]] = j;
+      
+      unsigned a = from_s.crossing_from_circle (kd, c),
+	b = from_s.crossing_to_circle (kd, c);
+      unsigned x = to_s.crossing_from_circle (kd, c),
+	y = to_s.crossing_to_circle (kd, c);
+      for (unsigned j = 0; j < from_s.num_monomials (); j ++)
+	{
+	  unsigned j2 = 0;
+	  for (unsigned_const_iter k = j; k; k ++)
+	    {
+	      unsigned s = k.val ();
+	      j2 = unsigned_bitset (j2, to_s.edge_circle[from_circle_edge_rep[s]]);
+	    }
+	  
+	  if (a == b)
+	    {
+	      // split
+	      assert (x != y);
+	      
+	      if (unsigned_bittest (j, a))
+		{
+		  // 1 -> x + y
+		  j2 = unsigned_bitset (j2, x);
+		  j2 = unsigned_bitclear (j2, y);
+		  
+		  p[generator (i, j)].muladd (1, generator (i2, j2));
+		  
+		  j2 = unsigned_bitclear (j2, x);
+		  j2 = unsigned_bitset (j2, y);
+		  
+		  p[generator (i, j)].muladd (1, generator (i2, j2));
+		}
+	      else
+		{
+		  // a -> xy
+		  j2 = unsigned_bitclear (j2, x);
+		  j2 = unsigned_bitclear (j2, y);
+		  
+		  p[generator (i, j)].muladd (1, generator (i2, j2));
+		}
+	    }
+	  else
+	    {
+	      // join
+	      assert (x == y);
+	      
+	      if (unsigned_bittest (j, a)
+		  && unsigned_bittest (j, b))
+		{
+		  // 1 -> 1
+		  j2 = unsigned_bitset (j2, x);
+		  
+		  p[generator (i, j)].muladd (1, generator (i2, j2));
+		}
+	      else if ((unsigned_bittest (j, a)
+			&& !unsigned_bittest (j, b))
+		       || (!unsigned_bittest (j, a)
+			   && unsigned_bittest (j, b)))
+		{
+		  // a, b -> x
+		  j2 = unsigned_bitclear (j2, x);
+		  
+		  p[generator (i, j)].muladd (1, generator (i2, j2));
+		}
+	    }
+	}
+    }
+  
+  mod_map<R> dinv (p);
+  dinv.check_grading (grading (-1, -2));
+  return dinv;
+}
+
 template<class R> void
 cube<R>::check_reverse_crossings ()
 {

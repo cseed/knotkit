@@ -47,6 +47,7 @@ public:
 				    bool reverse_orientation,
 				    unsigned to_reverse) const;
   
+  mod_map<R> compute_dinv (unsigned c);
   mod_map<R> H_i (unsigned c);
   
   mod_map<R> compute_nu () const;

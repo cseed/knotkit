@@ -777,9 +777,143 @@ compute_twistedU ()
       }
 }
 
+
+void
+test_forgetful_ss ()
+{
+  typedef fraction_field<polynomial<Z2> > R;
+  
+  for (unsigned i = 1; i <= 11; i ++)
+    for (unsigned j = 1; j <= mt_links (i, 0); j ++)
+      {
+	knot_diagram kd (mt_link (i, 0, j));
+	unsigned n = kd.num_components ();
+	if (n < 2)
+	  continue;
+	
+	show (kd); newline ();
+	
+	unionfind<1> u (kd.num_edges ());
+	for (unsigned i = 1; i <= kd.n_crossings; i ++)
+	  {
+	    u.join (kd.ept_edge (kd.crossings[i][1]),
+		    kd.ept_edge (kd.crossings[i][3]));
+	    u.join (kd.ept_edge (kd.crossings[i][2]),
+		    kd.ept_edge (kd.crossings[i][4]));
+	  }
+	
+	printf ("%d components:\n", n);
+	
+	map<unsigned, unsigned> root_comp;
+	unsigned t = 0;
+	for (unsigned i = 1; i <= kd.num_edges (); i ++)
+	  {
+	    if (u.find (i) == i)
+	      {
+		++ t;
+		root_comp.push (i, t);
+	      }
+	  }
+	assert (t == n);
+	
+	unsigned disj_rank = 1;
+	for (unsigned k = 1; k <= n; k ++)
+	  {
+	    knot_diagram comp (SUBLINK, smallbitset (n, unsigned_2pow (k - 1)), kd);
+
+	    cube<R> c (comp);
+	    mod_map<R> d = c.compute_d (1, 0, 0, 0, 0);
+	  
+	    chain_complex_simplifier<R> s (c.khC, d, 1);
+	    assert (s.new_d == 0);
+	    
+	    printf ("  % 2d: rank %d\n", k, s.new_C->dim ());
+	    
+	    disj_rank *= s.new_C->dim ();
+	  }
+	
+	{
+	  knot_diagram comp (SUBLINK, smallbitset (n, unsigned_bitclear (unsigned_fill (n), 1)), kd);
+	  
+	  cube<R> c (comp);
+	  mod_map<R> d = c.compute_d (1, 0, 0, 0, 0);
+	    
+	  chain_complex_simplifier<R> s (c.khC, d, 1);
+	  assert (s.new_d == 0);
+	    
+	  printf ("  11...10: rank %d\n", s.new_C->dim ());
+	}
+	
+	cube<R> c (kd);
+	
+#if 0
+	for (unsigned i = 0; i < c.n_resolutions; i ++)
+	  {
+	    smallbitset state (kd.n_crossings, i);
+	    smoothing s (kd, state);
+	    s.show_self (kd, state);
+	    newline ();
+	  }
+#endif
+	
+	mod_map<R> untwisted_d = c.compute_d (1, 0, 0, 0, 0);
+	assert (untwisted_d.compose (untwisted_d) == 0);
+	
+	chain_complex_simplifier<R> s1 (c.khC, untwisted_d, 1);
+	assert (s1.new_d == 0);
+	
+	printf ("untwisted rank = %d\n", s1.new_C->dim ());
+	
+	mod_map<R> d = untwisted_d;
+	for (unsigned x = 1; x <= kd.n_crossings; x ++)
+	  {
+	    unsigned r1 = u.find (kd.ept_edge (kd.crossings[x][1])),
+	      r2 = u.find (kd.ept_edge (kd.crossings[x][2]));
+	    
+	    d = d + c.compute_dinv (x)*(R (polynomial<Z2> (1, root_comp(r1))) + 1);
+	    d = d + c.compute_dinv (x)*(R (polynomial<Z2> (1, root_comp(r2))) + 1);
+	    
+#if 0					
+	    R hbar (polynomial<Z2> (1, 1));
+	    R hbarp1 = hbar + 1;
+	    
+	    // if (u.find (kd.ept_edge (kd.crossings[x][1])) != u.find (kd.ept_edge (kd.crossings[x][2])))
+	    
+	    if (u.find (kd.ept_edge (kd.crossings[x][1])) != comp1_root)
+	      d = d + c.compute_dinv (x)*hbarp1;
+	    
+	    if (u.find (kd.ept_edge (kd.crossings[x][2])) != comp1_root)
+	      d = d + c.compute_dinv (x)*hbarp1;
+#endif
+	  }
+	
+#if 0
+	mod_map<R> h = d.compose (d);
+	display ("h:\n", h);
+#endif
+	
+	assert (d.compose (d) == 0);
+	
+	// display ("d:\n", d);
+	
+	chain_complex_simplifier<R> s2 (c.khC, d, -1);
+	assert (s2.new_d == 0);
+	
+	printf ("twisted rank = %d\n", s2.new_C->dim ());
+	
+	if (disj_rank == s2.new_C->dim ())
+	  printf ("  %d == %d: YES!\n", disj_rank, s2.new_C->dim ());
+	else
+	  printf ("  %d == %d: NO :-(\n", disj_rank, s2.new_C->dim ());
+      }
+}
+
 int
 main ()
 {
+  test_forgetful_ss ();
+  return 0;
+  
   compute_twistedU ();
   
 #if 1

@@ -172,9 +172,10 @@ chain_complex_simplifier<R>::chain_complex_simplifier (ptr<const module<R> > C_,
       for (linear_combination_const_iter<R> j = new_d_columns[i]; j; j ++)
 	{
 	  grading jgr = C->generator_grading (j.key ());
-	  assert (jgr.h >= igr.h);
+	  // assert (jgr.h >= igr.h);
 	  if (j.val ().is_unit ()
-	      && jgr.h - igr.h == dh)
+	      // && jgr.h - igr.h == dh
+	      )
 	    {
 	      cancel (i, j.val (), j.key ());
 	      break;

@@ -942,6 +942,7 @@ class mod_map
   
   // ?? add and other map operations should not be explicit
   mod_map operator + (const mod_map &m) const;
+  mod_map operator * (const R &c) const;
   
   bool homogeneous () const;
   void check_grading (grading delta) const;
@@ -1787,6 +1788,14 @@ mod_map<R>::check_grading (grading delta) const
     }
 }
 
+template<class R> mod_map<R>
+mod_map<R>::operator * (const R &c) const
+{
+  basedvector<linear_combination<R>, 1> v (impl->from->dim ());
+  for (unsigned i = 1; i <= impl->from->dim (); i ++)
+    v[i] = c*column (i);
+  return mod_map (IMPL, new explicit_map_impl<R> (impl->from, impl->to, v));
+}
 
 template<class R> mod_map<R>
 mod_map<R>::operator + (const mod_map &m) const
