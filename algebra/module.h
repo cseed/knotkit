@@ -82,6 +82,7 @@ class module : public refcounted
   
   multivariate_laurentpoly<Z> free_poincare_polynomial () const;
   multivariate_laurentpoly<Z> free_delta_poincare_polynomial () const;
+  multivariate_laurentpoly<Z> free_ell_poincare_polynomial () const;
   
   ptr<const direct_sum<R> >
     add (basedvector<ptr<const module<R> >, 1> compound_summands) const;
@@ -1476,6 +1477,20 @@ module<R>::free_delta_poincare_polynomial () const
       grading hq = generator_grading (i);
       multivariate_laurent_monomial m;
       m.push_exponent (1, hq.q - 2*hq.h);
+      r.muladdeq (1, m);
+    }
+  return r;
+}
+
+template<class R> multivariate_laurentpoly<Z>
+module<R>::free_ell_poincare_polynomial () const
+{
+  multivariate_laurentpoly<Z> r;
+  for (unsigned i = 1; i <= free_rank (); i ++)
+    {
+      grading hq = generator_grading (i);
+      multivariate_laurent_monomial m;
+      m.push_exponent (1, hq.h - hq.q);
       r.muladdeq (1, m);
     }
   return r;

@@ -816,33 +816,42 @@ test_forgetful_ss ()
 	  }
 	assert (t == n);
 	
-	unsigned disj_rank = 1;
+	printf ("  kd w: %d\n", kd.writhe ());
+	
+	multivariate_laurentpoly<Z> disj_P = 1;
 	for (unsigned k = 1; k <= n; k ++)
 	  {
 	    knot_diagram comp (SUBLINK, smallbitset (n, unsigned_2pow (k - 1)), kd);
-
+	    
+	    unsigned w = 0;
+	    for (unsigned i = 1; i <= kd.n_crossings; i ++)
+	      {
+		if (root_comp(u.find (kd.ept_edge (kd.crossings[i][1]))) == k
+		    && root_comp(u.find (kd.ept_edge (kd.crossings[i][2]))) == k)
+		  {
+		    if (kd.is_to_ept (kd.crossings[i][1]) == kd.is_to_ept (kd.crossings[i][4]))
+		      w ++;
+		    else
+		      w --;
+		  }
+	      }
+	    
+	    printf ("  % 2d w: %d\n", k, w);
+	    
 	    cube<R> c (comp);
 	    mod_map<R> d = c.compute_d (1, 0, 0, 0, 0);
 	  
 	    chain_complex_simplifier<R> s (c.khC, d, 1);
 	    assert (s.new_d == 0);
 	    
-	    printf ("  % 2d: rank %d\n", k, s.new_C->dim ());
+	    multivariate_laurentpoly<Z> P = s.new_C->free_ell_poincare_polynomial ();
+	    printf ("  % 2d P: ", k);
+	    display (P);
 	    
-	    disj_rank *= s.new_C->dim ();
+	    disj_P *= (P
+		       * multivariate_laurentpoly<Z> (1, VARIABLE, 1, w)
+		       );
 	  }
-	
-	{
-	  knot_diagram comp (SUBLINK, smallbitset (n, unsigned_bitclear (unsigned_fill (n), 1)), kd);
-	  
-	  cube<R> c (comp);
-	  mod_map<R> d = c.compute_d (1, 0, 0, 0, 0);
-	    
-	  chain_complex_simplifier<R> s (c.khC, d, 1);
-	  assert (s.new_d == 0);
-	    
-	  printf ("  11...10: rank %d\n", s.new_C->dim ());
-	}
 	
 	cube<R> c (kd);
 	
@@ -862,7 +871,10 @@ test_forgetful_ss ()
 	chain_complex_simplifier<R> s1 (c.khC, untwisted_d, 1);
 	assert (s1.new_d == 0);
 	
-	printf ("untwisted rank = %d\n", s1.new_C->dim ());
+	multivariate_laurentpoly<Z> P1 = s1.new_C->free_ell_poincare_polynomial ();
+	display ("  link P      : ", P1);
+	
+	display ("  disj_P (adj): ", disj_P);
 	
 	mod_map<R> d = untwisted_d;
 	for (unsigned x = 1; x <= kd.n_crossings; x ++)
@@ -898,13 +910,16 @@ test_forgetful_ss ()
 	
 	chain_complex_simplifier<R> s2 (c.khC, d, -1);
 	assert (s2.new_d == 0);
+
+	multivariate_laurentpoly<Z> P2 = (s2.new_C->free_ell_poincare_polynomial ()
+					  * multivariate_laurentpoly<Z> (1, VARIABLE, 1, kd.writhe ())
+					  );
+	display ("  Einf P (adj): ", P2);
 	
-	printf ("twisted rank = %d\n", s2.new_C->dim ());
-	
-	if (disj_rank == s2.new_C->dim ())
-	  printf ("  %d == %d: YES!\n", disj_rank, s2.new_C->dim ());
+	if (disj_P == P2)
+	  printf (" disj_P == Einf P (adj): YES!\n");
 	else
-	  printf ("  %d == %d: NO :-(\n", disj_rank, s2.new_C->dim ());
+	  printf (" disj_P != Einf P (adj): NO :-(!\n");
       }
 }
 
