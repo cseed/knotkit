@@ -12,4 +12,4 @@
 # go to the directory with the program
 cd $HOME/src/knotkit
 # and run it
-./main
+LD_LIBRARY_PATH=/u/cseed/llvm-3.1/lib ./main

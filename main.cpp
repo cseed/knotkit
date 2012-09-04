@@ -783,7 +783,7 @@ test_forgetful_ss ()
 {
   typedef fraction_field<polynomial<Z2> > R;
   
-  for (unsigned i = 1; i <= 11; i ++)
+  for (unsigned i = 1; i <= 12; i ++)
     for (unsigned j = 1; j <= mt_links (i, 0); j ++)
       {
 	knot_diagram kd (mt_link (i, 0, j));
@@ -920,6 +920,7 @@ test_forgetful_ss ()
 	  printf (" disj_P == Einf P (adj): YES!\n");
 	else
 	  printf (" disj_P != Einf P (adj): NO :-(!\n");
+	fflush (stdout);
       }
 }
 
