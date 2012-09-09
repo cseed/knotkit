@@ -86,6 +86,13 @@ class knot_desc
   std::string name () const;
   unsigned table_crossing_knots () const;
   
+  hash_t hash_self () const
+  {
+    return hash_combine (hash ((int)t),
+			 hash_combine (hash (i),
+				       hash (j)));
+  }
+  
   void write_self (writer &w) const;
   void show_self () const { printf ("%s", name ().c_str ()); }
   void display_self () const { show_self (); newline (); }
