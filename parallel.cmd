@@ -1,5 +1,5 @@
 # mpi job, runtime max 5days
-#PBS -l nodes=2:ppn=6,walltime=96:00:00
+#PBS -l nodes=3:ppn=4,walltime=150:00:00
 # xxx PBS -l mem=80gb
 #
 # sends mail if the process aborts, when it begins, and

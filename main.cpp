@@ -922,14 +922,13 @@ test_knot_sq ()
     "knot_sq/K11_sq.dat.gz",
     "knot_sq/K12_sq.dat.gz",
     "knot_sq/K13_sq.dat.gz",
-#if 0
     "knot_sq/K14_sq.dat.gz",
+    "knot_sq/K15_sq_part.dat.gz",
     "knot_sq/Lsmall_sq.dat.gz",
     "knot_sq/L11_sq.dat.gz",
     "knot_sq/L12_sq.dat.gz",
     "knot_sq/L13_sq.dat.gz",
     "knot_sq/L14_sq.dat.gz",
-#endif
     0,
   };
   
@@ -945,6 +944,7 @@ test_knot_sq ()
 	}
     }
   printf ("|mutants| = %d\n", mutants.card ());
+  fflush (stdout);
   
   basedvector<unsigned, 1> width_hist (7);
   for (unsigned i = 1; i <= width_hist.size (); i ++)
@@ -986,6 +986,7 @@ test_knot_sq ()
 	      {
 		show (desc); newline ();
 		printf (" > has CP^2\n");
+		fflush (stdout);
 	      }
 	  }
       }
@@ -996,6 +997,7 @@ test_knot_sq ()
       gzfile_reader r (knot_sq_files[i]);
       
       printf ("loading %s...\n", knot_sq_files[i]);
+      fflush (stdout);
       
       unsigned n = r.read_unsigned ();
       for (unsigned i = 1; i <= n; i ++)
@@ -1025,6 +1027,7 @@ test_knot_sq ()
 		{
 		  show (desc); newline ();
 		  printf (" > has CP^2\n");
+		  fflush (stdout);
 		}
 	    }
 	}
@@ -1036,6 +1039,7 @@ test_knot_sq ()
     {
       printf (" % 2d: %d\n", i, width_hist[i]);
     }
+  fflush (stdout);
   
   unsigned missing = 0,
     compared = 0;
@@ -1083,6 +1087,7 @@ test_knot_sq ()
 			      printf ("> DIFFER\n");
 			      display ("  ", desc_1);
 			      display ("  ", desc);
+			      fflush (stdout);
 			    }
 			  compared ++;
 			}
@@ -1105,6 +1110,7 @@ test_knot_sq ()
 			      printf ("> DIFFER\n");
 			      display ("  ", desc_1);
 			      display ("  ", desc);
+			      fflush (stdout);
 			    }
 			  compared ++;
 			}
@@ -1119,6 +1125,23 @@ test_knot_sq ()
     }
   printf ("missing = %d\n", missing);
   printf ("compared = %d\n", compared);
+  fflush (stdout);
+}
+
+bool
+file_exists (const char *file)
+{
+  struct stat stat_buf;
+  if (stat (file, &stat_buf) != 0)
+    {
+      if (errno == ENOENT)
+	return 0;
+      
+      stderror ("stat: %s", file);
+      exit (EXIT_FAILURE);
+    }
+  
+  return 1;
 }
 
 void
@@ -1146,6 +1169,7 @@ compute_mutant_mirrors ()
 	}
     }
   printf ("|mutants| = %d\n", mutants.card ());
+  fflush (stdout);
   
   hashmap<knot_desc,
 	  pair<mod_map<Z2>, mod_map<Z2> > > mutant_knot_sq;
@@ -1155,6 +1179,7 @@ compute_mutant_mirrors ()
       gzfile_reader r (knot_sq_files[i]);
       
       printf ("loading %s...\n", knot_sq_files[i]);
+      fflush (stdout);
       
       unsigned n = r.read_unsigned ();
       for (unsigned i = 1; i <= n; i ++)
@@ -1168,6 +1193,7 @@ compute_mutant_mirrors ()
     }
   
   printf ("|mutant_knot_sq| = %d\n", mutant_knot_sq.card ());
+  fflush (stdout);
   
   map<knot_desc,
       pair<mod_map<Z2>, mod_map<Z2> > > mknot_kh_sq;
@@ -1194,31 +1220,36 @@ compute_mutant_mirrors ()
 		{
 		  knot_desc desc (knot_desc::HTW, i, groups[j][k]);
 		  show (desc); newline ();
-		  
-		  knot_diagram kd (MIRROR, desc.diagram ());
-		  
-		  cube<Z2> c (kd);
-		  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
-		  
-		  chain_complex_simplifier<Z2> s (c.khC, d, 1);
-		  assert (s.new_d == 0);
-		  
-		  steenrod_square sq (c, d, s);
-		  mod_map<Z2> sq1 = sq.sq1 ();
-		  mod_map<Z2> sq2 = sq.sq2 ();
-		  
-		  ptr<const module<Z2> > H = sq1.domain ();
-		  
-		  assert (group_H[1]->free_poincare_polynomial ()
-			  == H->free_poincare_polynomial ());
+		  fflush (stdout);
 		  
 		  char buf[1000];
 		  assert (desc.t == knot_desc::HTW);
 		  sprintf (buf, "mknot/K%d_%d.dat.gz", desc.i, desc.j);
-		  gzfile_writer w (buf);
-		  write (w, desc);
-		  write (w, sq1);
-		  write (w, sq2);
+		  
+		  if (!file_exists (buf))
+		    {
+		      knot_diagram kd (MIRROR, desc.diagram ());
+		  
+		      cube<Z2> c (kd);
+		      mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+		  
+		      chain_complex_simplifier<Z2> s (c.khC, d, 1);
+		      assert (s.new_d == 0);
+		  
+		      steenrod_square sq (c, d, s);
+		      mod_map<Z2> sq1 = sq.sq1 ();
+		      mod_map<Z2> sq2 = sq.sq2 ();
+		  
+		      ptr<const module<Z2> > H = sq1.domain ();
+		  
+		      assert (group_H[1]->free_poincare_polynomial ()
+			      == H->free_poincare_polynomial ());
+		  
+		      gzfile_writer w (buf);
+		      write (w, desc);
+		      write (w, sq1);
+		      write (w, sq2);
+		    }
 		}
 	    }
 	}
@@ -1278,14 +1309,54 @@ convert_mknots ()
   write (w, mutant_mknot_sq);
 }
 
+void
+convert_15 ()
+{
+  hashmap<knot_desc,
+    pair<mod_map<Z2>, mod_map<Z2> > > knot15_sq;
+  
+  basedvector<basedvector<unsigned, 1>, 1> groups
+    = mutant_knot_groups (15);
+  for (unsigned i = 1; i <= groups.size (); i ++)
+    {
+      for (unsigned j = 1; j <= groups[i].size (); j ++)
+	{
+	  unsigned k = groups[i][j];
+	  
+	  char buf[1000];
+	  sprintf (buf, "/u/cseed/mut15.bak/K15_%d.dat.gz", k);
+	  
+	  if (file_exists (buf))
+	    {
+	      printf ("loading %s...\n", buf);
+	      fflush (stdout);
+	      
+	      gzfile_reader r (buf);
+	      mod_map<Z2> sq1 (r);
+	      mod_map<Z2> sq2 (r);
+	      
+	      knot_desc desc (knot_desc::HTW, 15, k);
+	      knot15_sq.push (desc,
+			      pair<mod_map<Z2>, mod_map<Z2> > (sq1, sq2));
+	    }
+	}
+    }
+  
+  printf ("|knot15_sq| = %d\n", knot15_sq.card ());
+  
+  gzfile_writer w ("/u/cseed/src/knotkit/K15_sq_part.dat.gz");
+  write (w, knot15_sq);
+}
+
 int
 main ()
 {
-  compute_mutant_mirrors ();
+  test_knot_sq ();
   return 0;
   
-  test_knot_sq ();
+  compute_mutant_mirrors ();
   convert_mknots ();
+  convert_15 ();
   
   test_forgetful_ss ();
   compute_twistedU ();
