@@ -913,6 +913,118 @@ compute_st (mod_map<Z2> sq1,
 }
 
 void
+display_st (map<grading, basedvector<int, 1> > st)
+{
+  bool first = 1;
+  for (map_const_iter<grading, basedvector<int, 1> > i = st; i; i ++)
+    {
+      grading hq = i.key ();
+      int s1 = i.val ()[1],
+	s2 = i.val ()[2],
+	s3 = i.val ()[3],
+	s4 = i.val ()[4];
+      if (s1 == 0 && s2 == 0 && s3 == 0 && s4 == 0)
+	continue;
+      if (first)
+	first = 0;
+      else
+	printf (",");
+      printf ("$(%d, %d) \\mapsto (%d, %d, %d, %d)$", hq.h, hq.q, s1, s2, s3, s4);
+    }
+  newline ();
+}
+
+void
+test_kh_htt_stronger ()
+{
+  map<pair<multivariate_laurentpoly<Z>,
+	   multivariate_laurentpoly<Z> >,
+      pair<knot_desc,
+	   map<grading, basedvector<int, 1> > > > P_sq1_knot_st;
+  
+  const char *knot_sq_files[] = {
+    "knot_sq/rolfsen_sq.dat.gz",
+    "knot_sq/Ksmall_sq.dat.gz",
+    "knot_sq/K11_sq.dat.gz",
+    "knot_sq/K12_sq.dat.gz",
+    "knot_sq/K13_sq.dat.gz",
+    "knot_sq/K14_sq.dat.gz",
+    "knot_sq/Lsmall_sq.dat.gz",
+    "knot_sq/L11_sq.dat.gz",
+    "knot_sq/L12_sq.dat.gz",
+    "knot_sq/L13_sq.dat.gz",
+    "knot_sq/L14_sq.dat.gz",
+    0,
+  };
+  
+  for (unsigned i = 0; knot_sq_files[i]; i ++)
+    {
+      gzfile_reader r (knot_sq_files[i]);
+      
+      printf ("loading %s...\n", knot_sq_files[i]);
+      
+      unsigned n = r.read_unsigned ();
+      for (unsigned i = 1; i <= n; i ++)
+	{
+	  knot_desc desc (r);
+	  pair<mod_map<Z2>, mod_map<Z2> > p1 (r);
+	  
+	  if (desc.t == knot_desc::MT
+	      || desc.t == knot_desc::MT_ALT
+	      || desc.t == knot_desc::MT_NONALT)
+	    {
+	      knot_diagram kd = desc.diagram ();
+	      if (kd.num_components () == 1)
+		continue;
+	    }
+	  
+	  mod_map<Z2> sq1 = p1.first,
+	    sq2 = p1.second;
+	  ptr<const module<Z2> > H = sq1.domain ();
+	  multivariate_laurentpoly<Z> P = H->free_poincare_polynomial ();
+	  
+	  unsigned hwidth = homological_width (H);
+	  
+	  map<grading, basedvector<int, 1> > st
+	    = compute_st (sq1, sq2);
+	  
+	  ptr<const free_submodule<Z2> > sq1_im = sq1.image ();
+	  multivariate_laurentpoly<Z> sq1_im_P = sq1_im->free_poincare_polynomial ();
+	  
+	  pair<pair<knot_desc,
+		    map<grading, basedvector<int, 1> > > &,
+	       bool> p2 = P_sq1_knot_st.find (pair<multivariate_laurentpoly<Z>,
+					           multivariate_laurentpoly<Z> > (P, sq1_im_P));
+	  if (p2.second)
+	    {
+	      if (p2.first.second != st)
+		{
+		  printf ("DIFFER:\n");
+		  printf ("hwidth = %d\n", hwidth);
+
+		  show (p2.first.first);
+		  display_st (p2.first.second);
+		  
+		  show (desc);
+		  display_st (st);
+		  
+		  printf ("Kh[");
+		  planar_diagram (p2.first.first.diagram ()).show_knottheory ();
+		  printf (", Modulus -> Null][q,t] === Kh[");
+		  planar_diagram (desc.diagram ()).show_knottheory ();
+		  printf (", Modulus -> Null][q,t]\n");
+		}
+	    }
+	  else
+	    {
+	      p2.first.first = desc;
+	      p2.first.second = st;
+	    }
+	}
+    }
+}
+
+void
 test_knot_sq ()
 {
   const char *knot_sq_files[] = {
@@ -923,6 +1035,7 @@ test_knot_sq ()
     "knot_sq/K13_sq.dat.gz",
 #if 0
     "knot_sq/K14_sq.dat.gz",
+    "knot_sq/K15_sq_part.dat.gz",
     "knot_sq/Lsmall_sq.dat.gz",
     "knot_sq/L11_sq.dat.gz",
     "knot_sq/L12_sq.dat.gz",
@@ -1120,6 +1233,56 @@ test_knot_sq ()
   printf ("compared = %d\n", compared);
 }
 
+bool
+file_exists (const char *buf)
+{
+  struct stat stat_buf;
+  if (stat (buf, &stat_buf) != 0)
+    {
+      if (errno == ENOENT)
+	return 0;
+      
+      stderror ("stat: %s", buf);
+      exit (EXIT_FAILURE);
+    }
+  
+  return 1;
+}
+
+void
+convert_mut15 ()
+{
+  hashmap<knot_desc,
+	  pair<mod_map<Z2>, mod_map<Z2> > > knot15_sq_part;
+  
+  basedvector<basedvector<unsigned, 1>, 1> groups = mutant_knot_groups (15);
+  for (unsigned i = 1; i <= groups.size (); i ++)
+    {
+      for (unsigned j = 1; j <= groups[i].size (); j ++)
+	{
+	  knot_desc desc (knot_desc::HTW, i, groups[i][j]);
+	  
+	  char buf[1000];
+	  sprintf (buf, "/u/cseed/mut15.bak/K15_%d.dat.gz", groups[i][j]);
+	  
+	  if (file_exists (buf))
+	    {
+	      gzfile_reader r (buf);
+	      
+	      mod_map<Z2> sq1 (r);
+	      mod_map<Z2> sq2 (r);
+	      knot15_sq_part.push (desc,
+				   pair<mod_map<Z2>, mod_map<Z2> > (sq1, sq2));
+	    }
+	}
+    }
+  
+  printf ("|knot15_sq_part| = %d\n", knot15_sq_part.card ());
+  
+  gzfile_writer w ("/u/cseed/src/knotkit/knot_sq/K15_sq_part.dat.gz");
+  write (w, knot15_sq_part);
+}
+
 void
 compute_mutant_mirrors ()
 {
@@ -1280,8 +1443,12 @@ convert_mknots ()
 int
 main ()
 {
-  compute_mutant_mirrors ();
+  convert_mut15 ();
   return 0;
+  
+  test_kh_htt_stronger ();
+  
+  compute_mutant_mirrors ();
   
   test_knot_sq ();
   convert_mknots ();
