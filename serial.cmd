@@ -1,5 +1,5 @@
 # serial job
-#PBS -l nodes=1:ppn=1,walltime=96:00:00
+#PBS -l nodes=1:ppn=1,walltime=4:00:00
 # xxx PBS -l mem=80gb
 #
 # sends mail if the process aborts, when it begins, and
