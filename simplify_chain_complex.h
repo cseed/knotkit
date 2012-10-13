@@ -63,7 +63,7 @@ class chain_complex_simplifier
  public:
   chain_complex_simplifier (ptr<const module<R> > C_,
 			    const mod_map<R> &d_,
-			    int dh);
+			    int dq);
   
 };
 
@@ -145,7 +145,7 @@ chain_complex_simplifier<R>::cancel (unsigned i, R b, unsigned j)
 template<class R>
 chain_complex_simplifier<R>::chain_complex_simplifier (ptr<const module<R> > C_,
 						       const mod_map<R> &d_,
-						       int dh)
+						       int dq)
   : C(C_), n(C_->dim ()), d(d_),
     new_d_columns(n),
     preim(n),
@@ -172,9 +172,8 @@ chain_complex_simplifier<R>::chain_complex_simplifier (ptr<const module<R> > C_,
       for (linear_combination_const_iter<R> j = new_d_columns[i]; j; j ++)
 	{
 	  grading jgr = C->generator_grading (j.key ());
-	  // assert (jgr.h >= igr.h);
 	  if (j.val ().is_unit ()
-	      // && jgr.h - igr.h == dh
+	      && jgr.q - igr.q == dq
 	      )
 	    {
 	      cancel (i, j.val (), j.key ());

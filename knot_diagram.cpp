@@ -22,7 +22,7 @@ knot_diagram::knot_diagram (const planar_diagram &pd)
       crossings[c] = basedvector<unsigned, 1> (4);
     }
 
-  smallbitset done (num_edges ());
+  set<unsigned> done;
   for (unsigned c0 = 1; c0 <= n_crossings; c0 ++)
     {
       for (unsigned i0 = 1; i0 <= 2; i0 ++)
@@ -519,6 +519,63 @@ knot_diagram::rotate_crossing (unsigned c)
       unsigned p = crossings[c][j];
       ept_index[p] = j;
     }
+}
+
+unsigned
+knot_diagram::total_linking_number () const
+{
+  unionfind<1> u (num_edges ());
+  
+  for (unsigned i = 1; i <= n_crossings; i ++)
+    {
+      u.join (ept_edge (crossings[i][1]),
+	      ept_edge (crossings[i][3]));
+      u.join (ept_edge (crossings[i][2]),
+	      ept_edge (crossings[i][4]));
+    }
+  unsigned n = u.num_sets ();
+  
+  map<unsigned, unsigned> root_comp;
+  unsigned t = 0;
+  for (unsigned i = 1; i <= num_edges (); i ++)
+    {
+      if (u.find (i) == i)
+	{
+	  ++ t;
+	  root_comp.push (i, t);
+	}
+    }
+  assert (t == n);
+  
+  unsigned total_lk = 0;
+  
+  for (unsigned i = 1; i <= n; i ++)
+    for (unsigned j = i + 1; j <= n; j ++)
+      {
+	if (i == j)
+	  continue;
+	
+	int lk = 0;
+	for (unsigned x = 1; x <= n_crossings; x ++)
+	  {
+	    unsigned r1 = root_comp(u.find (ept_edge (crossings[x][1]))),
+	      r2 = root_comp(u.find (ept_edge (crossings[x][2])));
+	    if (((r1 == i) && (r2 == j))
+		|| ((r2 == i) && (r1 == j)))
+	      {	
+		if (is_to_ept (crossings[x][1]) == is_to_ept (crossings[x][4]))
+		  lk ++;
+		else
+		  lk --;
+	      }
+	  }
+	assert (is_even (lk));
+	lk /= 2;
+	
+	total_lk += std::abs (lk);
+      }
+  
+  return total_lk;
 }
 
 knot_diagram::knot_diagram (connect_sum,

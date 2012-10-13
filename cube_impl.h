@@ -364,6 +364,13 @@ cube<R>::compute_dinv (unsigned c)
     {
       if (!unsigned_bittest (i, c))
 	continue;
+
+      int sign = 1;
+      for (unsigned j = 1; j < c; j ++)
+	{
+	  if (unsigned_bittest (i, j))
+	    sign *= -1;
+	}
       
       smoothing from_s (kd, smallbitset (n_crossings, i));
       
@@ -398,12 +405,12 @@ cube<R>::compute_dinv (unsigned c)
 		  j2 = unsigned_bitset (j2, x);
 		  j2 = unsigned_bitclear (j2, y);
 		  
-		  p[generator (i, j)].muladd (1, generator (i2, j2));
+		  p[generator (i, j)].muladd (sign, generator (i2, j2));
 		  
 		  j2 = unsigned_bitclear (j2, x);
 		  j2 = unsigned_bitset (j2, y);
 		  
-		  p[generator (i, j)].muladd (1, generator (i2, j2));
+		  p[generator (i, j)].muladd (sign, generator (i2, j2));
 		}
 	      else
 		{
@@ -411,7 +418,7 @@ cube<R>::compute_dinv (unsigned c)
 		  j2 = unsigned_bitclear (j2, x);
 		  j2 = unsigned_bitclear (j2, y);
 		  
-		  p[generator (i, j)].muladd (1, generator (i2, j2));
+		  p[generator (i, j)].muladd (sign, generator (i2, j2));
 		}
 	    }
 	  else
@@ -425,7 +432,7 @@ cube<R>::compute_dinv (unsigned c)
 		  // 1 -> 1
 		  j2 = unsigned_bitset (j2, x);
 		  
-		  p[generator (i, j)].muladd (1, generator (i2, j2));
+		  p[generator (i, j)].muladd (sign, generator (i2, j2));
 		}
 	      else if ((unsigned_bittest (j, a)
 			&& !unsigned_bittest (j, b))
@@ -435,7 +442,7 @@ cube<R>::compute_dinv (unsigned c)
 		  // a, b -> x
 		  j2 = unsigned_bitclear (j2, x);
 		  
-		  p[generator (i, j)].muladd (1, generator (i2, j2));
+		  p[generator (i, j)].muladd (sign, generator (i2, j2));
 		}
 	    }
 	}

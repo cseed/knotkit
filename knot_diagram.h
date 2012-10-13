@@ -157,6 +157,8 @@ class knot_diagram
   
   int writhe () const { return (int)nplus - (int)nminus; }
   
+  unsigned total_linking_number () const;
+  
   basedvector<basedvector<int, 1>, 1> planar_diagram_crossings () const;
   
   hash_t hash_self () const;
