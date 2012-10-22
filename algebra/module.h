@@ -63,7 +63,12 @@ class module : public refcounted
     if (i <= free_rank ())
       return c == 0;
     else
-      return generator_ann (i) | c;
+      {
+	// ???
+	abort ();
+	
+	// return generator_ann (i) | c;
+      }
   }
   
   R annihilator (R c, unsigned i) const
@@ -1853,7 +1858,15 @@ mod_map<R>::kernel () const
 	  linear_combination<R> &to_x = to_xs[j],
 	    &from_x = from_xs[j];
 	  R to_xc = to_x(i);
-	  if (! (to_vc | to_xc))
+	  if (to_xc == 0)
+	    continue;
+	  
+	  if (to_vc == 0 && to_xc != 0)
+	    {
+	      to_v += to_x;
+	      from_v += from_x;
+	    }
+	  else if (! (to_vc | to_xc))
 	    {
 	      tuple<R, R, R> t = to_vc.extended_gcd (to_xc);
 	      assert (get<0> (t) == to_vc*get<1> (t) + get<2> (t)*to_xc);
@@ -1959,8 +1972,14 @@ mod_span<R>::mod_span (ptr<const module<R> > mod,
 	  
 	  linear_combination<R> &x = xs[j];
 	  R xc = x(i);
+	  if (xc == 0)
+	    continue;
 	  
-	  if (! (vc | xc))
+	  if (vc == 0)
+	    {
+	      v += x;
+	    }
+	  else if (! (vc | xc))
 	    {
 	      tuple<R, R, R> t = vc.extended_gcd (xc);
 	      assert (get<0> (t) == vc*get<1> (t) + get<2> (t)*xc);

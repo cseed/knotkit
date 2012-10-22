@@ -67,7 +67,7 @@ public:
   
   polynomial recip () const
   {
-    assert (coeffs.card () != 1);
+    assert (coeffs.card () == 1);
     
     pair<unsigned, T> p = coeffs.head ();
     assert (p.first == 0);
@@ -134,13 +134,16 @@ public:
   polynomial operator * (const polynomial &p) const;
   
   bool divides (const polynomial &num) const;
+  
+  // *this | num
   bool operator | (const polynomial &num) const { return divides (num); }
   
   tuple<polynomial, polynomial> divide_with_remainder (const polynomial &denom) const;
   
   polynomial mod (const polynomial &denom) const;
-  
+
   polynomial divide_exact (const polynomial &denom) const;
+  polynomial div (const polynomial &denom) const { return divide_exact (denom); }
   
   polynomial gcd (const polynomial &b) const;
   polynomial lcm (const polynomial &b) const;
@@ -392,14 +395,14 @@ class polynomial<Z2>
   
  public:
   polynomial () { }
-  explicit polynomial (int x)
+  polynomial (int x)
   {
     Z2 c (x);
     if (c != 0)
       coeffs.push (0);
   }
   
-  explicit polynomial (Z2 c)
+  polynomial (Z2 c)
   {
     if (c != 0)
       coeffs.push (0);
@@ -450,6 +453,17 @@ class polynomial<Z2>
   bool operator != (int x) const { return !operator == (x); }
   
   unsigned degree () const { return coeffs.tail (); }
+  bool is_unit () const
+  {
+    return coeffs.card () == 1
+      && coeffs.head () == 0;
+  }
+  
+  polynomial recip () const
+  {
+    assert (is_unit ());
+    return 1;
+  }
   
   polynomial &operator += (polynomial p) { coeffs ^= p.coeffs; return *this; }
   polynomial &operator -= (polynomial p) { coeffs ^= p.coeffs; return *this; }

@@ -166,7 +166,7 @@ cube<R>::compute_map (unsigned dh, unsigned max_n,
 			continue;
 		      assert (!unsigned_bittest (v_to, p));
 		    }
-
+		  
 		  b[generator (fromstate, v_from)].muladd
 		    (sign, generator (tostate, v_to));
 		}
@@ -302,7 +302,7 @@ cube<R>::compute_X (unsigned p) const
 template<class R> mod_map<R>
 cube<R>::H_i (unsigned c)
 {
-  mod_map<R> b (khC, 0);
+  map_builder<R> b (khC, 0);
   for (unsigned i = 0; i < n_resolutions; i ++)
     {
       if (unsigned_bittest (i, c))
@@ -319,6 +319,14 @@ cube<R>::H_i (unsigned c)
       
       unsigned from = from_s.crossing_from_circle (kd, c),
 	to = from_s.crossing_to_circle (kd, c);
+      
+      int sign = 1;
+      for (unsigned j = 1; j < c; j ++)
+        {
+          if (unsigned_bittest (i, j))
+            sign *= -1;
+        }
+      
       for (unsigned j = 0; j < from_s.num_monomials (); j ++)
 	{
 	  unsigned j2 = 0;
@@ -336,7 +344,7 @@ cube<R>::H_i (unsigned c)
 				    to_s.crossing_from_circle (kd, c));
 	      j2 = unsigned_bitset (j2,
 				    to_s.crossing_to_circle (kd, c));
-	      v.muladd (1, generator (i2, j2));
+	      v.muladd (-sign, generator (i2, j2));
 	    }
 	  else if (from != to
 		   && !unsigned_bittest (j, from)
@@ -344,7 +352,7 @@ cube<R>::H_i (unsigned c)
 	    {
 	      assert (! unsigned_bittest (j2,
 					  to_s.crossing_from_circle (kd, c)));
-	      v.muladd (1, generator (i2, j2));
+	      v.muladd (sign, generator (i2, j2));
 	    }
 	}
     }

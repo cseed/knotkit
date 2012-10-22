@@ -219,7 +219,8 @@ class multivariate_laurentpoly
   
   multivariate_laurentpoly (const multivariate_laurentpoly &p) : coeffs(p.coeffs) { }
   multivariate_laurentpoly (copy, const multivariate_laurentpoly &p)
-    : coeffs(COPY2, p.coeffs)
+    // ??? COPY2?
+    : coeffs(COPY, p.coeffs)
   {
   }
 

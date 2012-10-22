@@ -850,18 +850,104 @@ test_forgetful_ss ()
 }
 
 void
-test_forgetful_signs ()
+compute_forgetful_torsion ()
 {
-  typedef Zp<97> R;
+  typedef polynomial<Zp<2> > R;
   
-#if 0
-  for (unsigned i = 1; i <= 14; i ++)
+  for (unsigned i = 1; i <= 12; i ++)
     for (unsigned j = 1; j <= mt_links (i, 0); j ++)
       {
 	knot_diagram kd (mt_link (i, 0, j));
-      }
+	unsigned n = kd.num_components ();
+	if (n != 2)
+	  continue;
+	
+	show (kd); newline ();
+	
+	unionfind<1> u (kd.num_edges ());
+	for (unsigned i = 1; i <= kd.n_crossings; i ++)
+	  {
+	    u.join (kd.ept_edge (kd.crossings[i][1]),
+		    kd.ept_edge (kd.crossings[i][3]));
+	    u.join (kd.ept_edge (kd.crossings[i][2]),
+		    kd.ept_edge (kd.crossings[i][4]));
+	  }
+	
+	map<unsigned, unsigned> root_comp;
+	unsigned t = 0;
+	for (unsigned i = 1; i <= kd.num_edges (); i ++)
+	  {
+	    if (u.find (i) == i)
+	      {
+		++ t;
+		root_comp.push (i, t);
+	      }
+	  }
+	assert (t == n);
+	
+	cube<R> c (kd);
+#if 0
+	for (unsigned i = 0; i < c.n_resolutions; i ++)
+	  {
+	    smallbitset state (kd.n_crossings, i);
+	    smoothing s (kd, state);
+	    s.show_self (kd, state);
+	    newline ();
+	  }
 #endif
+	
+	mod_map<R> untwisted_d = c.compute_d (1, 0, 0, 0, 0);
+	assert (untwisted_d.compose (untwisted_d) == 0);
+	
+	mod_map<R> d = untwisted_d;
+	for (unsigned x = 1; x <= kd.n_crossings; x ++)
+	  {
+	    unsigned r1 = u.find (kd.ept_edge (kd.crossings[x][1])),
+	      r2 = u.find (kd.ept_edge (kd.crossings[x][2]));
+	    
+	    if (r1 != r2)
+	      d = d + c.compute_dinv (x)*(R (1, 1));
+	  }
+	
+#if 0
+	mod_map<R> h = d.compose (d);
+	display ("h:\n", h);
+#endif
+	
+	assert (d.compose (d) == 0);
+	
+	// display ("d:\n", d);
+	
+	chain_complex_simplifier<R> s (c.khC, d, 0);
+	printf ("|s.new_C| = %d\n", s.new_C->dim ());
+	display ("s.new_d:\n", s.new_d);
+	
+#if 0
+	ptr<const free_submodule<R> > ker = s.new_d.kernel ();
+	printf ("|ker| = %d\n", ker->dim ());
+	
+	ptr<const free_submodule<R> > im = s.new_d.image ();
+	printf ("|im| = %d\n", im->dim ());
+#endif
+	
+	ptr<const module<R> > H = s.new_d.homology ();
+	display ("H:\n", *H);
+	// printf ("dim H = %d, free rank H = %d\n", H->dim (), H->free_rank ());
+      }
+}
+
+void
+test_forgetful_signs ()
+{
+  typedef Q R;
+  
 #if 1
+  for (unsigned i = 1; i <= 14; i ++)
+    for (unsigned j = 1; j <= mt_links (i, 1); j ++)
+      {
+	knot_diagram kd (mt_link (i, 1, j));
+#endif
+#if 0
   for (unsigned i = 2; i <= 16; i ++)
     for (unsigned j = i; j <= 16; j ++)
       {
@@ -870,6 +956,7 @@ test_forgetful_signs ()
 		&& kd.n_crossings <= i * (j - 1));
 	if (kd.n_crossings > 13)
 	  continue;
+      }
 #endif
 	
 	unsigned n = kd.num_components ();
@@ -1023,6 +1110,110 @@ test_forgetful_signs ()
 	
 	if (trivial_bound < kinf)
          printf (" > BETTER\n");
+      }
+}
+
+void
+compute_lee_bound ()
+{
+  typedef Z2 R;
+  
+#if 0
+  for (unsigned i = 2; i <= 16; i ++)
+    for (unsigned j = i; j <= 16; j ++)
+      {
+	knot_diagram kd (torus_knot (i, j));
+	assert (kd.n_crossings == (i - 1) * j
+		&& kd.n_crossings <= i * (j - 1));
+	if (kd.n_crossings > 13)
+	  continue;
+      }
+#endif
+#if 1
+  for (unsigned i = 1; i <= 10; i ++)
+    for (unsigned j = 1; j <= rolfsen_crossing_knots (i); j ++)
+      {
+	knot_diagram kd (rolfsen_knot (i, j));
+#endif
+	
+	show (kd); newline ();
+	
+	cube<R> c (kd);
+#if 0
+	for (unsigned i = 0; i < c.n_resolutions; i ++)
+	  {
+	    smallbitset state (kd.n_crossings, i);
+	    smoothing s (kd, state);
+	    s.show_self (kd, state);
+	    newline ();
+	  }
+#endif
+	
+	mod_map<R> d = c.compute_d (1, 0, 0, 0, 0);
+	assert (d.compose (d) == 0);
+	
+	for (unsigned x = 1; x <= kd.n_crossings; x ++)
+	  d = d + c.H_i (x);
+	
+	assert (d.compose (d) == 0);
+	
+	ptr<const module<R> > Ek = c.khC;
+	mod_map<R> dk = d;
+	
+	unsigned kinf;
+	for (int dq = 0;; dq += 2)
+	  {
+	    chain_complex_simplifier<R> s (Ek, dk, dq);
+	    Ek = s.new_C;
+	    dk = s.new_d;
+	    
+	    printf ("|E%d| = %d\n", (dq / 2) + 1, Ek->dim ());
+	    if (dk == 0)
+	      {
+		kinf = (dq / 2);
+		break;
+	      }
+	  }
+	
+	printf ("kinf = %d\n", kinf);
+      }
+}
+
+void
+test_crossing_ss ()
+{
+  typedef multivariate_laurentpoly<Z2> R;
+  
+  for (unsigned i = 1; i <= 14; i ++)
+    for (unsigned j = 1; j <= htw_knots (i); j ++)
+      {
+	knot_diagram kd (htw_knot (i, j));
+	show (kd); newline ();
+	
+	cube<R> c (kd);
+#if 0
+	for (unsigned i = 0; i < c.n_resolutions; i ++)
+	  {
+	    smallbitset state (kd.n_crossings, i);
+	    smoothing s (kd, state);
+	    s.show_self (kd, state);
+	    newline ();
+	  }
+#endif
+	
+	mod_map<R> untwisted_d = c.compute_d (1, 0, 0, 0, 0);
+	assert (untwisted_d.compose (untwisted_d) == 0);
+	
+	mod_map<R> d = untwisted_d;
+	for (unsigned x = 1; x <= kd.n_crossings; x ++)
+	  {
+	    d = d + c.compute_dinv (x)*(R (1, VARIABLE, x));
+	  }
+	
+	display ("d:\n", d);
+	
+	mod_map<R> h = d.compose (d);
+	display ("h:\n", h);
       }
 }
 
@@ -1752,11 +1943,137 @@ convert_15 ()
   write (w, knot15_sq);
 }
 
+void
+compare_gss_splitting ()
+{
+  typedef Z2 R;
+  
+#if 1
+  for (unsigned i = 1; i <= 14; i ++)
+    for (unsigned j = 1; j <= mt_links (i, 1); j ++)
+      {
+	knot_diagram kd (mt_link (i, 1, j));
+#endif
+	
+	unsigned n = kd.num_components ();
+	if (n < 2)
+	  continue;
+	
+	show (kd); newline ();
+	
+	unionfind<1> u (kd.num_edges ());
+	for (unsigned i = 1; i <= kd.n_crossings; i ++)
+	  {
+	    u.join (kd.ept_edge (kd.crossings[i][1]),
+		    kd.ept_edge (kd.crossings[i][3]));
+	    u.join (kd.ept_edge (kd.crossings[i][2]),
+		    kd.ept_edge (kd.crossings[i][4]));
+	  }
+	
+	map<unsigned, unsigned> root_comp;
+	unsigned t = 0;
+	for (unsigned i = 1; i <= kd.num_edges (); i ++)
+	  {
+	    if (u.find (i) == i)
+	      {
+		++ t;
+		root_comp.push (i, t);
+	      }
+	  }
+	assert (t == n);
+	
+	cube<R> c (kd);
+#if 1
+	for (unsigned i = 0; i < c.n_resolutions; i ++)
+	  {
+	    smallbitset state (kd.n_crossings, i);
+	    smoothing s (kd, state);
+	    s.show_self (kd, state);
+	    newline ();
+	  }
+#endif
+
+	printf ("inter-component x:\n");
+	mod_map<R> ds (c.khC);
+	for (unsigned x = 1; x <= kd.n_crossings; x ++)
+	  {
+	    unsigned p1 = kd.crossings[x][1],
+	      p2 = kd.crossings[x][2];
+	    unsigned r1 = u.find (kd.ept_edge (p1)),
+	      r2 = u.find (kd.ept_edge (p2));
+	    unsigned c1 = root_comp(r1),
+	      c2 = root_comp(r2);
+
+	    if (c1 != c2)
+	      {
+		printf ("  %d\n", x);
+		
+		ds = ds + c.compute_dinv (x);
+	      }
+	  }
+	
+	mod_map<R> d1 = c.compute_d (1, 0, 0, 0, 0);
+	assert (d1.compose (ds) == ds.compose (d1));
+
+	mod_map<R> d2 = c.compute_d (2, 0, 0, 0, 0);
+	mod_map<R> h2 = d2.compose (ds) + ds.compose (d2);
+	if (h2 != 0)
+	  display ("h2:\n", h2);
+	
+	mod_map<R> d3 = c.compute_d (3, 0, 0, 0, 0);
+	mod_map<R> h3 = d3.compose (ds) + ds.compose (d3);
+	if (h3 != 0)
+	  display ("h3:\n", h3);
+	
+	mod_map<R> d = c.compute_d (0, 0, 0, 0, 0);
+	mod_map<R> h = d.compose (ds) + ds.compose (d);
+	if (h != 0)
+	  display ("h:\n", h);
+      }
+}
+
 int
 main ()
 {
-  test_forgetful_signs ();
+  compute_lee_bound ();
   return 0;
+  
+  compare_gss_splitting ();
+  
+  {
+    knot_diagram kd (rolfsen_knot (3, 1));
+    cube<Q> c (kd);
+    mod_map<Q> d = c.compute_d (1, 0, 0, 0, 0);
+    chain_complex_simplifier<Q> s (c.khC, d, 0);
+    assert (s.new_d == 0);
+    display ("s.new_C:\n", *s.new_C);
+  }
+  return 0;
+  
+  test_forgetful_signs ();
+  
+  {
+    knot_diagram kd (torus_knot (2, 2));
+    printf ("n+ = %d, n- = %d\n", kd.nplus, kd.nminus);
+    cube<Z2> c (kd);
+    sseq ss = compute_szabo_sseq (c);
+    ss.texshow (stdout, "Hopf");
+  }
+  {
+    knot_diagram kd (MIRROR, knot_diagram (torus_knot (2, 2)));
+    printf ("n+ = %d, n- = %d\n", kd.nplus, kd.nminus);
+    cube<Z2> c (kd);
+    sseq ss = compute_szabo_sseq (c);
+    ss.texshow (stdout, "Hopf");
+  }
+  
+  return 0;
+  
+  compute_forgetful_torsion ();
+  return 0;
+  
+  test_forgetful_signs ();
+  test_crossing_ss ();
   
   find_width4_in_h0 ();
   // convert_15 ();

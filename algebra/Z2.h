@@ -41,6 +41,12 @@ class Z2
   Z2 &operator *= (const Z2 &x) { v &= x.v; return *this; }
   Z2 &operator /= (const Z2 &x) { assert (x.v); return *this; }
   
+  // *this += z1*z2
+  Z2 &muladdeq (const Z2 &z1, const Z2 &z2)
+  {
+    return operator += (z1 * z2);
+  }
+  
   bool divides (Z2 x) const { return v || !x.v; }
   bool operator | (const Z2 x) const { return divides (x); }
   
