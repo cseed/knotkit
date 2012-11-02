@@ -1113,6 +1113,183 @@ test_forgetful_signs ()
       }
 }
 
+template<class R> sseq
+compute_forgetfulss (knot_diagram &kd)
+{
+  unsigned n = kd.num_components ();
+
+	
+  unionfind<1> u (kd.num_edges ());
+  for (unsigned i = 1; i <= kd.n_crossings; i ++)
+    {
+      u.join (kd.ept_edge (kd.crossings[i][1]),
+	      kd.ept_edge (kd.crossings[i][3]));
+      u.join (kd.ept_edge (kd.crossings[i][2]),
+	      kd.ept_edge (kd.crossings[i][4]));
+    }
+	
+  map<unsigned, unsigned> root_comp;
+  unsigned t = 0;
+  for (unsigned i = 1; i <= kd.num_edges (); i ++)
+    {
+      if (u.find (i) == i)
+	{
+	  ++ t;
+	  root_comp.push (i, t);
+	}
+    }
+  assert (t == n);
+	
+  basedvector<R, 1> comp_weight (n);
+  for (unsigned i = 1; i <= n; i ++)
+    comp_weight[i] = R ((int)i);
+	
+  map<unsigned, R> crossing_over_sign;
+	
+  // crossings
+  set<unsigned> pending;
+  set<unsigned> finished;
+	
+  crossing_over_sign.push (1, R (1));
+  pending.push (1);
+  
+  while (pending.card () > 0)
+    {
+      unsigned x = pending.pop ();
+      finished.push (x);
+      
+      R s = crossing_over_sign(x);
+      
+      for (unsigned j = 1; j <= 4; j ++)
+	{
+	  unsigned p = kd.crossings[x][j];
+	  R t = kd.is_over_ept (p) ? s : -s;  // sign of (x, p)
+	  
+	  unsigned q = kd.edge_other_ept (p);
+	  unsigned x2 = kd.ept_crossing[q];
+	  
+	  R u = kd.is_over_ept (q) ? -t : t;
+	  
+	  if (crossing_over_sign % x2)
+	    assert (crossing_over_sign(x2) == u);
+	  else
+	    crossing_over_sign.push (x2, u);
+	  
+	  if (! (finished % x2))
+	    pending += x2;
+	}
+    }
+  assert (finished.card () == kd.n_crossings);
+  
+  cube<R> c (kd);
+#if 0
+  for (unsigned i = 0; i < c.n_resolutions; i ++)
+    {
+      smallbitset state (kd.n_crossings, i);
+      smoothing s (kd, state);
+      s.show_self (kd, state);
+      newline ();
+    }
+#endif
+  
+  mod_map<R> untwisted_d = c.compute_d (1, 0, 0, 0, 0);
+  assert (untwisted_d.compose (untwisted_d) == 0);
+	
+  mod_map<R> d = untwisted_d;
+  for (unsigned x = 1; x <= kd.n_crossings; x ++)
+    {
+      unsigned p1 = kd.crossings[x][1],
+	p2 = kd.crossings[x][2];
+      assert (kd.is_over_ept (p2));
+	    
+      unsigned r1 = u.find (kd.ept_edge (p1)),
+	r2 = u.find (kd.ept_edge (p2));
+	    
+      unsigned c1 = root_comp(r1),
+	c2 = root_comp(r2);
+	    
+      if (c1 != c2)
+	{
+	  R s = crossing_over_sign(x);
+		
+	  R w_under = comp_weight[c1];
+	  R w_over = comp_weight[c2];
+		
+	  d = d + c.compute_dinv (x)*(s*(w_over - w_under))
+	    ;
+	}
+    }
+  
+  assert (d.compose (d) == 0);
+  
+  ptr<const module<R> > C = c.khC;
+  // d
+  
+  int minh = 1000,
+    maxh = -1000,
+    minq = 1000,
+    maxq = -1000;
+  
+  for (unsigned i = 1; i <= C->dim (); i ++)
+    {
+      grading hq = C->generator_grading (i);
+      if (hq.h < minh)
+	minh = hq.h;
+      if (hq.h > maxh)
+	maxh = hq.h;
+      if (hq.q < minq)
+	minq = hq.q;
+      if (hq.q > maxq)
+	maxq = hq.q;
+    }
+  
+  sseq_bounds bounds (minh, maxh, minq, maxq);
+  
+  basedvector<sseq_page, 1> pages;
+  
+  for (unsigned dq = 0;;)
+    {
+      chain_complex_simplifier<R> s (C, d, dq);
+      C = s.new_C;
+      d = s.new_d;
+      
+      dq -= 2;
+      
+      sseq_page pg (bounds);
+      for (unsigned i = 1; i <= C->dim (); i ++)
+	{
+	  grading hq = C->generator_grading (i);
+	  pg.rank[hq.h - bounds.minh][hq.q - bounds.minq] ++;
+	}
+      pages.append (pg);
+      
+#if 0
+      mod_map<R> dk = d.graded_piece (grading (dq + 1, dq));
+      dk.check_grading (grading (dq + 1, dq));
+      
+      ptr<const free_submodule<R> > dk_im = dk.image ();
+      for (unsigned i = 1; i <= dk_im->dim (); i ++)
+	{
+	  grading hq = dk_im->generator_grading (i);
+	  pg.im_rank[hq.h - bounds.minh][hq.q - bounds.minq] ++;
+	}
+#endif
+      
+      printf ("E_%d: ", (-dq) / 2);
+      display (C->free_poincare_polynomial ());
+      
+      if (d == 0)
+	break;
+    }
+  
+#if 0
+  sseq_builder b (c.khC, d);
+  return b.build_sseq ();
+#endif
+  
+  return sseq (bounds, pages);
+}
+
 void
 compute_lee_bound ()
 {
@@ -2035,6 +2212,15 @@ compare_gss_splitting ()
 int
 main ()
 {
+  {
+    knot_diagram kd (mt_link (5, 1, 3));
+    show (kd); newline ();
+    
+    sseq ss = compute_forgetfulss<Q> (kd);
+    ss.texshow (stdout, "L5a3");
+  }
+  return 0;
+  
   compute_lee_bound ();
   return 0;
   

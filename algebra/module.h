@@ -976,6 +976,8 @@ class mod_map
   mod_map induced_map_to (ptr<const quotient_module<R> > new_to);
   mod_map induced_map (ptr<const quotient_module<R> > new_fromto);
   
+  mod_map graded_piece (grading hq) const;
+  
   // ???
   basedvector<linear_combination<R>, 1> explicit_columns () const;
   
@@ -1611,6 +1613,28 @@ mod_map<R>::induced_map (ptr<const quotient_module<R> > new_fromto)
   for (unsigned i = 1; i <= new_fromto->dim (); i ++)
     v[i] = new_fromto->project (map (new_fromto->generator_rep (i)));
   return new explicit_map_impl<R> (new_fromto, v);
+}
+
+template<class R> mod_map<R>
+mod_map<R>::graded_piece (grading hq) const
+{
+  basedvector<linear_combination<R>, 1> v (impl->from->dim ());
+  for (unsigned i = 1; i <= impl->from->dim (); i ++)
+    {
+      grading ihq = impl->from->generator_grading (i);
+      
+      linear_combination<R> c = column (i);
+      linear_combination<R> d (impl->to);
+      for (linear_combination_const_iter<R> j = c; j; j ++)
+	{
+	  grading jhq = impl->from->generator_grading (j.key ());
+	  if (jhq.h - ihq.h == hq.h
+	      && jhq.q - ihq.q == hq.q)
+	    d.muladd (j.val (), j.key ());
+	}
+      v[i] = d;
+    }
+  return mod_map (IMPL, new explicit_map_impl<R> (impl->from, impl->to, v));
 }
 
 template<class R> mod_map<R> 
