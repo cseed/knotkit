@@ -14,10 +14,10 @@ master ()
 {
   basedvector<knot_desc, 1> work;
   
-  for (unsigned i = 1; i <= 14; i ++)
-    for (unsigned j = 1; j <= mt_links (i, 0); j ++)
+  for (unsigned i = 1; i <= 10; i ++)
+    for (unsigned j = 1; j <= mt_links (i); j ++)
       {
-	knot_diagram kd (mt_links (i, 0, j));
+	knot_diagram kd (mt_links (i, j));
 	unsigned n = kd.num_components ();
 	if (n < 2)
 	  continue;
@@ -116,6 +116,7 @@ file_exists (const char *file)
   return 1;
 }
 
+#if 0
 void
 compute_forgetful (int rank, knot_desc desc, const char *buf)
 {
@@ -291,6 +292,215 @@ compute_forgetful (int rank, knot_desc desc, const char *buf)
   write (w, desc);
   write (w, pages);
 }
+#endif
+
+unsigned
+compute_b_lk_weak (knot_diagram &kd)
+{
+  unsigned m = kd.num_components ();
+  assert (m > 1);
+  
+  if (m == 2)
+    {
+      unsigned total_lk = kd.total_linking_number ();
+      return total_lk == 0 ? 2 : total_lk;
+    }
+  
+  unionfind<1> u (kd.num_edges ());
+  
+  for (unsigned i = 1; i <= kd.n_crossings; i ++)
+    {
+      u.join (kd.ept_edge (kd.crossings[i][1]),
+	      kd.ept_edge (kd.crossings[i][3]));
+      u.join (kd.ept_edge (kd.crossings[i][2]),
+	      kd.ept_edge (kd.crossings[i][4]));
+    }
+  assert (m == u.num_sets ());
+  
+  map<unsigned, unsigned> root_comp;
+  unsigned t = 0;
+  for (unsigned i = 1; i <= kd.num_edges (); i ++)
+    {
+      if (u.find (i) == i)
+	{
+	  ++ t;
+	  root_comp.push (i, t);
+	}
+    }
+  assert (t == m);
+  
+  unsigned b_lk_weak = 0;
+  
+  for (unsigned i = 1; i <= m; i ++)
+    for (unsigned j = i + 1; j <= m; j ++)
+      {
+	assert (i < j);
+	
+	int lk = 0;
+	for (unsigned x = 1; x <= kd.n_crossings; x ++)
+	  {
+	    unsigned r1 = root_comp(u.find (kd.ept_edge (kd.crossings[x][1]))),
+	      r2 = root_comp(u.find (kd.ept_edge (kd.crossings[x][2])));
+	    if (((r1 == i) && (r2 == j))
+		|| ((r2 == i) && (r1 == j)))
+	      {
+		if (kd.is_to_ept (kd.crossings[x][1]) == kd.is_to_ept (kd.crossings[x][4]))
+		  lk ++;
+		else
+		  lk --;
+	      }
+	  }
+	assert (is_even (lk));
+	lk /= 2;
+	
+	if (lk == 0)
+	  {
+	    smallbitset ci (m);
+	    ci.push (i);
+	    
+	    smallbitset cj (m);
+	    cj.push (j);
+	    
+	    smallbitset c (m);
+	    c.push (i);
+	    c.push (j);
+	    knot_diagram Lij (SUBLINK, c, kd);
+	    
+	    multivariate_laurentpoly<Z> P_Lij = Kh_poincare_polynomial<Z2> (Lij);
+	    
+	    knot_diagram Li_join_Lj (DISJOINT_UNION,
+				     knot_diagram (SUBLINK, ci, kd),
+				     knot_diagram (SUBLINK, cj, kd));
+	    
+	    multivariate_laurentpoly<Z> P_Li_join_Lj = Kh_poincare_polynomial<Z2> (Li_join_Lj);
+	    
+	    if (P_Lij != P_Li_join_Lj)
+	      lk = 2;  // non-split
+	  }
+	
+	b_lk_weak += abs (lk);
+      }
+  
+  return b_lk_weak == 0 ? 2 : b_lk_weak;
+}
+
+void
+compute_splitting_bounds (knot_diagram &kd)
+{
+  int rank = self_rank ();
+  
+  typedef fraction_field<polynomial<Z2> > Z2x;
+  
+  unsigned m = kd.num_components ();
+  assert (m > 1);
+	
+  printf ("[% 2d] ", rank); show (kd); newline ();
+  printf ("[% 2d]  m = %d\n", rank, m);
+  
+  unionfind<1> u (kd.num_edges ());
+  
+  for (unsigned i = 1; i <= kd.n_crossings; i ++)
+    {
+      u.join (kd.ept_edge (kd.crossings[i][1]),
+	      kd.ept_edge (kd.crossings[i][3]));
+      u.join (kd.ept_edge (kd.crossings[i][2]),
+	      kd.ept_edge (kd.crossings[i][4]));
+    }
+  assert (u.num_sets () == m);
+  
+  map<unsigned, unsigned> root_comp;
+  unsigned t = 0;
+  for (unsigned i = 1; i <= kd.num_edges (); i ++)
+    {
+      if (u.find (i) == i)
+	{
+	  ++ t;
+	  root_comp.push (i, t);
+	}
+    }
+  assert (t == m);
+  
+  basedvector<Q, 1> comp_weightQ (m);
+  for (unsigned i = 1; i <= m; i ++)
+    comp_weightQ[i] = Q (i);
+  unsigned bQ = splitting_bound<Q> (kd, comp_weightQ);
+  
+  basedvector<Z2x, 1> comp_weightZ2x (m);
+  for (unsigned i = 1; i <= m; i ++)
+    comp_weightZ2x[i] = Z2x (polynomial<Z2> (Z2 (1), i));
+  unsigned bZ2x = splitting_bound<Z2x> (kd, comp_weightZ2x);
+  
+  // lower bound
+  unsigned b = std::max (bQ, bZ2x);
+  
+  printf ("[% 2d] bQ = %d\n", rank, bQ);
+  printf ("[% 2d] bZ2x = %d\n", rank, bZ2x);
+  printf ("[% 2d] b = %d\n", rank, b);
+  
+  
+  unsigned total_lk = kd.total_linking_number ();
+  unsigned b_lk_weaker = total_lk == 0 ? 2 : total_lk;
+  
+  unsigned b_lk_weak = compute_b_lk_weak (kd);
+  assert (b_lk_weaker <= b_lk_weak);
+  
+  printf ("[% 2d] b_lk_weaker = %d\n", rank, b_lk_weaker);
+  printf ("[% 2d] b_lk_weak = %d\n", rank, b_lk_weak);
+  
+  if (b_lk_weaker < b_lk_weak)
+    printf ("[% 2d] > STRICTLY WEAKER\n", rank);
+  
+  basedvector<basedvector<unsigned, 1>, 1> ps = permutations (m);
+  unsigned r = kd.n_crossings;
+  for (unsigned i = 1; i <= ps.size (); i ++)
+    {
+      basedvector<unsigned, 1> p = ps[i];
+	    
+      unsigned ri = 0;
+      for (unsigned j = 1; j <= kd.n_crossings; j ++)
+	{
+	  unsigned upper_e = kd.ept_edge (kd.crossings[j][2]),
+	    lower_e = kd.ept_edge (kd.crossings[j][1]);
+		
+	  unsigned upper_c = root_comp(u.find (upper_e)),
+	    lower_c = root_comp(u.find (lower_e));
+		
+	  if (upper_c != lower_c
+	      && p[upper_c] < p[lower_c])
+	    ri ++;
+	}
+	    
+      if (ri < r)
+	r = ri;
+    }
+  printf ("[% 2d] r = %d\n", rank, r);
+  
+  assert (b_lk_weak <= r);
+  assert (b <= r);
+  
+  // non-trivial link, sp at least 1.
+  unsigned best = std::max (b, b_lk_weak);
+  
+  if (best == r)
+    printf ("[% 2d] > sp = %d", rank, r);
+  else
+    printf ("[% 2d] > %d <= sp <= %d", rank, best, r);
+  
+  printf (" ");
+  
+  if (b == best
+      && b_lk_weak == best)
+    printf ("(b + b_lk_weak)");
+  else if (b == best)
+    printf ("(b)");
+  else
+    {
+      assert (b_lk_weak == best);
+      printf ("(b_lk_weak)");
+    }
+  
+  fflush (stdout);
+}
 
 void
 slave ()
@@ -311,15 +521,8 @@ slave ()
 	    
 	    printf ("[% 2d] CMD_DO %s\n", rank, desc.name ().c_str ());
 	    
-	    assert (desc.t == knot_desc::MT);
-	    char buf[1000];
-	    sprintf (buf, "/scratch/network/cseed/forgetful/L%d_%d.dat.gz",
-		     desc.i, desc.j);
-	    
-	    if (! file_exits ())
-	      compute_forgetful (rank, desc, buf);
-	    else
-	      printf ("skip %s: exists.\n", buf);
+	    knot_diagram kd = desc.diagram ();
+	    compute_splitting_bounds (kd);
 	    
 	    send_int (0, 0);
 	  }

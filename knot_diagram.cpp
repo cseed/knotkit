@@ -454,6 +454,60 @@ knot_diagram::knot_diagram (sublink,
   calculate_nminus_nplus ();
 }
 
+knot_diagram::knot_diagram (disjoint_union,
+			    const knot_diagram &kd1,
+			    const knot_diagram &kd2)
+  : name(kd1.name + "+" + kd2.name),
+    n_crossings(kd1.n_crossings + kd2.n_crossings),
+    marked_edge(0),
+    crossings(n_crossings),
+    nminus(kd1.nminus + kd2.nminus),
+    nplus(kd1.nplus + kd2.nplus)
+{
+  assert (kd1.marked_edge == 0);
+  assert (kd2.marked_edge == 0);
+  
+  for (unsigned i = 1; i <= n_crossings; i ++)
+    crossings[i] = basedvector<unsigned, 1> (4);
+  
+  for (unsigned i = 1; i <= kd1.n_crossings; i ++)
+    for (unsigned j = 1; j <= 4; j ++)
+      crossings[i][j] = kd1.crossings[i][j];
+  
+  for (unsigned e = 1; e <= kd1.num_edges (); e ++)
+    {
+      if (kd1.edge_smoothing_oriented % e)
+	edge_smoothing_oriented.push (e);
+    }
+  
+  for (unsigned i = 1; i <= kd2.n_crossings; i ++)
+    for (unsigned j = 1; j <= 4; j ++)
+      crossings[kd1.n_crossings + i][j] = kd1.num_epts () + kd2.crossings[i][j];
+  
+  for (unsigned e = 1; e <= kd2.num_edges (); e ++)
+    {
+      if (kd2.edge_smoothing_oriented % e)
+	edge_smoothing_oriented.push (kd1.num_edges () + e);
+    }
+  
+  // ?? break this out into aux function
+  ept_crossing = basedvector<unsigned, 1> (num_epts ());
+  ept_index = basedvector<unsigned, 1> (num_epts ());
+  for (unsigned i = 1; i <= n_crossings; i ++)
+    {
+      for (unsigned j = 1; j <= 4; j ++)
+	{
+	  unsigned p = crossings[i][j];
+	  ept_crossing[p] = i;
+	  ept_index[p] = j;
+	}
+    }
+  
+#ifndef NDEBUG
+  check_crossings ();
+#endif
+}
+
 knot_diagram::knot_diagram (mirror, const knot_diagram &kd)
   : name("mirror(" + kd.name + ")"),
     n_crossings(kd.n_crossings),

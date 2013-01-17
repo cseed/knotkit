@@ -2262,6 +2262,106 @@ permutations (unsigned n)
   return permutations (v);
 }
 
+template<class R> multivariate_laurentpoly<Z>
+Kh_poincare_polynomial (knot_diagram &kd)
+{
+  cube<R> c (kd);
+  mod_map<R> d = c.compute_d (1, 0, 0, 0, 0);
+  chain_complex_simplifier<R> s (c.khC, d, 0);
+  assert (s.new_d == 0);
+  return s.new_C->free_poincare_polynomial ();
+}
+
+unsigned
+compute_b_lk_weak (knot_diagram &kd)
+{
+  unsigned m = kd.num_components ();
+  assert (m > 1);
+  
+  if (m == 2)
+    {
+      unsigned total_lk = kd.total_linking_number ();
+      return total_lk == 0 ? 2 : total_lk;
+    }
+  
+  unionfind<1> u (kd.num_edges ());
+  
+  for (unsigned i = 1; i <= kd.n_crossings; i ++)
+    {
+      u.join (kd.ept_edge (kd.crossings[i][1]),
+	      kd.ept_edge (kd.crossings[i][3]));
+      u.join (kd.ept_edge (kd.crossings[i][2]),
+	      kd.ept_edge (kd.crossings[i][4]));
+    }
+  assert (m == u.num_sets ());
+  
+  map<unsigned, unsigned> root_comp;
+  unsigned t = 0;
+  for (unsigned i = 1; i <= kd.num_edges (); i ++)
+    {
+      if (u.find (i) == i)
+	{
+	  ++ t;
+	  root_comp.push (i, t);
+	}
+    }
+  assert (t == m);
+  
+  unsigned b_lk_weak = 0;
+  
+  for (unsigned i = 1; i <= m; i ++)
+    for (unsigned j = i + 1; j <= m; j ++)
+      {
+	assert (i < j);
+	
+	int lk = 0;
+	for (unsigned x = 1; x <= kd.n_crossings; x ++)
+	  {
+	    unsigned r1 = root_comp(u.find (kd.ept_edge (kd.crossings[x][1]))),
+	      r2 = root_comp(u.find (kd.ept_edge (kd.crossings[x][2])));
+	    if (((r1 == i) && (r2 == j))
+		|| ((r2 == i) && (r1 == j)))
+	      {
+		if (kd.is_to_ept (kd.crossings[x][1]) == kd.is_to_ept (kd.crossings[x][4]))
+		  lk ++;
+		else
+		  lk --;
+	      }
+	  }
+	assert (is_even (lk));
+	lk /= 2;
+	
+	if (lk == 0)
+	  {
+	    smallbitset ci (m);
+	    ci.push (i);
+	    
+	    smallbitset cj (m);
+	    cj.push (j);
+	    
+	    smallbitset c (m);
+	    c.push (i);
+	    c.push (j);
+	    knot_diagram Lij (SUBLINK, c, kd);
+	    
+	    multivariate_laurentpoly<Z> P_Lij = Kh_poincare_polynomial<Z2> (Lij);
+	    
+	    knot_diagram Li_join_Lj (DISJOINT_UNION,
+				     knot_diagram (SUBLINK, ci, kd),
+				     knot_diagram (SUBLINK, cj, kd));
+	
+	    multivariate_laurentpoly<Z> P_Li_join_Lj = Kh_poincare_polynomial<Z2> (Li_join_Lj);
+	    
+	    if (P_Lij != P_Li_join_Lj)
+	      lk = 2;  // non-split
+	  }
+	
+	b_lk_weak += abs (lk);
+      }
+  
+  return b_lk_weak == 0 ? 2 : b_lk_weak;
+}
+
 void
 compute_splitting_bounds ()
 {
@@ -2319,25 +2419,18 @@ compute_splitting_bounds ()
 	printf ("  b = %d\n", b);
 	
 	unsigned total_lk = kd.total_linking_number ();
-	unsigned b_lk_weak = total_lk == 0 ? 2 : total_lk;
 	
+	unsigned b_lk_weak = compute_b_lk_weak (kd);
+	unsigned b_lk_weaker = total_lk == 0 ? 2 : total_lk;
+	
+	printf ("  b_lk_weaker = %d\n", b_lk_weaker);
 	printf ("  b_lk_weak = %d\n", b_lk_weak);
 	
-	basedvector<basedvector<unsigned, 1>, 1> ps = permutations (m);
-#if 0
-	printf ("ps, |ps| = %d, m = %d:\n", ps.size (), m);
-	for (unsigned i = 1; i <= ps.size (); i ++)
-	  {
-	    basedvector<unsigned, 1> p = ps[i];
-	    assert (p.size () == m);
-	    
-	    printf (" % 3d: ", i);
-	    for (unsigned j = 1; j <= m; j ++)
-	      printf (" %d", p[j]);
-	    newline ();
-	  }
-#endif
+	assert (b_lk_weaker <= b_lk_weak);
+	if (b_lk_weaker < b_lk_weak)
+	  printf (" > STRICTLY WEAKER\n");
 	
+	basedvector<basedvector<unsigned, 1>, 1> ps = permutations (m);
 	unsigned r = kd.n_crossings;
 	for (unsigned i = 1; i <= ps.size (); i ++)
 	  {
@@ -2362,6 +2455,7 @@ compute_splitting_bounds ()
 	  }
 	printf ("  r = %d\n", r);
 	
+	assert (b_lk_weak <= r);
 	assert (b <= r);
 	
 	// non-trivial link, sp at least 1.
@@ -2383,12 +2477,10 @@ compute_splitting_bounds ()
 	      printf ("  > sp = %d (b + b_lk_weak)\n", b);
 	    else
 	      printf ("  > %d <= sp <= %d (b + b_lk_weak)\n", b, r);
-	    
 	  }
 	else if (b_lk_weak == r)
 	  {
 	    assert (b < b_lk_weak);
-	    
 	    printf ("  > sp = %d (b_lk_weak)\n", b_lk_weak);
 	  }
       }
