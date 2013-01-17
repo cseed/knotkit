@@ -5,7 +5,7 @@
 template<unsigned n>
 class multivariate_monomial
 {
- private:
+ public:
   unsigned v[n];
   
  public:
@@ -264,6 +264,12 @@ public:
   multivariate_polynomial operator * (const multivariate_polynomial &p) const;
   
   monomial common_monomial () const;
+  
+  multivariate_polynomial gcd (const multivariate_polynomial &b) const
+  {
+    // ???
+    return multivariate_polynomial (1);
+  }
   
   pair<multivariate_polynomial, multivariate_polynomial>
     uncommon_factors (multivariate_polynomial b, basedvector<multivariate_polynomial, 1> ds);

@@ -67,6 +67,11 @@ template<class T> class fraction_field
     return fraction_field (new_num, denom*xe);
   }
   
+  fraction_field operator - () const
+  {
+    return fraction_field (-num, denom);
+  }
+  
   fraction_field operator * (const fraction_field &x) const
   {
     T d1 = num.gcd (x.denom);
@@ -211,7 +216,6 @@ fraction_field<T>::reduce ()
     }
   
   T d = num.gcd (denom);
-  
   num = num.divide_exact (d);
   denom = denom.divide_exact (d);
 }
@@ -221,7 +225,6 @@ fraction_field<T>::check ()
 {
   if (num == 0)
     return;
-  // check denom == 1
   
   // assert (num.gcd (denom) == 1);
 }

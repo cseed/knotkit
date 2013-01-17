@@ -22,6 +22,7 @@ class Z2
   Z2 &operator = (int x) { v = (bool)(x & 1); return *this; }
   
   bool operator == (const Z2 &x) const { return v == x.v; }
+  bool operator != (const Z2 &x) const { return v != x.v; }
   
   bool operator == (int x) const { return v == (bool)(x & 1); }
   bool operator != (int x) const { return !operator == (x); }

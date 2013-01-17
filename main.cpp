@@ -1114,11 +1114,11 @@ test_forgetful_signs ()
 }
 
 template<class R> sseq
-compute_forgetfulss (knot_diagram &kd)
+compute_forgetfulss (knot_diagram &kd,
+		     basedvector<R, 1> comp_weight)
 {
   unsigned n = kd.num_components ();
-
-	
+  
   unionfind<1> u (kd.num_edges ());
   for (unsigned i = 1; i <= kd.n_crossings; i ++)
     {
@@ -1139,11 +1139,9 @@ compute_forgetfulss (knot_diagram &kd)
 	}
     }
   assert (t == n);
-	
-  basedvector<R, 1> comp_weight (n);
-  for (unsigned i = 1; i <= n; i ++)
-    comp_weight[i] = R ((int)i);
-	
+  
+  assert (comp_weight.size () == n);
+  
   map<unsigned, R> crossing_over_sign;
 	
   // crossings
@@ -1275,17 +1273,14 @@ compute_forgetfulss (knot_diagram &kd)
 	}
 #endif
       
+#if 0
       printf ("E_%d: ", (-dq) / 2);
       display (C->free_poincare_polynomial ());
+#endif
       
       if (d == 0)
 	break;
     }
-  
-#if 0
-  sseq_builder b (c.khC, d);
-  return b.build_sseq ();
-#endif
   
   return sseq (bounds, pages);
 }
@@ -2209,9 +2204,281 @@ compare_gss_splitting ()
       }
 }
 
+template<class R> unsigned
+splitting_bound (knot_diagram &kd,
+		 basedvector<R, 1> comp_weight)
+{
+  sseq ss = compute_forgetfulss<R> (kd, comp_weight);
+  
+  assert (ss.pages.size () >= 1);
+  return ss.pages.size () - 1;
+}
+
+basedvector<basedvector<unsigned, 1>, 1>
+permutations (basedvector<unsigned, 1> v)
+{
+  unsigned n = v.size ();
+  basedvector<basedvector<unsigned, 1>, 1> ps;
+  
+  if (n == 1)
+    {
+      ps.append (v);
+      return ps;
+    }
+  
+  for (unsigned i = 1; i <= n; i ++)
+    {
+      unsigned x = v[i];
+      
+      basedvector<unsigned, 1> v2 (n - 1);
+      for (unsigned j = 1; j < i; j ++)
+	v2[j] = v[j];
+      for (unsigned j = i + 1; j <= n; j ++)
+	v2[j - 1] = v[j];
+      
+      basedvector<basedvector<unsigned, 1>, 1> ps2 = permutations (v2);
+      for (unsigned j = 1; j <= ps2.size (); j ++)
+	{
+	  basedvector<unsigned, 1> p2 = ps2[j];
+	  assert (p2.size () == n - 1);
+	  
+	  basedvector<unsigned, 1> v3 (n);
+	  v3[1] = x;
+	  for (unsigned k = 1; k <= n - 1; k ++)
+	    v3[k + 1] = p2[k];
+	  ps.append (v3);
+	}
+    }
+  
+  return ps;
+}
+
+basedvector<basedvector<unsigned, 1>, 1>
+permutations (unsigned n)
+{
+  basedvector<unsigned, 1> v (n);
+  for (unsigned i = 1; i <= n; i ++)
+    v[i] = i;
+  return permutations (v);
+}
+
+void
+compute_splitting_bounds ()
+{
+  typedef fraction_field<polynomial<Z2> > Z2x;
+  
+  for (unsigned i = 1; i <= 12; i ++)
+    for (unsigned j = 1; j <= mt_links (i); j ++)
+      {
+	knot_diagram kd (mt_link (i, j));
+	unsigned m = kd.num_components ();
+	if (m == 1)
+	  continue;
+	
+	show (kd); newline ();
+	printf ("  m = %d\n", m);
+	
+	unionfind<1> u (kd.num_edges ());
+	
+	for (unsigned i = 1; i <= kd.n_crossings; i ++)
+	  {
+	    u.join (kd.ept_edge (kd.crossings[i][1]),
+		    kd.ept_edge (kd.crossings[i][3]));
+	    u.join (kd.ept_edge (kd.crossings[i][2]),
+		    kd.ept_edge (kd.crossings[i][4]));
+	  }
+	assert (u.num_sets () == m);
+	
+	map<unsigned, unsigned> root_comp;
+	unsigned t = 0;
+	for (unsigned i = 1; i <= kd.num_edges (); i ++)
+	  {
+	    if (u.find (i) == i)
+	      {
+		++ t;
+		root_comp.push (i, t);
+	      }
+	  }
+	assert (t == m);
+	
+	basedvector<Q, 1> comp_weightQ (m);
+	for (unsigned i = 1; i <= m; i ++)
+	  comp_weightQ[i] = Q (i);
+	unsigned bQ = splitting_bound<Q> (kd, comp_weightQ);
+	
+	basedvector<Z2x, 1> comp_weightZ2x (m);
+	for (unsigned i = 1; i <= m; i ++)
+	  comp_weightZ2x[i] = Z2x (polynomial<Z2> (Z2 (1), i));
+	unsigned bZ2x = splitting_bound<Z2x> (kd, comp_weightZ2x);
+	
+	// lower bound
+	unsigned b = std::max (bQ, bZ2x);
+	
+	printf ("  bQ = %d\n", bQ);
+	printf ("  bZ2x = %d\n", bZ2x);
+	printf ("  b = %d\n", b);
+	
+	unsigned total_lk = kd.total_linking_number ();
+	unsigned b_lk_weak = total_lk == 0 ? 2 : total_lk;
+	
+	printf ("  b_lk_weak = %d\n", b_lk_weak);
+	
+	basedvector<basedvector<unsigned, 1>, 1> ps = permutations (m);
+#if 0
+	printf ("ps, |ps| = %d, m = %d:\n", ps.size (), m);
+	for (unsigned i = 1; i <= ps.size (); i ++)
+	  {
+	    basedvector<unsigned, 1> p = ps[i];
+	    assert (p.size () == m);
+	    
+	    printf (" % 3d: ", i);
+	    for (unsigned j = 1; j <= m; j ++)
+	      printf (" %d", p[j]);
+	    newline ();
+	  }
+#endif
+	
+	unsigned r = kd.n_crossings;
+	for (unsigned i = 1; i <= ps.size (); i ++)
+	  {
+	    basedvector<unsigned, 1> p = ps[i];
+	    
+	    unsigned ri = 0;
+	    for (unsigned j = 1; j <= kd.n_crossings; j ++)
+	      {
+		unsigned upper_e = kd.ept_edge (kd.crossings[j][2]),
+		  lower_e = kd.ept_edge (kd.crossings[j][1]);
+		
+		unsigned upper_c = root_comp(u.find (upper_e)),
+		  lower_c = root_comp(u.find (lower_e));
+		
+		if (upper_c != lower_c
+		    && p[upper_c] < p[lower_c])
+		  ri ++;
+	      }
+	    
+	    if (ri < r)
+	      r = ri;
+	  }
+	printf ("  r = %d\n", r);
+	
+	assert (b <= r);
+	
+	// non-trivial link, sp at least 1.
+	assert (b_lk_weak >= 1);
+	if (b <= 1
+	    && b_lk_weak == 1)
+	  continue;
+	
+	if (b > b_lk_weak)
+	  {
+	    if (b == r)
+	      printf ("  > sp = %d (b)\n", b);
+	    else
+	      printf ("  > %d <= sp <= %d (b)\n", b, r);
+	  }
+	else if (b == b_lk_weak)
+	  {
+	    if (b == r)
+	      printf ("  > sp = %d (b + b_lk_weak)\n", b);
+	    else
+	      printf ("  > %d <= sp <= %d (b + b_lk_weak)\n", b, r);
+	    
+	  }
+	else if (b_lk_weak == r)
+	  {
+	    assert (b < b_lk_weak);
+	    
+	    printf ("  > sp = %d (b_lk_weak)\n", b_lk_weak);
+	  }
+      }
+}
+
+
+void
+compute_forgetful_tables ()
+{
+  // typedef fraction_field<multivariate_polynomial<Z2, 10> > R;
+  typedef Z2 R;
+  
+#if 0
+  for (unsigned i = 1; i <= 10; i ++)
+    for (unsigned j = 1; j <= mt_links (i); j ++)
+      {
+	knot_diagram kd (mt_link (i, j));
+#endif
+      {
+	// knot_diagram kd (mt_link (12, 0, 2087));
+	// knot_diagram kd (mt_link (12, 0, 1705));
+	// knot_diagram kd (mt_link (14, 0, 66759));
+	// knot_diagram kd (mt_link (14, 0, 65798));
+	knot_diagram kd (mt_link (13, 0, 8862));
+	
+	abort ();
+	// sseq ss = compute_forgetfulss<R> (kd);
+	sseq ss;
+	
+#if 0
+	if (ss.pages.size () < 2)
+	  continue;
+#endif
+	
+	for (unsigned k = 1; k <= ss.pages.size (); k ++)
+	  {
+	    if (k == 1)
+	      printf ("%s &", kd.name.c_str ());
+	    else
+	      printf (" &");
+	    
+	    printf (" $E_%d$ & %d & $", k, ss.pages[k].total_rank ());
+	    
+	    bool first = 1;
+	    
+	    const sseq_bounds &b = ss.bounds;
+	    
+	    for (int i = b.minh; i <= b.maxh; i ++)
+	      for (int j = b.minq; j <= b.maxq; j ++)
+		{
+		  unsigned r = ss.pages[k].rank[i - b.minh][j - b.minq];
+		  
+		  if (r > 0)
+		    {
+		      
+		      if (first)
+			first = 0;
+		      else
+			printf (" + ");
+		
+		      if (i == 0
+			  && j == 0)
+			printf ("%d", r);
+		      else
+			{
+			  if (r != 1)
+			    printf ("%d", r);
+		    
+			  if (i != 0)
+			    printf ("t^{%d}", i);
+			  if (j != 0)
+			    printf ("q^{%d}", j);
+			}
+		    }
+		}
+	    printf ("$ \\\\\n");
+	  }
+      }
+}
+
 int
 main ()
 {
+  compute_splitting_bounds ();
+  return 0;
+  
+  compute_forgetful_tables ();
+  return 0;
+  
+#if 0
   {
     knot_diagram kd (mt_link (5, 1, 3));
     show (kd); newline ();
@@ -2220,6 +2487,7 @@ main ()
     ss.texshow (stdout, "L5a3");
   }
   return 0;
+#endif
   
   compute_lee_bound ();
   return 0;
