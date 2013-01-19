@@ -385,17 +385,21 @@ compute_b_lk_weak (knot_diagram &kd)
 }
 
 void
-compute_splitting_bounds (knot_diagram &kd)
+compute_splitting_bounds (const knot_desc &desc)
 {
-  int rank = self_rank ();
-  
   typedef fraction_field<polynomial<Z2> > Z2x;
   
+  int rank = self_rank ();
+  
+  knot_diagram kd = desc.diagram ();
   unsigned m = kd.num_components ();
   assert (m > 1);
-	
+  
   printf ("[% 2d] ", rank); show (kd); newline ();
   printf ("[% 2d]  m = %d\n", rank, m);
+  
+  unsigned total_lk = kd.total_linking_number ();
+  printf ("[% 2d] total_lk = %d\n", rank, total_lk);
   
   unionfind<1> u (kd.num_edges ());
   
@@ -433,13 +437,15 @@ compute_splitting_bounds (knot_diagram &kd)
   // lower bound
   unsigned b = std::max (bQ, bZ2x);
   
+  // adjust parity
+  if ((total_lk & 1) != (b & 1))
+    b ++;
+  
   printf ("[% 2d] bQ = %d\n", rank, bQ);
   printf ("[% 2d] bZ2x = %d\n", rank, bZ2x);
   printf ("[% 2d] b = %d\n", rank, b);
   
-  
-  unsigned total_lk = kd.total_linking_number ();
-  unsigned b_lk_weaker = total_lk == 0 ? 2 : total_lk;
+  unsigned b_lk_weaker = total_lk == 0 ? 2 : total_lk; // kd is non-split
   
   unsigned b_lk_weak = compute_b_lk_weak (kd);
   assert (b_lk_weaker <= b_lk_weak);
@@ -451,7 +457,7 @@ compute_splitting_bounds (knot_diagram &kd)
     printf ("[% 2d] > STRICTLY WEAKER\n", rank);
   
   basedvector<basedvector<unsigned, 1>, 1> ps = permutations (m);
-  unsigned r = kd.n_crossings;
+  unsigned upper = kd.n_crossings;
   for (unsigned i = 1; i <= ps.size (); i ++)
     {
       basedvector<unsigned, 1> p = ps[i];
@@ -470,21 +476,21 @@ compute_splitting_bounds (knot_diagram &kd)
 	    ri ++;
 	}
 	    
-      if (ri < r)
-	r = ri;
+      if (ri < upper)
+	upper = ri;
     }
-  printf ("[% 2d] r = %d\n", rank, r);
+  printf ("[% 2d] upper = %d\n", rank, upper);
   
-  assert (b_lk_weak <= r);
-  assert (b <= r);
+  assert (b_lk_weak <= upper);
+  assert (b <= upper);
   
   // non-trivial link, sp at least 1.
   unsigned best = std::max (b, b_lk_weak);
   
-  if (best == r)
-    printf ("[% 2d] > sp = %d", rank, r);
+  if (best == upper)
+    printf ("[% 2d] > sp = %d", rank, upper);
   else
-    printf ("[% 2d] > %d <= sp <= %d", rank, best, r);
+    printf ("[% 2d] > %d <= sp <= %d", rank, best, upper);
   
   printf (" ");
   
@@ -498,8 +504,21 @@ compute_splitting_bounds (knot_diagram &kd)
       assert (b_lk_weak == best);
       printf ("(b_lk_weak)");
     }
-  
   fflush (stdout);
+  
+  char buf[1000];
+  assert (desc.t == knot_desc::MT);
+  sprintf (buf, "splitting/L%d_%d.dat.gz\n", desc.i, desc.j);
+  
+  {
+    gzfile_reader r (buf);
+    write (r, desc);
+    write (r, bQ);
+    write (r, bZ2x);
+    write (r, b);
+    write (r, b_lk_weak);
+    write (r, upper);
+  }
 }
 
 void
@@ -521,8 +540,7 @@ slave ()
 	    
 	    printf ("[% 2d] CMD_DO %s\n", rank, desc.name ().c_str ());
 	    
-	    knot_diagram kd = desc.diagram ();
-	    compute_splitting_bounds (kd);
+	    compute_splitting_bounds (desc);
 	    
 	    send_int (0, 0);
 	  }

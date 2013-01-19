@@ -2561,9 +2561,48 @@ compute_forgetful_tables ()
       }
 }
 
+void
+show_lk (const dt_code &dt)
+{
+  knot_diagram kd (dt);
+  
+  show (kd); newline ();
+  printf ("m = %d\n", kd.num_components ());
+  
+  planar_diagram (kd).display_knottheory ();
+}
+    
 int
 main ()
 {
+  show_lk (mt_link (11, 1, 739));
+  show_lk (mt_link (12, 1, 2521));
+  show_lk (mt_link (12, 1, 2552));
+  show_lk (mt_link (12, 1, 2672));
+  show_lk (mt_link (12, 1, 2910));
+  
+  show_lk (mt_link (12, 0, 2207));
+  show_lk (mt_link (12, 0, 2209));
+  show_lk (mt_link (12, 0, 2211));
+  show_lk (mt_link (12, 0, 2214));
+  show_lk (mt_link (12, 0, 2208));
+  show_lk (mt_link (12, 0, 2230));
+  show_lk (mt_link (12, 0, 2238));
+  show_lk (mt_link (12, 0, 2245));
+  show_lk (mt_link (12, 0, 2251));
+  show_lk (mt_link (12, 0, 2255));
+  show_lk (mt_link (12, 0, 2262));
+  show_lk (mt_link (12, 0, 2292));
+  return 0;
+  
+  {
+    knot_diagram kd (mt_link (12, 0, 2262));
+    printf ("m = %d\n", kd.num_components ());
+    
+    planar_diagram (kd).display_knottheory ();
+  }
+  return 0;
+  
   compute_splitting_bounds ();
   return 0;
   
