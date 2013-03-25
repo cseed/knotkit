@@ -1,5 +1,5 @@
 
-devel = 1
+devel = 0
 
 BISON = bison
 FLEX = flex
@@ -10,8 +10,8 @@ CXX = clang++ -fno-color-diagnostics --stdlib=libc++ --std=c++11
 
 INCLUDES = -I. -I/opt/local/include 
 
-OPTFLAGS = -g
-# OPTFLAGS = -O2 -g
+# OPTFLAGS = -g
+OPTFLAGS = -O2 -g
 # OPTFLAGS = -O2 -DNDEBUG
 
 LDFLAGS = -L/opt/local/lib

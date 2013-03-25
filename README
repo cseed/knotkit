@@ -80,7 +80,8 @@ knotkit also builds under Linux.  In addition to GMP, you will need a
 C++ compiler which supports C++11.  I use LLVM clang, but knotkit
 should build with a recent version of GCC.
 
-knotkit doesn't have a sophisticated build system.  To build knotkit, just run:
+knotkit doesn't have a sophisticated build system.  To build knotkit,
+just run:
 
 make
 
