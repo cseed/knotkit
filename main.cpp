@@ -1281,8 +1281,10 @@ compute_forgetfulss (knot_diagram &kd,
       if (d == 0)
 	break;
     }
-  
-  return sseq (bounds, pages);
+
+  abort ();
+  // ???
+  return sseq (bounds, grading (0, 0), grading (0, 0), pages);
 }
 
 void
@@ -2613,7 +2615,7 @@ main ()
   {
     knot_diagram kd (mt_link (5, 1, 3));
     show (kd); newline ();
-    
+
     sseq ss = compute_forgetfulss<Q> (kd);
     ss.texshow (stdout, "L5a3");
   }

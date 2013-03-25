@@ -329,6 +329,13 @@ cube<R>::H_i (unsigned c)
       
       for (unsigned j = 0; j < from_s.num_monomials (); j ++)
 	{
+	  if (markedp_only)
+	    {
+	      unsigned p = from_s.edge_circle[kd.marked_edge];
+	      if (unsigned_bittest (j, p))
+		continue;
+	    }
+	  
 	  unsigned j2 = 0;
 	  for (unsigned_const_iter k = j; k; k ++)
 	    {
@@ -372,7 +379,7 @@ cube<R>::compute_dinv (unsigned c)
     {
       if (!unsigned_bittest (i, c))
 	continue;
-
+      
       int sign = 1;
       for (unsigned j = 1; j < c; j ++)
 	{
@@ -395,6 +402,13 @@ cube<R>::compute_dinv (unsigned c)
 	y = to_s.crossing_to_circle (kd, c);
       for (unsigned j = 0; j < from_s.num_monomials (); j ++)
 	{
+	  if (markedp_only)
+	    {
+	      unsigned p = from_s.edge_circle[kd.marked_edge];
+	      if (unsigned_bittest (j, p))
+		continue;
+	    }
+	  
 	  unsigned j2 = 0;
 	  for (unsigned_const_iter k = j; k; k ++)
 	    {

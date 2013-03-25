@@ -1,1 +1,156 @@
-I modified cotton's readme.
+knotkit is a C++ software package written by Cotton Seed
+(cseed@math.princeton.edu) for computing some knot and manifold
+invariants appearing in low-dimensional topology.  Other contributors
+include Josh Batson.
+
+TABLE OF CONTENTS
+
+1. INTRO
+2. BUILDING
+3. USAGE
+4. UPCOMING CHANGES
+5. FOR DEVELOPERS
+
+1. INTRO
+
+In addition to accepting knot presentations in a variety of formats
+(see usage below), knotkit contains the following tables of knot data:
+
+* The Rolfsen knot tables through 10 crossings, extracted from
+  Bar-Natan's Mathematica package, KnotTheory`,
+* The Hoste-Weeks-Thistlewaite knot tables through 16 crossings taken
+  from knotscape, and
+* and the Morwen Thistlewaite hyperbolic link tables taken from
+  SnapPy.
+
+This version of knotkit has support to compute the following
+invariants:
+
+* Khovanov homology
+See:
+M. Khovanov, A Categorification of the Jones Polynomial, Duke
+  Math. J. 101 (2000), 359--426, arXiv:math/9908171.
+D. Bar-Natan, On Khovanov's Categorification of the Jones Polynomial,
+  Algebraic and Geometric Topology 2 (2002), 337--370.
+
+* Szabo's geometric spectral sequence 
+Computing gss was the original motivation for writing knotkit.  For
+more information on gss, see:
+Z. Szabo, A geometric spectral sequence in Khovanov homology, 
+  arXiv:1010.4252, and
+C. Seed, Computations of Szabo's Geometric Spectral Sequence in Khovanov
+  Homology, arXiv:1110.0735.
+
+* The Batson-Seed link splitting spectral sequence
+See:
+J. Batson, C. Seed, A Link Splitting Spectral Sequence in Khovanov
+  Homology.
+
+* The Lipshitz-Sarkar Steenrod square on Khovanov homology
+See:
+R. Lipshitz, S. Sarkar, A Khovanov Homotopy Type, arXiv:1112.3932.
+R. Lipshitz, S. Sarkar, A Steenrod Square on Khovanov Homology,
+  arXiv:1204.5776.
+
+* Bar-Natan's analogue of Lee homology
+See:
+E. S. Lee, An endomorphism of the Khovanov invariant, Adv. Math. 197
+  (2005), 2, 554–586, arXiv:math/0210213.
+D. Bar-Natan, Khovanov’s homology for tangles and cobordisms,
+  Geom. Topol. 9 (2005), 1443–1499, arXiv:math/0410495.
+R. Lipshitz, S. Sarkar, A refinement of Rasmussen's s-invariant,
+  arXiv:1206.3532.
+
+* The s-invariant coming from Bar-Natan's analogue of Lee homology
+In addition to the above references, see:
+J. Rasmussen, Khovanov homology and the slice genus, Invent.
+  Math. 182 2 (2010), 419--447, arXiv:math/0402131.
+R. Lipshitz, S. Sarkar, A refinement of Rasmussen's s-invariant,
+  arXiv:1206.3532.
+
+2. BUILDING
+
+To build knotkit on OS X, you will need the latest version of XCode
+(available for free in the App Store) and the GNU multiple precision
+arithmetic library (GMP).  You can get GMP here:
+
+http://gmplib.org/
+
+knotkit also builds under Linux.  In addition to GMP, you will need a
+C++ compiler which supports C++11.  I use LLVM clang, but knotkit
+should build with a recent version of GCC.
+
+knotkit doesn't have a sophisticated build system.  To build knotkit, just run:
+
+make
+
+from the knotkit source directory.  This should build the executable
+"kk".  For instructions on invoking kk, see usage below.  If you run
+into a problem, please contact me: Cotton Seed
+(cotton@math.princeton.edu).
+
+3. USAGE
+
+The usage message for kk is given below.  This can also be obtained by
+running "kk -h".
+
+A note about output.  The output for commands kh, gss, ls and lee is a
+.tex file which renders the bigraded homology group or spectral
+sequence.  The output for the command sq2 matches the output for the
+program written by Lipshitz-Sarkar and is suitable for loading into
+Sage.  The command s outputs a single line of text.
+
+usage: kk <invariant> [options...] <link>
+  compute <invariant> for knot or link <link>
+<invariant> can be one of:
+  kh: Khovanov homology
+  gss: Szabo's geometric spectral sequence
+  ls: Batson-Seed link splitting spectral sequence
+    component weights are 0, 1, ..., m
+  sq2: Lipshitz-Sarkar Steenrod square on Z/2 Kh
+    output suitable for Sage
+  leess: spectral sequence coming from Bar-Natan analogue of Lee's
+    deformation of Khovanov's complex (whew!)
+  s: Rasmussen's s-invariant coming from lee
+options:
+  -r         : compute reduced theory
+  -h         : print this message
+  -o <file>  : write output to <file>
+                (stdout is the default)
+  -f <field> : ground field (if applicable)
+                (Z2 is the default)
+  -v         : verbose: report progress as the computation proceeds
+<field> can be one of:
+  Z2, Z3, Q
+<link> can be one of:
+  - the unknot, e.g. U or unknot
+  - a torus knot, e.g. T(2,3)
+  - a Rolfsen table knot, e.g. 10_124
+  - a Hoste-Thistlethwaite-Weeks knot, e.g. 11a12 or 12n214
+  - a Morwen Thistlethwaite link, e.g. L9a21 or L14n7631
+  - a planar diagram, e.g.
+      PD[X[1, 4, 2, 5], X[3, 6, 4, 1], X[5, 2, 6, 3]] or
+      PD[[1, 4, 2, 5], [3, 6, 4, 1], [5, 2, 6, 3]]
+  - a Dowker-Thistlethwaite code, e.g.
+      DTCode[6,8,2,4],
+      DT[dadbcda] or
+      DT[{6, -8}, {-10, 12, -14, 2, -4}]
+  - a braid, e.g. BR[2, {-1, -1, -1}]
+
+4. UPCOMING CHANGES
+
+The following changes are currently planned:
+
+* support for Z/p, p arbitrary prime and F(x) field of rational functions
+* Roberts' totally twisted Khovanov homology
+* the E^3 page of the twisted spectral sequence Kh(L) => \widehat{HF}(\Sigma_L)
+* spectral sequences of PIDs: ls over F[x], gss over Z
+* maps induced by cobordisms
+
+5. FOR DEVELOPERS
+
+If you are interested in contributing to knotkit or using it for a new
+application, please contact me: Cotton Seed
+(cotton@math.princeton.edu).  I am interested in developing knotkit to
+be an open platform for performing computations arising in
+low-dimensional topology.

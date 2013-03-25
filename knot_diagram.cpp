@@ -626,7 +626,7 @@ knot_diagram::total_linking_number () const
 	assert (is_even (lk));
 	lk /= 2;
 	
-	total_lk += std::abs (lk);
+	total_lk += abs (lk);
       }
   
   return total_lk;

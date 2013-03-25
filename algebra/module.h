@@ -53,7 +53,8 @@ class module : public refcounted
   
   // r < i <= n
   virtual R generator_ann (unsigned i) const = 0;
-  
+
+  basedvector<grading, 1> grading_vector () const;
   set<grading> gradings () const;
   
   bool is_free () const { return dim () == free_rank (); }
@@ -1501,6 +1502,15 @@ module<R>::free_ell_poincare_polynomial () const
       r.muladdeq (1, m);
     }
   return r;
+}
+
+template<class R> basedvector<grading, 1>
+module<R>::grading_vector () const
+{
+  basedvector<grading, 1> v (dim ());
+  for (unsigned i = 1; i <= dim (); i ++)
+    v[i] = generator_grading (i);
+  return v;
 }
 
 template<class R> set<grading> 

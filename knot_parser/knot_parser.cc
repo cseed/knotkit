@@ -1,9 +1,8 @@
-/* A Bison parser, made by GNU Bison 2.4.3.  */
+/* A Bison parser, made by GNU Bison 2.6.5.  */
 
 /* Skeleton implementation for Bison LALR(1) parsers in C++
    
-      Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Free
-   Software Foundation, Inc.
+      Copyright (C) 2002-2012 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -34,37 +33,41 @@
 
 /* First part of user declarations.  */
 
-
-/* Line 311 of lalr1.cc  */
-#line 40 "knot_parser/knot_parser.cc"
+/* Line 278 of lalr1.cc  */
+#line 38 "knot_parser/knot_parser.cc"
 
 
 #include "knot_parser.hh"
 
 /* User implementation prologue.  */
 
-
-/* Line 317 of lalr1.cc  */
-#line 49 "knot_parser/knot_parser.cc"
+/* Line 284 of lalr1.cc  */
+#line 46 "knot_parser/knot_parser.cc"
 /* Unqualified %code blocks.  */
-
-/* Line 318 of lalr1.cc  */
+/* Line 285 of lalr1.cc  */
 #line 15 "knot_parser/knot_parser.yy"
 
 #define YY_DECL \
   yy::knot_parser::token_type knot_yylex (yy::knot_parser::semantic_type *yylval)
 YY_DECL;
 
-
-/* Line 318 of lalr1.cc  */
+/* Line 285 of lalr1.cc  */
 #line 29 "knot_parser/knot_parser.yy"
 
 #define yylex knot_yylex
 
 
+/* Line 285 of lalr1.cc  */
+#line 62 "knot_parser/knot_parser.cc"
 
-/* Line 318 of lalr1.cc  */
-#line 68 "knot_parser/knot_parser.cc"
+
+# ifndef YY_NULL
+#  if defined __cplusplus && 201103L <= __cplusplus
+#   define YY_NULL nullptr
+#  else
+#   define YY_NULL 0
+#  endif
+# endif
 
 #ifndef YY_
 # if defined YYENABLE_NLS && YYENABLE_NLS
@@ -77,6 +80,27 @@ YY_DECL;
 #  define YY_(msgid) msgid
 # endif
 #endif
+
+#define YYRHSLOC(Rhs, K) ((Rhs)[K])
+/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
+   If N is 0, then set CURRENT to the empty location which ends
+   the previous symbol: RHS[0] (always defined).  */
+
+# ifndef YYLLOC_DEFAULT
+#  define YYLLOC_DEFAULT(Current, Rhs, N)                               \
+    do                                                                  \
+      if (N)                                                            \
+        {                                                               \
+          (Current).begin  = YYRHSLOC (Rhs, 1).begin;                   \
+          (Current).end    = YYRHSLOC (Rhs, N).end;                     \
+        }                                                               \
+      else                                                              \
+        {                                                               \
+          (Current).begin = (Current).end = YYRHSLOC (Rhs, 0).end;      \
+        }                                                               \
+    while (/*CONSTCOND*/ false)
+# endif
+
 
 /* Suppress unused-variable warnings by "using" E.  */
 #define YYUSE(e) ((void) (e))
@@ -128,49 +152,8 @@ do {					\
 
 
 namespace yy {
-
-/* Line 380 of lalr1.cc  */
-#line 134 "knot_parser/knot_parser.cc"
-#if YYERROR_VERBOSE
-
-  /* Return YYSTR after stripping away unnecessary quotes and
-     backslashes, so that it's suitable for yyerror.  The heuristic is
-     that double-quoting is unnecessary unless the string contains an
-     apostrophe, a comma, or backslash (other than backslash-backslash).
-     YYSTR is taken from yytname.  */
-  std::string
-  knot_parser::yytnamerr_ (const char *yystr)
-  {
-    if (*yystr == '"')
-      {
-        std::string yyr = "";
-        char const *yyp = yystr;
-
-        for (;;)
-          switch (*++yyp)
-            {
-            case '\'':
-            case ',':
-              goto do_not_strip_quotes;
-
-            case '\\':
-              if (*++yyp != '\\')
-                goto do_not_strip_quotes;
-              /* Fall through.  */
-            default:
-              yyr += *yyp;
-              break;
-
-            case '"':
-              return yyr;
-            }
-      do_not_strip_quotes: ;
-      }
-
-    return yystr;
-  }
-
-#endif
+/* Line 352 of lalr1.cc  */
+#line 157 "knot_parser/knot_parser.cc"
 
   /// Build a parser object.
   knot_parser::knot_parser (knot_diagram &parsed_knot_yyarg)
@@ -198,6 +181,9 @@ namespace yy {
   {
     YYUSE (yylocationp);
     YYUSE (yyvaluep);
+    std::ostream& yyo = debug_stream ();
+    std::ostream& yyoutput = yyo;
+    YYUSE (yyoutput);
     switch (yytype)
       {
          default:
@@ -271,6 +257,18 @@ namespace yy {
   }
 #endif
 
+  inline bool
+  knot_parser::yy_pact_value_is_default_ (int yyvalue)
+  {
+    return yyvalue == yypact_ninf_;
+  }
+
+  inline bool
+  knot_parser::yy_table_value_is_error_ (int yyvalue)
+  {
+    return yyvalue == yytable_ninf_;
+  }
+
   int
   knot_parser::parse ()
   {
@@ -278,17 +276,18 @@ namespace yy {
     int yychar = yyempty_;
     int yytoken = 0;
 
-    /* State.  */
+    // State.
     int yyn;
     int yylen = 0;
     int yystate = 0;
 
-    /* Error handling.  */
+    // Error handling.
     int yynerrs_ = 0;
     int yyerrstatus_ = 0;
 
     /// Semantic value of the lookahead.
-    semantic_type yylval;
+    static semantic_type yyval_default;
+    semantic_type yylval = yyval_default;
     /// Location of the lookahead.
     location_type yylloc;
     /// The locations where the error started and ended.
@@ -330,7 +329,7 @@ namespace yy {
 
     /* Try to take a decision without lookahead.  */
     yyn = yypact_[yystate];
-    if (yyn == yypact_ninf_)
+    if (yy_pact_value_is_default_ (yyn))
       goto yydefault;
 
     /* Read a lookahead token.  */
@@ -339,7 +338,6 @@ namespace yy {
 	YYCDEBUG << "Reading a token: ";
 	yychar = yylex (&yylval);
       }
-
 
     /* Convert token to internal form.  */
     if (yychar <= yyeof_)
@@ -363,8 +361,8 @@ namespace yy {
     yyn = yytable_[yyn];
     if (yyn <= 0)
       {
-	if (yyn == 0 || yyn == yytable_ninf_)
-	goto yyerrlab;
+	if (yy_table_value_is_error_ (yyn))
+	  goto yyerrlab;
 	yyn = -yyn;
 	goto yyreduce;
       }
@@ -419,8 +417,7 @@ namespace yy {
     switch (yyn)
       {
 	  case 10:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 67 "knot_parser/knot_parser.yy"
     { 
 	unsigned n = (yysemantic_stack_[(3) - (1)].integer),
@@ -439,8 +436,7 @@ namespace yy {
     break;
 
   case 11:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 85 "knot_parser/knot_parser.yy"
     {
 	unsigned n = (yysemantic_stack_[(3) - (1)].integer),
@@ -460,8 +456,7 @@ namespace yy {
     break;
 
   case 12:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 104 "knot_parser/knot_parser.yy"
     {
 	unsigned n = (yysemantic_stack_[(4) - (2)].integer),
@@ -481,22 +476,19 @@ namespace yy {
     break;
 
   case 13:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 123 "knot_parser/knot_parser.yy"
     { parsed_knot = knot_diagram (planar_diagram ("<parsed>", *(yysemantic_stack_[(4) - (3)].int_vec2))); }
     break;
 
   case 14:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 125 "knot_parser/knot_parser.yy"
     { parsed_knot = knot_diagram (planar_diagram ("<parsed>", *(yysemantic_stack_[(4) - (3)].int_vec2))); }
     break;
 
   case 15:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 130 "knot_parser/knot_parser.yy"
     {
 	basedvector<basedvector<int, 1>, 1> even_labels (1);
@@ -506,36 +498,31 @@ namespace yy {
     break;
 
   case 16:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 136 "knot_parser/knot_parser.yy"
     { parsed_knot = knot_diagram (dt_code ("<parsed>", *(yysemantic_stack_[(4) - (3)].int_vec2))); }
     break;
 
   case 17:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 138 "knot_parser/knot_parser.yy"
     { parsed_knot = knot_diagram (dt_code ("<parsed>", (yysemantic_stack_[(4) - (3)].string))); }
     break;
 
   case 18:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 143 "knot_parser/knot_parser.yy"
     { parsed_knot = knot_diagram (torus_knot ((yysemantic_stack_[(6) - (3)].integer), (yysemantic_stack_[(6) - (5)].integer))); }
     break;
 
   case 19:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 148 "knot_parser/knot_parser.yy"
     { parsed_knot = knot_diagram (braid ((yysemantic_stack_[(6) - (3)].integer), *(yysemantic_stack_[(6) - (5)].int_vec))); }
     break;
 
   case 20:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 153 "knot_parser/knot_parser.yy"
     {
 	unsigned unknot_ar[1][4] = {
@@ -546,8 +533,7 @@ namespace yy {
     break;
 
   case 23:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 168 "knot_parser/knot_parser.yy"
     {
 	basedvector<basedvector<int, 1>, 1> *v
@@ -558,8 +544,7 @@ namespace yy {
     break;
 
   case 24:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 175 "knot_parser/knot_parser.yy"
     { 
 	basedvector<basedvector<int, 1>, 1> *v = (yysemantic_stack_[(3) - (1)].int_vec2);
@@ -569,22 +554,19 @@ namespace yy {
     break;
 
   case 25:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 184 "knot_parser/knot_parser.yy"
     { (yyval.int_vec) = (yysemantic_stack_[(3) - (2)].int_vec); }
     break;
 
   case 26:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 186 "knot_parser/knot_parser.yy"
     { (yyval.int_vec) = (yysemantic_stack_[(3) - (2)].int_vec); }
     break;
 
   case 27:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 191 "knot_parser/knot_parser.yy"
     {
 	basedvector<int, 1> *v =
@@ -595,8 +577,7 @@ namespace yy {
     break;
 
   case 28:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 198 "knot_parser/knot_parser.yy"
     {
 	basedvector<int, 1> *v = (yysemantic_stack_[(3) - (1)].int_vec);
@@ -606,8 +587,7 @@ namespace yy {
     break;
 
   case 29:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 207 "knot_parser/knot_parser.yy"
     {
 	basedvector<basedvector<int, 1>, 1> *v
@@ -618,8 +598,7 @@ namespace yy {
     break;
 
   case 30:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 214 "knot_parser/knot_parser.yy"
     { 
 	basedvector<basedvector<int, 1>, 1> *v = (yysemantic_stack_[(3) - (1)].int_vec2);
@@ -629,8 +608,7 @@ namespace yy {
     break;
 
   case 31:
-
-/* Line 678 of lalr1.cc  */
+/* Line 661 of lalr1.cc  */
 #line 223 "knot_parser/knot_parser.yy"
     {
 	basedvector<int, 1> *v
@@ -644,12 +622,22 @@ namespace yy {
     break;
 
 
-
-/* Line 678 of lalr1.cc  */
-#line 650 "knot_parser/knot_parser.cc"
+/* Line 661 of lalr1.cc  */
+#line 627 "knot_parser/knot_parser.cc"
 	default:
           break;
       }
+    /* User semantic actions sometimes alter yychar, and that requires
+       that yytoken be updated with the new translation.  We take the
+       approach of translating immediately before every use of yytoken.
+       One alternative is translating here after every semantic action,
+       but that translation would be missed if the semantic action
+       invokes YYABORT, YYACCEPT, or YYERROR immediately after altering
+       yychar.  In the case of YYABORT or YYACCEPT, an incorrect
+       destructor might then be invoked immediately.  In the case of
+       YYERROR, subsequent parser actions might lead to an incorrect
+       destructor call or verbose syntax error message before the
+       lookahead is translated.  */
     YY_SYMBOL_PRINT ("-> $$ =", yyr1_[yyn], &yyval, &yyloc);
 
     yypop_ (yylen);
@@ -673,11 +661,17 @@ namespace yy {
   | yyerrlab -- here on detecting error |
   `------------------------------------*/
   yyerrlab:
+    /* Make sure we have latest lookahead translation.  See comments at
+       user semantic actions for why this is necessary.  */
+    yytoken = yytranslate_ (yychar);
+
     /* If not already recovering from an error, report this error.  */
     if (!yyerrstatus_)
       {
 	++yynerrs_;
-	error (yylloc, yysyntax_error_ (yystate));
+	if (yychar == yyempty_)
+	  yytoken = yyempty_;
+	error (yylloc, yysyntax_error_ (yystate, yytoken));
       }
 
     yyerror_range[1] = yylloc;
@@ -732,7 +726,7 @@ namespace yy {
     for (;;)
       {
 	yyn = yypact_[yystate];
-	if (yyn != yypact_ninf_)
+	if (!yy_pact_value_is_default_ (yyn))
 	{
 	  yyn += yyterror_;
 	  if (0 <= yyn && yyn <= yylast_ && yycheck_[yyn] == yyterror_)
@@ -782,7 +776,13 @@ namespace yy {
 
   yyreturn:
     if (yychar != yyempty_)
-      yydestruct_ ("Cleanup: discarding lookahead", yytoken, &yylval, &yylloc);
+      {
+        /* Make sure we have latest lookahead translation.  See comments
+           at user semantic actions for why this is necessary.  */
+        yytoken = yytranslate_ (yychar);
+        yydestruct_ ("Cleanup: discarding lookahead", yytoken, &yylval,
+                     &yylloc);
+      }
 
     /* Do not reclaim the symbols of the rule which action triggered
        this YYABORT or YYACCEPT.  */
@@ -801,51 +801,9 @@ namespace yy {
 
   // Generate an error message.
   std::string
-  knot_parser::yysyntax_error_ (int yystate)
+  knot_parser::yysyntax_error_ (int, int)
   {
-    std::string res;
-    YYUSE (yystate);
-#if YYERROR_VERBOSE
-    int yyn = yypact_[yystate];
-    if (yypact_ninf_ < yyn && yyn <= yylast_)
-      {
-	/* Start YYX at -YYN if negative to avoid negative indexes in
-	   YYCHECK.  */
-	int yyxbegin = yyn < 0 ? -yyn : 0;
-
-	/* Stay within bounds of both yycheck and yytname.  */
-	int yychecklim = yylast_ - yyn + 1;
-	int yyxend = yychecklim < yyntokens_ ? yychecklim : yyntokens_;
-	int count = 0;
-	for (int x = yyxbegin; x < yyxend; ++x)
-	  if (yycheck_[x + yyn] == x && x != yyterror_)
-	    ++count;
-
-	// FIXME: This method of building the message is not compatible
-	// with internationalization.  It should work like yacc.c does it.
-	// That is, first build a string that looks like this:
-	// "syntax error, unexpected %s or %s or %s"
-	// Then, invoke YY_ on this string.
-	// Finally, use the string as a format to output
-	// yytname_[tok], etc.
-	// Until this gets fixed, this message appears in English only.
-	res = "syntax error, unexpected ";
-	res += yytnamerr_ (yytname_[tok]);
-	if (count < 5)
-	  {
-	    count = 0;
-	    for (int x = yyxbegin; x < yyxend; ++x)
-	      if (yycheck_[x + yyn] == x && x != yyterror_)
-		{
-		  res += (!count++) ? ", expecting " : " or ";
-		  res += yytnamerr_ (yytname_[x]);
-		}
-	  }
-      }
-    else
-#endif
-      res = YY_("syntax error");
-    return res;
+    return YY_("syntax error");
   }
 
 
@@ -865,9 +823,9 @@ namespace yy {
       54,    58,    59,   -36
   };
 
-  /* YYDEFACT[S] -- default rule to reduce with in state S when YYTABLE
-     doesn't specify something else to do.  Zero means the default is an
-     error.  */
+  /* YYDEFACT[S] -- default reduction number in state S.  Performed when
+     YYTABLE doesn't specify something else to do.  Zero means the
+     default is an error.  */
   const unsigned char
   knot_parser::yydefact_[] =
   {
@@ -899,7 +857,7 @@ namespace yy {
 
   /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
      positive, shift that token.  If negative, reduce the rule which
-     number is the opposite.  If zero, do what YYDEFACT says.  */
+     number is the opposite.  If YYTABLE_NINF_, syntax error.  */
   const signed char knot_parser::yytable_ninf_ = -1;
   const unsigned char
   knot_parser::yytable_[] =
@@ -975,7 +933,7 @@ namespace yy {
        3,    10
   };
 
-#if YYDEBUG || YYERROR_VERBOSE || YYTOKEN_TABLE
+#if YYDEBUG
   /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
      First, the terminals, then, starting at \a yyntokens_, nonterminals.  */
   const char*
@@ -986,11 +944,10 @@ namespace yy {
   "']'", "'('", "','", "')'", "'{'", "'}'", "$accept", "knot",
   "rolfsen_knot", "htw_knot", "mt_link", "planar_diagram", "dt",
   "torus_link", "braid", "unknot", "alt_spec", "int_vec2", "int_vec",
-  "int_vec_1", "crossing_vec", "crossing", 0
+  "int_vec_1", "crossing_vec", "crossing", YY_NULL
   };
-#endif
 
-#if YYDEBUG
+
   /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
   const knot_parser::rhs_number_type
   knot_parser::yyrhs_[] =
@@ -1115,12 +1072,9 @@ namespace yy {
 
 
 } // yy
-
-/* Line 1054 of lalr1.cc  */
-#line 1121 "knot_parser/knot_parser.cc"
-
-
-/* Line 1056 of lalr1.cc  */
+/* Line 1106 of lalr1.cc  */
+#line 1077 "knot_parser/knot_parser.cc"
+/* Line 1107 of lalr1.cc  */
 #line 233 "knot_parser/knot_parser.yy"
 
 
@@ -1145,4 +1099,3 @@ parse_knot (const char *s)
   
   return d;
 }
-

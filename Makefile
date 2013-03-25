@@ -1,21 +1,22 @@
 
-BISON = /opt/local/bin/bison
-FLEX = /opt/local/bin/flex
+devel = 1
+
+BISON = bison
+FLEX = flex
 
 # CXX = g++
 # CXX = OMPI_CXX=clang++ mpic++ -fno-color-diagnostics --stdlib=libc++ --std=c++11 -I/u/cseed/llvm-3.1/lib/c++/v1
-CXX = clang++ -fno-color-diagnostics --stdlib=libc++ --std=c++11 -I/u/cseed/llvm-3.1/lib/c++/v1
+CXX = clang++ -fno-color-diagnostics --stdlib=libc++ --std=c++11
 
-INCLUDES = -I/opt/local/include -I.
+INCLUDES = -I. -I/opt/local/include 
 
-# OPTFLAGS = -g
-OPTFLAGS = -O2 -g
+OPTFLAGS = -g
+# OPTFLAGS = -O2 -g
 # OPTFLAGS = -O2 -DNDEBUG
 
-LDFLAGS = -L/opt/local/lib -L/u/cseed/llvm-3.1/lib
-# LDFLAGS = -pg -L/opt/local/lib
+LDFLAGS = -L/opt/local/lib
 
-CXXFLAGS = $(OPTFLAGS) -Wall -Wno-unused $(INCLUDES)
+CXXFLAGS = $(OPTFLAGS) -DHOME="\"`pwd`\"" -Wall -Wno-unused $(INCLUDES)
 
 LIB_OBJS = lib/refcount.o \
   lib/lib.o lib/smallbitset.o lib/bitset.o lib/setcommon.o lib/io.o lib/directed_multigraph.o
@@ -45,7 +46,7 @@ KNOTKIT_HEADERS = knotkit.h planar_diagram.h dt_code.h knot_diagram.h \
 
 LIBS = -lgmp -lz
 
-all: gss
+all: kk
 
 %.o : %.cc
 	$(CXX) -c $(CXXFLAGS) $< -o $@
@@ -53,8 +54,8 @@ all: gss
 %.o : %.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
-gss: gss.o $(COMMON_OBJS)
-	$(CXX) $(LDFLAGS) -o gss $^ $(LIBS)
+kk: kk.o $(COMMON_OBJS)
+	$(CXX) $(LDFLAGS) -o kk $^ $(LIBS)
 
 main: main.o $(COMMON_OBJS)
 	$(CXX) $(LDFLAGS) -o main $^ $(LIBS)
@@ -65,6 +66,7 @@ mpimain: mpimain.o mpi_aux.o $(COMMON_OBJS)
 testlib: testlib.o $(COMMON_OBJS)
 	$(CXX) $(LDFLAGS) -o testlib $^
 
+ifeq ($(devel),1)
 knot_parser/knot_parser.cc knot_parser/knot_parser.hh: knot_parser/knot_parser.yy
 	$(BISON) knot_parser/knot_parser.yy -o knot_parser/knot_parser.cc
 
@@ -82,6 +84,7 @@ rd_parser/rd_parser.cc rd_parser/rd_parser.hh: rd_parser/rd_parser.yy
 
 rd_parser/rd_scanner.cc: rd_parser/rd_scanner.ll
 	$(FLEX) -o rd_parser/rd_scanner.cc rd_parser/rd_scanner.ll
+endif
 
 .PHONY: parser_files
 parser_files: \
@@ -95,7 +98,7 @@ parser_files: \
 .PHONY: clean
 clean:
 	rm -f *.o lib/*.o algebra/*.o knot_parser/*.o rd_parser/*.o
-	rm -f main gss mpimain
+	rm -f main kk mpimain
 	rm -f gmon.out
 
 .PHONY: realclean
@@ -112,6 +115,6 @@ realclean: clean
 
 $(LIB_OBJS): $(LIB_HEADERS)
 $(ALGEBRA_OBJS): $(ALGEBRA_HEADERS) $(LIB_HEADERS)
-$(KNOTKIT_OBJS) main.o mpimain.o gss.o: $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)
+$(KNOTKIT_OBJS) main.o mpimain.o kk.o: $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)
 
 mpimain.o mpi_aux.o: mpi_aux.h
