@@ -106,13 +106,17 @@ usage: kk <invariant> [options...] <link>
 <invariant> can be one of:
   kh: Khovanov homology
   gss: Szabo's geometric spectral sequence
-  ls: Batson-Seed link splitting spectral sequence
+  lsss: Batson-Seed link splitting spectral sequence
     component weights are 0, 1, ..., m
   sq2: Lipshitz-Sarkar Steenrod square on Z/2 Kh
     output suitable for Sage
   leess: spectral sequence coming from Bar-Natan analogue of Lee's
     deformation of Khovanov's complex (whew!)
   s: Rasmussen's s-invariant coming from lee
+output:
+    kh, gss, lsss, leess: .tex file
+    sq2: text in Sage format
+    s: text
 options:
   -r         : compute reduced theory
   -h         : print this message
@@ -128,7 +132,7 @@ options:
   - a torus knot, e.g. T(2,3)
   - a Rolfsen table knot, e.g. 10_124
   - a Hoste-Thistlethwaite-Weeks knot, e.g. 11a12 or 12n214
-  - a Morwen Thistlethwaite link, e.g. L9a21 or L14n7631
+  - a Morwen Thistlethwaite link, e.g. L8n9 or L13n8862
   - a planar diagram, e.g.
       PD[X[1, 4, 2, 5], X[3, 6, 4, 1], X[5, 2, 6, 3]] or
       PD[[1, 4, 2, 5], [3, 6, 4, 1], [5, 2, 6, 3]]
@@ -137,6 +141,7 @@ options:
       DT[dadbcda] or
       DT[{6, -8}, {-10, 12, -14, 2, -4}]
   - a braid, e.g. BR[2, {-1, -1, -1}]
+  - disjoint union (juxtaposition), e.g. T(2,3) U
 
 4. UPCOMING CHANGES
 
@@ -145,7 +150,7 @@ The following changes are currently planned:
 * support for Z/p, p arbitrary prime and F(x) field of rational functions
 * Roberts' totally twisted Khovanov homology
 * the E^3 page of the twisted spectral sequence Kh(L) => \widehat{HF}(\Sigma_L)
-* spectral sequences of PIDs: ls over F[x], gss over Z
+* spectral sequences of PIDs: lsss over F[x], gss over Z
 * maps induced by cobordisms
 
 5. FOR DEVELOPERS

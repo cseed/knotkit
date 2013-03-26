@@ -115,8 +115,8 @@ dt_code mt_link (unsigned n, unsigned k);
 
 planar_diagram torus_knot (unsigned n_strands, unsigned n_shifts);
 
-planar_diagram braid (unsigned n_strands, const basedvector<int, 1> &twists);
-planar_diagram braid (unsigned n_strands, unsigned n_twists, int twists_ar[]);
+knot_diagram braid (unsigned n_strands, const basedvector<int, 1> &twists);
+knot_diagram braid (unsigned n_strands, unsigned n_twists, int twists_ar[]);
 
 knot_diagram parse_knot (const char *s);
 resolution_diagram parse_resolution_diagram (const char *s);

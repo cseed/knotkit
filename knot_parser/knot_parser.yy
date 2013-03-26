@@ -24,6 +24,7 @@ YY_DECL;
   basedvector<int, 1> *int_vec;
   basedvector<basedvector<int, 1>, 1> *int_vec2;
   const char *string;
+  knot_diagram *kd;
 }
 
 %code {
@@ -36,9 +37,12 @@ YY_DECL;
 
 %token PD DT BR LINK X T
 %token U UNKNOT
+
 %token <alternating> ALT NONALT
 %token <string> STRING
 
+%type <kd> knot knot_1
+%type <kd> rolfsen_knot htw_knot mt_link planar_diagram dt torus_link unknot braid
 %type <alternating> alt_spec
 
 %type <int_vec> int_vec int_vec_1
@@ -49,9 +53,27 @@ YY_DECL;
 
 %%
 
-%start knot;
+%start entry;
+
+entry:
+    knot
+      { 
+        parsed_knot = *$1; 
+        delete $1;
+      }
+  ;
 
 knot:
+   knot_1
+ | knot knot
+     {
+       $$ = new knot_diagram (DISJOINT_UNION, *$1, *$2);
+       delete $1;
+       delete $2;
+     }
+ ;
+
+knot_1:
     rolfsen_knot
   | htw_knot
   | mt_link
@@ -70,7 +92,7 @@ rolfsen_knot:
 	
 	if (n >= 1 && n <= 10
 	    && k >= 1 && k <= rolfsen_crossing_knots (n))
-	  parsed_knot = knot_diagram (rolfsen_knot (n, k));
+	  $$ = new knot_diagram (rolfsen_knot (n, k));
 	else
 	  {
 	    fprintf (stderr, "knot_parser: no such Rolfsen knot `%d_%d'\n",
@@ -89,7 +111,7 @@ htw_knot:
 	
 	if (n >= 1 && n <= 16
 	    && k >= 1 && k <= htw_knots (n, alt))
-	  parsed_knot = knot_diagram (htw_knot (n, alt, k));
+	  $$ = new knot_diagram (htw_knot (n, alt, k));
 	else
 	  {
 	    fprintf (stderr, "knot_parser: no such HTW knot `%d%c%d'\n",
@@ -108,7 +130,7 @@ mt_link:
 	
 	if (n >= 1 && n <= 14
 	    && k >= 1 && k <= mt_links (n, alt))
-	  parsed_knot = knot_diagram (mt_link (n, alt, k));
+	  $$ = new knot_diagram (mt_link (n, alt, k));
 	else
 	  {
 	    fprintf (stderr, "knot_parser: no such MT link `%d%c%d'\n", 
@@ -120,9 +142,9 @@ mt_link:
 
 planar_diagram:
     PD '[' int_vec2 ']'
-      { parsed_knot = knot_diagram (planar_diagram ("<parsed>", *$3)); }
+      { $$ = new knot_diagram (planar_diagram ("<parsed>", *$3)); }
   | PD '[' crossing_vec ']'
-      { parsed_knot = knot_diagram (planar_diagram ("<parsed>", *$3)); }
+      { $$ = new knot_diagram (planar_diagram ("<parsed>", *$3)); }
   ;
 
 dt:
@@ -130,22 +152,22 @@ dt:
       {
 	basedvector<basedvector<int, 1>, 1> even_labels (1);
 	even_labels[1] = *$3;
-	parsed_knot = knot_diagram (dt_code ("<parsed>", even_labels));
+	$$ = new knot_diagram (dt_code ("<parsed>", even_labels));
       }
   | DT '[' int_vec2 ']'
-      { parsed_knot = knot_diagram (dt_code ("<parsed>", *$3)); }
+      { $$ = new knot_diagram (dt_code ("<parsed>", *$3)); }
   | DT '[' STRING ']'
-      { parsed_knot = knot_diagram (dt_code ("<parsed>", $3)); }
+      { $$ = new knot_diagram (dt_code ("<parsed>", $3)); }
   ;
 
 torus_link:
     T '(' INT ',' INT ')'
-      { parsed_knot = knot_diagram (torus_knot ($3, $5)); }
+      { $$ = new knot_diagram (torus_knot ($3, $5)); }
   ;
 
 braid:
     BR '[' INT ',' int_vec ']'
-      { parsed_knot = knot_diagram (braid ($3, *$5)); }
+      { $$ = new knot_diagram (braid ($3, *$5)); }
   ;
 
 unknot:
@@ -154,7 +176,7 @@ unknot:
 	unsigned unknot_ar[1][4] = {
 	  { 2, 1, 3, 4, },
 	};
-	parsed_knot = knot_diagram ("U", 1, unknot_ar);
+	$$ = new knot_diagram ("U", 1, unknot_ar);
       }
   ;
 

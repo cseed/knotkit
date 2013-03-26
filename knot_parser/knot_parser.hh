@@ -82,10 +82,11 @@ namespace yy {
   basedvector<int, 1> *int_vec;
   basedvector<basedvector<int, 1>, 1> *int_vec2;
   const char *string;
+  knot_diagram *kd;
 
 
 /* Line 36 of lalr1.cc  */
-#line 89 "knot_parser/knot_parser.hh"
+#line 90 "knot_parser/knot_parser.hh"
     };
 #else
     typedef YYSTYPE semantic_type;
@@ -283,7 +284,7 @@ namespace yy {
 
 } // yy
 /* Line 36 of lalr1.cc  */
-#line 287 "knot_parser/knot_parser.hh"
+#line 288 "knot_parser/knot_parser.hh"
 
 
 

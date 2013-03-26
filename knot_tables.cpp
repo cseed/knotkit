@@ -612,7 +612,7 @@ torus_knot (unsigned n_strands, unsigned n_shifts)
   return planar_diagram (std::string (buf), crossings);
 }
 
-planar_diagram
+knot_diagram
 braid (unsigned n_strands, unsigned n_twists, int twists_ar[])
 {
   basedvector<int, 1> twists (n_twists);
@@ -621,10 +621,9 @@ braid (unsigned n_strands, unsigned n_twists, int twists_ar[])
   return braid (n_strands, twists);
 }
 
-planar_diagram
+knot_diagram
 braid (unsigned n_strands, const basedvector<int, 1> &twists)
 {
-  unsigned n_crossings = twists.size ();
   unsigned e = 0;
   
   basedvector<unsigned, 1> final_strands (n_strands);
@@ -644,14 +643,36 @@ braid (unsigned n_strands, const basedvector<int, 1> &twists)
       last_twist[t] = i;
       last_twist[t + 1] = i;
     }
-#ifndef NDEBUG
-  for (unsigned i = 1; i <= n_strands; i ++)
-    assert (last_twist[i] != 0);
-#endif
   
-  basedvector<basedvector<int, 1>, 1> crossings (n_crossings);
+  unsigned n_crossings = twists.size ();
+  for (unsigned i = 1; i <= n_strands; i ++)
+    {
+      if (last_twist[i] == 0)
+	n_crossings ++;
+    }
+  
+  basedvector<basedvector<unsigned, 1>, 1> crossings (n_crossings);
   for (unsigned i = 1; i <= n_crossings; i ++)
-    crossings[i] = basedvector<int, 1> (4);
+    crossings[i] = basedvector<unsigned, 1> (4);
+  
+  unsigned c = twists.size ();
+  for (unsigned i = 1; i <= n_strands; i ++)
+    {
+      if (last_twist[i] == 0)
+	{
+	  ++ c;
+	  unsigned e1 = strands[i];
+	  unsigned e2 = ++ e;
+	  
+	  strands[i] = final_strands[i] = 0;
+	  
+	  crossings[c][1] = edge_from_ept (e1);
+	  crossings[c][2] = edge_to_ept (e2);
+	  crossings[c][3] = edge_from_ept (e2);
+	  crossings[c][4] = edge_to_ept (e1);
+	}
+    }
+  assert (c == n_crossings);
   
   for (unsigned i = 1; i <= twists.size (); i ++)
     {
@@ -686,27 +707,30 @@ braid (unsigned n_strands, const basedvector<int, 1> &twists)
       
       if (twists[i] > 0)
 	{
-	  crossings[i][1] = e1;
-	  crossings[i][2] = e2;
-	  crossings[i][3] = e3;
-	  crossings[i][4] = e4;
+	  crossings[i][1] = edge_to_ept (e1);
+	  crossings[i][2] = edge_from_ept (e2);
+	  crossings[i][3] = edge_from_ept (e3);
+	  crossings[i][4] = edge_to_ept (e4);
 	}
       else
 	{
-	  crossings[i][1] = e2;
-	  crossings[i][2] = e3;
-	  crossings[i][3] = e4;
-	  crossings[i][4] = e1;
+	  crossings[i][1] = edge_from_ept (e2);
+	  crossings[i][2] = edge_from_ept (e3);
+	  crossings[i][3] = edge_to_ept (e4);
+	  crossings[i][4] = edge_to_ept (e1);
 	}
     }
   
   assert (e == n_crossings * 2);
 #ifndef NDEBUG
   for (unsigned i = 1; i <= n_strands; i ++)
-    assert (final_strands[i] == 0);
+    {
+      assert (strands[i] == 0);
+      assert (final_strands[i] == 0);
+    }
 #endif
   
-  return planar_diagram ("abraid", crossings);
+  return knot_diagram ("abraid", crossings);
 }
 
 basedvector<basedvector<unsigned, 1>, 1> 

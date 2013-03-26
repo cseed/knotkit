@@ -11,13 +11,17 @@ usage ()
   printf ("<invariant> can be one of:\n");
   printf ("  kh: Khovanov homology\n");
   printf ("  gss: Szabo's geometric spectral sequence\n");
-  printf ("  ls: Batson-Seed link splitting spectral sequence\n");
+  printf ("  lsss: Batson-Seed link splitting spectral sequence\n");
   printf ("    component weights are 0, 1, ..., m\n");
   printf ("  sq2: Lipshitz-Sarkar Steenrod square on Z/2 Kh\n");
   printf ("    output suitable for Sage\n");
   printf ("  leess: spectral sequence coming from Bar-Natan analogue of Lee's\n");
   printf ("    deformation of Khovanov's complex (whew!)\n");
   printf ("  s: Rasmussen's s-invariant coming from lee\n");
+  printf ("output:\n");
+  printf ("    kh, gss, lsss, leess: .tex file\n");
+  printf ("    sq2: text in Sage format\n");
+  printf ("    s: text\n");
   printf ("options:\n");
   printf ("  -r         : compute reduced theory\n");
   printf ("  -h         : print this message\n");
@@ -33,7 +37,7 @@ usage ()
   printf ("  - a torus knot, e.g. T(2,3)\n");
   printf ("  - a Rolfsen table knot, e.g. 10_124\n");
   printf ("  - a Hoste-Thistlethwaite-Weeks knot, e.g. 11a12 or 12n214\n");
-  printf ("  - a Morwen Thistlethwaite link, e.g. L9a21 or L14n7631\n");
+  printf ("  - a Morwen Thistlethwaite link, e.g. L8n9 or L13n8862\n");
   printf ("  - a planar diagram, e.g.\n");
   printf ("      PD[X[1, 4, 2, 5], X[3, 6, 4, 1], X[5, 2, 6, 3]] or\n");
   printf ("      PD[[1, 4, 2, 5], [3, 6, 4, 1], [5, 2, 6, 3]]\n");
@@ -42,6 +46,7 @@ usage ()
   printf ("      DT[dadbcda] or\n");
   printf ("      DT[{6, -8}, {-10, 12, -14, 2, -4}]\n");
   printf ("  - a braid, e.g. BR[2, {-1, -1, -1}]\n");
+  printf ("  - disjoint union (juxtaposition), e.g. T(2,3) U\n");
 }
 
 FILE *outfp = stdout;
@@ -317,10 +322,11 @@ compute_invariant ()
       sseq ss (b, pages);
       
       tex_header ();
-      fprintf (outfp, "$E_k = %s^{BS}_k(\\verb~%s~; \\verb~%s~)$:\\\\\n",
+      fprintf (outfp, "$E_k = %s^{BS}_k({}^{%d}\\verb~%s~; \\verb~%s~)$:\\\\\n",
 	       (reduced
 		? "\\widetilde{E}"
 		: "E"),
+	       m,
 	       knot,
 	       field);
       ss.texshow (outfp, mapper);

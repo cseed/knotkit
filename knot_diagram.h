@@ -1,4 +1,14 @@
 
+// for building knot_diagram
+inline unsigned edge_from_ept (unsigned e)
+{
+  return e * 2 - 1;
+}
+inline unsigned edge_to_ept (unsigned e)
+{
+  return e * 2;
+}
+
 static inline unsigned
 add_base1_mod4 (unsigned x, unsigned y)
 {
