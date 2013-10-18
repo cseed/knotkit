@@ -1,6 +1,4 @@
 
-#include <gmp.h>
-
 #include <lib/lib.h>
 
 inline int recip (int x)
@@ -42,9 +40,9 @@ unsigned int_lcm (int a, int b);
 uint64 int64_lcm (int64 a, int64 b);
 
 // (d, x, y) = gcd (a, b) where x*a + y*b = d
-triple<unsigned, int, int> extended_gcd (int a, int b);
+tuple<unsigned, int, int> extended_gcd (int a, int b);
 
-triple<unsigned, int, int> unsigned_extended_gcd (unsigned a, unsigned b);
+tuple<unsigned, int, int> unsigned_extended_gcd (unsigned a, unsigned b);
 
 template<class R> class linear_combination;
 template<class R> class linear_combination_const_iter;

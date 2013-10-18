@@ -19,21 +19,20 @@ planar_diagram::planar_diagram (const knot_diagram &kd)
 }
 
 void
-planar_diagram::display_bohua () const
+planar_diagram::show_knottheory () const
 {
-  printf ("%s\t[", name.c_str ());
+  printf ("PD[");
   for (unsigned i = 1; i <= crossings.size (); i ++)
     {
       if (i > 1)
 	printf (",");
-      printf ("[%d,%d,%d,%d]", 
+      printf ("X[%d,%d,%d,%d]", 
 	      crossings[i][1],
 	      crossings[i][2],
 	      crossings[i][3],
 	      crossings[i][4]);
     }
-  printf ("]\n");
-  
+  printf ("]");
 }
 
 void

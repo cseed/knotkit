@@ -18,6 +18,8 @@ class priority_queue
     weighted &operator = (const weighted &w) { v = w.v; pri = w.pri; }
     
     bool operator == (const weighted &w) const { return v == w.v && pri == w.pri; }
+    bool operator != (const weighted &w) const { return !operator == (w); }
+    
     bool operator < (const weighted &w) const { return pri > w.pri || (pri == w.pri && v < w.v); }
   };
   

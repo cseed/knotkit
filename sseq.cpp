@@ -2,7 +2,8 @@
 #include <knotkit.h>
 
 sseq_page::sseq_page (const sseq_bounds &b)
-  : rank(b.width ()),
+  : k(0),
+    rank(b.width ()),
     im_rank(b.width ())
 {
   for (unsigned i = 0; i < b.width (); i ++)
@@ -140,87 +141,6 @@ sseq_page::delta_poincare_polynomial (const sseq_bounds &b) const
   return r;
 }
 
-void
-sseq_page::texshow (FILE *fp, const sseq_bounds &b, unsigned dh, bool last)
-{
-  fprintf (fp, "\
-\\begin{tikzpicture}[scale=.66]\n\
-  \\draw[->] (0,0) -- (%d.5,0) node[right] {$t$};\n\
-  \\draw[->] (0,0) -- (0,%d.5) node[above] {$q$};\n\
-  \\draw[step=1] (0,0) grid (%d,%d);\n",
-	   b.width (), (b.height () + 1) / 2, b.width (), (b.height () + 1) / 2);
-
-  fprintf (fp, "  \\draw (%.3f,-0.8) node[below] {$",
-	   ((double)b.width () + 0.5) / 2);
-  if (last)
-    fprintf (fp, "E_\\infty = ");
-  fprintf (fp, "E_{%d}$};\n",
-	   dh);
-  
-  /* label axes */
-  for (int x = b.minh; x <= b.maxh; x ++)
-    {
-      fprintf (fp, "\
-  \\draw (%d.5,-.2) node[below] {$%d$};\n",
-	       x - b.minh, x);
-    }
-  for (int y = b.minq; y <= b.maxq; y += 2)
-    {
-      fprintf (fp, "\
-  \\draw (-.2,%d.5) node[left] {$%d$};\n",
-	       (y - b.minq) / 2, y);
-    }
-  
-  for (unsigned i = 0; i < b.width (); i ++)
-    for (unsigned j = 0; j < b.height (); j ++)
-      {
-	int r = rank[i][j];
-	if (r == 1)
-	  {
-	    assert (is_even (j));
-	    fprintf (fp, "\
-  \\fill (%d.5, %d.5) circle (.15);\n",
-		     i, j / 2);
-	  }
-	else if (r > 1)
-	  {
-	    assert (is_even (j));
-	    fprintf (fp, "\
-  \\draw (%d.5, %d.5) node {$%d$};\n",
-		    i, j / 2, r);
-	  }
-      }
-  
-  for (unsigned i = 0; i < b.width (); i ++)
-    for (unsigned j = 0; j < b.height (); j ++)
-      {
-	unsigned r = im_rank[i][j];
-	if (r == 0)
-	  continue;
-	
-	unsigned dx = dh,
-	  dy = dh - 1;  // in "boxes"
-	assert (dx >= 2); // eliminated d_1
-	
-	double h = sqrt ((double)(dx * dx + dy * dy));
-	double xadj = (double)dx / h * 0.3;
-	double yadj = (double)dy / h * 0.3;
-	
-	assert (is_even (j));
-	fprintf (fp, "  \\draw[->] (%.3f, %.3f) -- ",
-		(double)i + 0.5 + xadj, (double)(j / 2) + 0.5 + yadj);
-	if (r > 1)
-	  fprintf (fp, "node[color=red!75!black] {$%d$} ", r);
-	fprintf (fp, "(%.3f, %.3f);\n",
-		(double)(i + dx) + 0.5 - xadj, (double)(j / 2 + dy) + 0.5 - yadj);
-      }
-  
-  fprintf (fp, "\
-\\end{tikzpicture}\n");
-  
-  fflush (fp);
-}
-
 sseq
 sseq::operator + (const sseq &ss2) const
 {
@@ -278,36 +198,6 @@ sseq::shift (int dh, int dq) const
 			    bounds.minq + dq,
 			    bounds.maxq + dq),
 	       pages);
-}
-
-bool
-sseq::equal_as_spaces (const sseq &ss) const
-{
-  if (bounds != ss.bounds
-      || pages.size () != ss.pages.size ())
-    return 0;
-  
-  for (unsigned i = 1; i <= pages.size (); i ++)
-    {
-      if (!pages[i].equal_as_spaces (ss.pages[i]))
-	return 0;
-    }
-  
-  return 1;
-}
-
-void
-sseq::texshow (FILE *fp, std::string name)
-{
-  fprintf (fp, "\\section{Knot $%s$}\n", name.c_str ());
-  
-  unsigned n = pages.size ();
-  for (unsigned i = 1; i <= n; i ++)
-    fprintf (fp, "$\\rank E_%d = %d$ \\\\\n",
-	    i + 1, pages[i].total_rank ());
-  
-  for (unsigned i = 1; i <= n; i ++)
-    pages[i].texshow (fp, bounds, i + 1, i == n);
 }
 
 void

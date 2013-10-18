@@ -1,4 +1,14 @@
 
+// for building knot_diagram
+inline unsigned edge_from_ept (unsigned e)
+{
+  return e * 2 - 1;
+}
+inline unsigned edge_to_ept (unsigned e)
+{
+  return e * 2;
+}
+
 static inline unsigned
 add_base1_mod4 (unsigned x, unsigned y)
 {
@@ -11,6 +21,7 @@ add_base1_mod4 (unsigned x, unsigned y)
 enum mirror { MIRROR };
 enum connect_sum { CONNECT_SUM };
 enum sublink { SUBLINK };
+enum disjoint_union { DISJOINT_UNION };
 
 class knot_diagram
 {
@@ -122,6 +133,9 @@ class knot_diagram
   knot_diagram (sublink,
 		smallbitset c,
 		const knot_diagram &kd);
+  knot_diagram (disjoint_union,
+		const knot_diagram &kd1,
+		const knot_diagram &kd2);
   
   knot_diagram (const std::string &name_, unsigned n_crossings_, unsigned crossings_ar[][4]);
   knot_diagram (const std::string &name_, const basedvector<basedvector<unsigned, 1>, 1> &crossings_);
@@ -156,6 +170,8 @@ class knot_diagram
   unsigned resolve_next_ept (unsigned p, bool resolution) const;
   
   int writhe () const { return (int)nplus - (int)nminus; }
+  
+  unsigned total_linking_number () const;
   
   basedvector<basedvector<int, 1>, 1> planar_diagram_crossings () const;
   

@@ -160,6 +160,7 @@ class resolution_diagram
   resolution_diagram &operator = (const resolution_diagram &rd);
   
   bool operator == (const resolution_diagram &rd) const;
+  bool operator != (const resolution_diagram &rd) const { return !operator == (rd); }
   
   /* reverse, reverse_orientation leave starting/ending circle numbers
      unchanged. */
@@ -190,10 +191,10 @@ class resolution_diagram_builder
   
  public:
   resolution_diagram_builder ();
-  resolution_diagram_builder (const resolution_diagram_builder &); // doesn't exist
+  resolution_diagram_builder (const resolution_diagram_builder &) = delete;
   ~resolution_diagram_builder () { }
   
-  resolution_diagram_builder &operator = (const resolution_diagram_builder &); // doesn't exist
+  resolution_diagram_builder &operator = (const resolution_diagram_builder &) = delete;
   
   void init (const knot_diagram &d,
 	     smallbitset from_state, const smoothing &from_s,

@@ -14,9 +14,14 @@ template<class R>
 class module : public refcounted
 {
  private:
+  friend class reader;
+  friend class writer;
+  
   unsigned id;
   
   static unsigned id_counter;
+  
+  static map<unsigned, ptr<const module<R> > > reader_id_module;
   
   static map<basedvector<unsigned, 1>,
     ptr<const direct_sum<R> > > direct_sum_idx;
@@ -28,13 +33,13 @@ class module : public refcounted
  public:
   module ()
   {
-    id = id_counter;
     id_counter ++;
+    id = id_counter;
   }
-  module (const module &); // doesn't exist
+  module (const module &) = delete;
   virtual ~module () { }
   
-  module &operator = (const module &); // doesn't exist
+  module &operator = (const module &) = delete;
   
  public:
   // the number of generators; n
@@ -48,6 +53,9 @@ class module : public refcounted
   
   // r < i <= n
   virtual R generator_ann (unsigned i) const = 0;
+
+  basedvector<grading, 1> grading_vector () const;
+  set<grading> gradings () const;
   
   bool is_free () const { return dim () == free_rank (); }
   
@@ -56,7 +64,12 @@ class module : public refcounted
     if (i <= free_rank ())
       return c == 0;
     else
-      return generator_ann (i) | c;
+      {
+	// ???
+	abort ();
+	
+	// return generator_ann (i) | c;
+      }
   }
   
   R annihilator (R c, unsigned i) const
@@ -75,6 +88,7 @@ class module : public refcounted
   
   multivariate_laurentpoly<Z> free_poincare_polynomial () const;
   multivariate_laurentpoly<Z> free_delta_poincare_polynomial () const;
+  multivariate_laurentpoly<Z> free_ell_poincare_polynomial () const;
   
   ptr<const direct_sum<R> >
     add (basedvector<ptr<const module<R> >, 1> compound_summands) const;
@@ -143,11 +157,16 @@ class module : public refcounted
     factors.append (this);
   }
   
+  ptr<const free_submodule<R> > graded_piece (grading hq) const;
+  
+  void write_self (writer &w) const { w.write_mod<R> (this); }
   void show_self () const;
   void display_self () const;
 };
 
-template<class R> unsigned module<R>::id_counter = 1;
+template<class R> unsigned module<R>::id_counter = 0;
+
+template<class R> map<unsigned, ptr<const module<R> > > module<R>::reader_id_module;
 
 template<class R> map<basedvector<unsigned, 1>,
   ptr<const direct_sum<R> > > module<R>::direct_sum_idx;
@@ -466,11 +485,11 @@ class base_module : public module<R>
   G g;
   
  public:
-  base_module (); // doesn't exist
+  base_module () = delete;
   base_module (const G &g_) : g(g_) { }
   ~base_module () { }
   
-  base_module &operator = (const base_module &); // doesn't exist
+  base_module &operator = (const base_module &) = delete;
   
   unsigned dim () const { return g.dim (); }
   unsigned free_rank () const { return g.free_rank (); }
@@ -487,17 +506,19 @@ class explicit_module : public module<R>
   basedvector<grading, 1> hq;
   
  public:
-  explicit_module (); // doesn't exist
+  explicit_module () = delete;
   explicit_module (unsigned r_,
 		   basedvector<R, 1> ann_,
 		   basedvector<grading, 1> hq_)
     : r(r_), ann(ann_), hq(hq_)
-  { }
+  {
+    assert (hq.size () == r + ann.size ());
+  }
   
   explicit explicit_module (unsigned r_, basedvector<grading, 1> hq_) : r(r_), hq(hq_) { }
   ~explicit_module () { }
   
-  explicit_module &operator = (const explicit_module &); // doesn't exist
+  explicit_module &operator = (const explicit_module &) = delete;
   
   unsigned dim () const { return r + ann.size (); }
   unsigned free_rank () const { return r; }
@@ -525,7 +546,7 @@ class free_submodule : public module<R>
   { }
   ~free_submodule () { }
   
-  free_submodule &operator = (const free_submodule &); // doesn't exist
+  free_submodule &operator = (const free_submodule &) = delete;
   
   ptr<const module<R> > parent_module () const { return parent; }
   
@@ -542,6 +563,9 @@ class free_submodule : public module<R>
   
   linear_combination<R> restrict (linear_combination<R> v0) const;
   ptr<const free_submodule<R> > restrict_submodule (ptr<const free_submodule<R> > m) const;
+  
+  ptr<const free_submodule<R> > intersection (ptr<const free_submodule<R> > m) const;
+  ptr<const free_submodule<R> > plus (ptr<const free_submodule<R> > m) const;
 };
 
 template<class R> 
@@ -562,13 +586,13 @@ class quotient_module : public module<R>
   basedvector<map<unsigned, R>, 1> pi;
   
  public:
-  quotient_module (const quotient_module &); // doesn't exist
+  quotient_module (const quotient_module &) = delete;
   quotient_module (ptr<const module<R> > parent_)
     : parent(parent_)
   { }
   ~quotient_module () { }
   
-  quotient_module &operator = (const quotient_module &); // doesn't exsit
+  quotient_module &operator = (const quotient_module &) = delete;
   
   ptr<const module<R> > parent_module () const { return parent; }
   
@@ -617,7 +641,7 @@ class map_impl : public refcounted
   ptr<const module<R> > to;
   
  public:
-  map_impl (const map_impl &); // doesn't exist
+  map_impl (const map_impl &) = delete;
   map_impl (ptr<const module<R> > fromto)
     : from(fromto), to(fromto)
   { }
@@ -626,9 +650,10 @@ class map_impl : public refcounted
   { }
   virtual ~map_impl () { }
   
-  map_impl &operator = (const map_impl &); // doesn't exist
+  map_impl &operator = (const map_impl &) = delete;
   
-  virtual linear_combination<R> column (unsigned i) const = 0;
+  virtual const linear_combination<R> column (unsigned i) const = 0;
+  virtual const linear_combination<R> column_copy (unsigned i) const { return column (i); }
   
   linear_combination<R> map (const linear_combination<R> &lc) const
   {
@@ -657,7 +682,11 @@ class explicit_map_impl : public map_impl<R>
   { }
   ~explicit_map_impl () { }
   
-  linear_combination<R> column (unsigned i) const { return columns[i]; }
+  const linear_combination<R> column (unsigned i) const { return columns[i]; }
+  const linear_combination<R> column_copy (unsigned i) const
+  {
+    return linear_combination<R> (COPY, columns[i]);
+  }
 };
 
 template<class R>
@@ -667,7 +696,7 @@ class zero_map_impl : public map_impl<R>
   zero_map_impl (ptr<const module<R> > fromto) : map_impl<R>(fromto) { }
   zero_map_impl (ptr<const module<R> > from, ptr<const module<R> > to) : map_impl<R>(from, to) { }
   
-  linear_combination<R> column (unsigned i) const { return linear_combination<R> (this->to); }
+  const linear_combination<R> column (unsigned i) const { return linear_combination<R> (this->to); }
 };
 
 template<class R>
@@ -677,7 +706,7 @@ class id_map_impl : public map_impl<R>
   id_map_impl (ptr<const module<R> > fromto) : map_impl<R>(fromto) { }
   id_map_impl (ptr<const module<R> > from, ptr<const module<R> > to) : map_impl<R>(from, to) { }
   
-  linear_combination<R> column (unsigned i) const
+  const linear_combination<R> column (unsigned i) const
   {
     linear_combination<R> r (this->to);
     r.muladd (1, i);
@@ -700,7 +729,7 @@ class composition_impl : public map_impl<R>
     assert (g->to == f->from);
   }
   
-  linear_combination<R> column (unsigned i) const
+  const linear_combination<R> column (unsigned i) const
   {
     return f->map (g->column (i));
   }
@@ -721,7 +750,7 @@ class direct_sum_impl : public map_impl<R>
   {
   }
   
-  linear_combination<R> column (unsigned i) const
+  const linear_combination<R> column (unsigned i) const
   {
     pair<unsigned, unsigned> p = f->from->project (g->from, i);
     
@@ -756,7 +785,7 @@ class tensor_impl : public map_impl<R>
   {
   }
   
-  linear_combination<R> column (unsigned i) const
+  const linear_combination<R> column (unsigned i) const
   {
     pair<unsigned, unsigned> p = f->from->generator_factors (g->from, i);
     
@@ -849,6 +878,15 @@ class mod_map
   mod_map (const map_builder<R> &b)
     : impl(new explicit_map_impl<R> (b.from, b.to, b.columns))
   { }
+  
+  mod_map (reader &r)
+  {
+    ptr<const module<R> > from = r.read_mod<R> ();
+    ptr<const module<R> > to = r.read_mod<R> ();
+    basedvector<linear_combination<R>, 1> columns (r);
+    impl = new explicit_map_impl<R> (from, to, columns);
+  }
+  
   ~mod_map () { }
   
   mod_map &operator = (const mod_map &m) { impl = m.impl; return *this; }
@@ -867,6 +905,7 @@ class mod_map
       }
     return 1;
   }
+  bool operator != (const mod_map &m) const { return !operator == (m); }
   
   bool operator == (int x) const
   {
@@ -883,8 +922,10 @@ class mod_map
   
   bool operator != (int x) const { return !operator == (x); }
   
-  linear_combination<R> column (unsigned i) const { return impl->column (i); }
-  linear_combination<R> operator [] (unsigned i) const { return impl->column (i); }
+  const linear_combination<R> column (unsigned i) const { return impl->column (i); }
+  const linear_combination<R> operator [] (unsigned i) const { return impl->column (i); }
+  
+  const linear_combination<R> column_copy (unsigned i) const { return impl->column_copy (i); }
   
   linear_combination<R> map (const linear_combination<R> &lc) const { return impl->map (lc); }
   mod_map compose (const mod_map &m) const
@@ -908,6 +949,7 @@ class mod_map
   
   // ?? add and other map operations should not be explicit
   mod_map operator + (const mod_map &m) const;
+  mod_map operator * (const R &c) const;
   
   bool homogeneous () const;
   void check_grading (grading delta) const;
@@ -917,6 +959,7 @@ class mod_map
   
   // inj : im -> to
   ptr<const free_submodule<R> > image () const;
+  ptr<const free_submodule<R> > image (basedvector<linear_combination<R>, 1> vs) const;
   
   ptr<const quotient_module<R> > cokernel () const;
   
@@ -934,8 +977,18 @@ class mod_map
   mod_map induced_map_to (ptr<const quotient_module<R> > new_to);
   mod_map induced_map (ptr<const quotient_module<R> > new_fromto);
   
+  mod_map graded_piece (grading hq) const;
+  
   // ???
   basedvector<linear_combination<R>, 1> explicit_columns () const;
+  
+  void write_self (writer &w) const
+  {
+    // write explicitly
+    write (w, *impl->from);
+    write (w, *impl->to);
+    write (w, explicit_columns ());
+  }
   
   void show_self () const;
   void display_self () const;
@@ -1095,16 +1148,16 @@ quotient_helper<R>::improve_pivot_row (unsigned i, unsigned j, unsigned i2)
     }
 #endif
   
-  triple<R, R, R> t = rc.extended_gcd (r2c);
-  assert (t.first == rc*t.second + t.third*r2c);
+  tuple<R, R, R> t = rc.extended_gcd (r2c);
+  assert (get<0> (t) == rc*get<1> (t) + get<2> (t)*r2c);
   
-  rows[i] = r*t.second + r2*t.third;
-  rows[i2] = (rc.div (t.first))*r2 - (r2c.div (t.first))*r;
+  rows[i] = r*get<1> (t) + r2*get<2> (t);
+  rows[i2] = (rc.div (get<0> (t)))*r2 - (r2c.div (get<0> (t)))*r;
   
-  assert ((rc | r2c) == rc.divides (t.first));
-  assert (!rc.divides (t.first) || rows[i2](j) == 0);
+  assert ((rc | r2c) == rc.divides (get<0> (t)));
+  assert (!rc.divides (get<0> (t)) || rows[i2](j) == 0);
   
-  return !rc.divides (t.first);
+  return !rc.divides (get<0> (t));
 }
 
 template<class R> bool
@@ -1149,8 +1202,8 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
     }
 #endif
   
-  triple<R, R, R> t = rc.extended_gcd (rc2);
-  assert (t.first == rc*t.second + t.third*rc2);
+  tuple<R, R, R> t = rc.extended_gcd (rc2);
+  assert (get<0> (t) == rc*get<1> (t) + get<2> (t)*rc2);
   
   for (unsigned k = 1; k <= rows.size (); k ++)
     {
@@ -1158,9 +1211,9 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
       R rkc = rk(j),
 	rkc2 = rk(j2);
       
-      rk.set_coeff (rkc*t.second + rkc2*t.third,
+      rk.set_coeff (rkc*get<1> (t) + rkc2*get<2> (t),
 		    j);
-      rk.set_coeff (rkc2*(rc.div (t.first)) - rkc*(rc2.div (t.first)),
+      rk.set_coeff (rkc2*(rc.div (get<0> (t))) - rkc*(rc2.div (get<0> (t))),
 		    j2);
     }
   
@@ -1169,8 +1222,8 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
   
   assert (g.hq () == g2.hq ());
   
-  generators[j] = (rc.div (t.first)) * g + (rc2.div (t.first)) * g2;
-  generators[j2] = t.second * g2 - t.third * g;
+  generators[j] = (rc.div (get<0> (t))) * g + (rc2.div (get<0> (t))) * g2;
+  generators[j2] = get<1> (t) * g2 - get<2> (t) * g;
   
  #if 0
   for (unsigned k = 1; k <= rows.size (); k ++)
@@ -1189,8 +1242,8 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
       R d = ginv(j),
 	d2 = ginv(j2);
       
-      ginv.set_coeff (t.second*d + t.third*d2, j);
-      ginv.set_coeff (rc.div (t.first) * d2 - rc2.div (t.first) * d, j2);
+      ginv.set_coeff (get<1> (t)*d + get<2> (t)*d2, j);
+      ginv.set_coeff (rc.div (get<0> (t)) * d2 - rc2.div (get<0> (t)) * d, j2);
     }
   
 #if 0
@@ -1207,10 +1260,10 @@ quotient_helper<R>::improve_pivot_column (unsigned i, unsigned j, unsigned j2)
     }
 #endif
   
-  assert ((rc | rc2) == rc.divides (t.first));
-  assert (!rc.divides (t.first) || r(j2) == 0);
+  assert ((rc | rc2) == rc.divides (get<0> (t)));
+  assert (!rc.divides (get<0> (t)) || r(j2) == 0);
   
-  return !rc.divides (t.first);
+  return !rc.divides (get<0> (t));
 }
 
 template<class R> void
@@ -1437,6 +1490,58 @@ module<R>::free_delta_poincare_polynomial () const
   return r;
 }
 
+template<class R> multivariate_laurentpoly<Z>
+module<R>::free_ell_poincare_polynomial () const
+{
+  multivariate_laurentpoly<Z> r;
+  for (unsigned i = 1; i <= free_rank (); i ++)
+    {
+      grading hq = generator_grading (i);
+      multivariate_laurent_monomial m;
+      m.push_exponent (1, hq.h - hq.q);
+      r.muladdeq (1, m);
+    }
+  return r;
+}
+
+template<class R> basedvector<grading, 1>
+module<R>::grading_vector () const
+{
+  basedvector<grading, 1> v (dim ());
+  for (unsigned i = 1; i <= dim (); i ++)
+    v[i] = generator_grading (i);
+  return v;
+}
+
+template<class R> set<grading> 
+module<R>::gradings () const
+{
+  set<grading> gs;
+  for (unsigned i = 1; i <= dim (); i ++)
+    gs += generator_grading (i);
+  return gs;
+}
+
+template<class R> ptr<const free_submodule<R> > 
+module<R>::graded_piece (grading hq) const
+{
+  basedvector<linear_combination<R>, 1> s;
+  for (unsigned i = 1; i <= dim (); i ++)
+    {
+      grading ihq = generator_grading (i);
+      if (ihq.h == hq.h
+	  && ihq.q == hq.q)
+	{
+	  linear_combination<R> v (this);
+	  v.muladd (1, i);
+	  s.append (v);
+	}
+    }
+  
+  mod_span<R> span (this, s);
+  return submodule (span);
+}
+
 template<class R> void
 module<R>::show_self () const
 {
@@ -1520,6 +1625,28 @@ mod_map<R>::induced_map (ptr<const quotient_module<R> > new_fromto)
   return new explicit_map_impl<R> (new_fromto, v);
 }
 
+template<class R> mod_map<R>
+mod_map<R>::graded_piece (grading hq) const
+{
+  basedvector<linear_combination<R>, 1> v (impl->from->dim ());
+  for (unsigned i = 1; i <= impl->from->dim (); i ++)
+    {
+      grading ihq = impl->from->generator_grading (i);
+      
+      linear_combination<R> c = column (i);
+      linear_combination<R> d (impl->to);
+      for (linear_combination_const_iter<R> j = c; j; j ++)
+	{
+	  grading jhq = impl->from->generator_grading (j.key ());
+	  if (jhq.h - ihq.h == hq.h
+	      && jhq.q - ihq.q == hq.q)
+	    d.muladd (j.val (), j.key ());
+	}
+      v[i] = d;
+    }
+  return mod_map (IMPL, new explicit_map_impl<R> (impl->from, impl->to, v));
+}
+
 template<class R> mod_map<R> 
 mod_map<R>::restrict_from (ptr<const free_submodule<R> > new_from) const
 {
@@ -1528,7 +1655,7 @@ mod_map<R>::restrict_from (ptr<const free_submodule<R> > new_from) const
   basedvector<linear_combination<R>, 1> v (new_from->dim ());
   for (unsigned i = 1; i <= new_from->dim (); i ++)
     v[i] = map (new_from->inject_generator (i));
-  return new explicit_map_impl<R> (new_from, impl->to, v);
+  return mod_map (IMPL, new explicit_map_impl<R> (new_from, impl->to, v));
 }
 
 template<class R> mod_map<R> 
@@ -1552,7 +1679,7 @@ mod_map<R>::restrict (ptr<const free_submodule<R> > new_from,
   basedvector<linear_combination<R>, 1> v (new_from->dim ());
   for (unsigned i = 1; i <= new_from->dim (); i ++)
     v[i] = new_to->restrict (map (new_from->inject_generator (i)));
-  return new explicit_map_impl<R> (new_from, new_to, v);
+  return mod_map (IMPL, new explicit_map_impl<R> (new_from, new_to, v));
 }
 
 template<class R> linear_combination<R>
@@ -1595,7 +1722,94 @@ free_submodule<R>::restrict_submodule (ptr<const free_submodule<R> > m) const
     span[i] = restrict (m->inject_generator (i));
   
   mod_span<R> span2 (this, span);
-  return submodule (span2);
+  return this->submodule (span2);
+}
+
+template<class R> ptr<const free_submodule<R> >
+free_submodule<R>::intersection (ptr<const free_submodule<R> > m) const
+{
+  assert (parent == m->parent);
+  
+  unsigned md = m->dim (),
+    d = dim ();
+  
+  basedvector<linear_combination<R>, 1> intr;
+  
+  basedvector<linear_combination<R>, 1> hperp,
+    hproj;
+  basedvector<unsigned, 1> hpivots;
+  for (unsigned i = 1; i <= md; i ++)
+    {
+      linear_combination<R> perp (COPY, m->gens[i]),
+	proj (parent);
+      
+      for (unsigned j = 1; j <= d; j ++)
+	{
+	  unsigned k = pivots[j];
+	  if (perp % k)
+	    {
+	      const linear_combination<R> &g = gens[j];
+	      R c = g(k);
+	      R d = perp(k);
+	      
+	      assert (c | d);
+	      R q = d.div (c);
+	      
+	      perp.mulsub (q, g);
+	      proj.mulsub (q, g);
+	      
+	      assert (! (perp % k));
+	    }
+	}
+      
+      for (unsigned j = 1; j <= hpivots.size (); j ++)
+	{
+	  unsigned k = hpivots[j];
+	  if (perp % k)
+	    {
+	      const linear_combination<R> &h = hperp[j];
+	      R c = h(k);
+	      R d = perp(k);
+	      
+	      assert (c | d);
+	      R q = d.div (c);
+	      
+	      perp.mulsub (q, h);
+	      proj.mulsub (q, hproj[j]);
+	      
+	      assert (! (perp % k));
+	    }
+	  
+	}
+      
+      if (perp == 0)
+	intr.append (proj);
+      else
+	{
+	  hperp.append (perp);
+	  hproj.append (proj);
+	  hpivots.append (perp.head ().first);
+	}
+    }
+  
+  mod_span<R> span (parent, intr);
+  return parent->submodule (span);
+}
+
+template<class R> ptr<const free_submodule<R> >
+free_submodule<R>::plus (ptr<const free_submodule<R> > m) const
+{
+  assert (parent == m->parent);
+  
+  basedvector<linear_combination<R>, 1> s;
+  for (unsigned i = 1; i <= dim (); i ++)
+    s.append (gens[i]);
+  
+  for (unsigned i = 1; i <= m->dim (); i ++)
+    s.append (m->gens[i]);
+  
+  mod_span<R> span (parent, s);
+  return parent->submodule (span);
 }
 
 template<class R> bool
@@ -1628,6 +1842,14 @@ mod_map<R>::check_grading (grading delta) const
     }
 }
 
+template<class R> mod_map<R>
+mod_map<R>::operator * (const R &c) const
+{
+  basedvector<linear_combination<R>, 1> v (impl->from->dim ());
+  for (unsigned i = 1; i <= impl->from->dim (); i ++)
+    v[i] = c*column (i);
+  return mod_map (IMPL, new explicit_map_impl<R> (impl->from, impl->to, v));
+}
 
 template<class R> mod_map<R>
 mod_map<R>::operator + (const mod_map &m) const
@@ -1636,8 +1858,8 @@ mod_map<R>::operator + (const mod_map &m) const
   
   basedvector<linear_combination<R>, 1> v (impl->from->dim ());
   for (unsigned i = 1; i <= m.impl->from->dim (); i ++)
-    v[i] = column (i) + m.columns (i);
-  return explicit_map_impl<R> (impl->from, impl->to, v);
+    v[i] = column (i) + m.column (i);
+  return mod_map (IMPL, new explicit_map_impl<R> (impl->from, impl->to, v));
 }
 
 template<class R> ptr<const free_submodule<R> > 
@@ -1647,7 +1869,7 @@ mod_map<R>::kernel () const
     to = impl->to;
   
   basedvector<linear_combination<R>, 1> from_xs (from->dim ());
-  for (unsigned i = 1; i <= to->dim (); i ++)
+  for (unsigned i = 1; i <= from->dim (); i ++)
     {
       linear_combination<R> x (from);
       x.muladd (1, i);
@@ -1670,13 +1892,21 @@ mod_map<R>::kernel () const
 	  linear_combination<R> &to_x = to_xs[j],
 	    &from_x = from_xs[j];
 	  R to_xc = to_x(i);
-	  if (! (to_vc | to_xc))
+	  if (to_xc == 0)
+	    continue;
+	  
+	  if (to_vc == 0 && to_xc != 0)
 	    {
-	      triple<R, R, R> t = to_vc.extended_gcd (to_xc);
-	      assert (t.first == to_vc*t.second + t.third*to_xc);
+	      to_v += to_x;
+	      from_v += from_x;
+	    }
+	  else if (! (to_vc | to_xc))
+	    {
+	      tuple<R, R, R> t = to_vc.extended_gcd (to_xc);
+	      assert (get<0> (t) == to_vc*get<1> (t) + get<2> (t)*to_xc);
 	      
-	      to_v = t.second*to_v + t.third*to_x;
-	      from_v = t.second*from_v + t.third*from_x;
+	      to_v = get<1> (t)*to_v + get<2> (t)*to_x;
+	      from_v = get<1> (t)*from_v + get<2> (t)*from_x;
 	      
 	      assert (to_v(i) != 0);
 	    }
@@ -1713,6 +1943,15 @@ mod_map<R>::image () const
 {
   mod_span<R> span (impl->to, explicit_columns ());
   return impl->to->submodule (span);
+}
+
+template<class R> ptr<const free_submodule<R> >
+mod_map<R>::image (basedvector<linear_combination<R>, 1> vs) const
+{
+  mod_span<R> span (impl->from, vs);
+  ptr<const free_submodule<R> > s = impl->from->submodule (span);
+  mod_map<R> r = restrict_from (s);
+  return r.image ();
 }
 
 template<class R> ptr<const quotient_module<R> > 
@@ -1767,13 +2006,19 @@ mod_span<R>::mod_span (ptr<const module<R> > mod,
 	  
 	  linear_combination<R> &x = xs[j];
 	  R xc = x(i);
+	  if (xc == 0)
+	    continue;
 	  
-	  if (! (vc | xc))
+	  if (vc == 0)
 	    {
-	      triple<R, R, R> t = vc.extended_gcd (xc);
-	      assert (t.first == vc*t.second + t.third*xc);
+	      v += x;
+	    }
+	  else if (! (vc | xc))
+	    {
+	      tuple<R, R, R> t = vc.extended_gcd (xc);
+	      assert (get<0> (t) == vc*get<1> (t) + get<2> (t)*xc);
 	      
-	      v = t.second*v + t.third*x;
+	      v = get<1> (t)*v + get<2> (t)*x;
 	      
 	      assert (v(i) != 0);
 	    }
@@ -1820,8 +2065,68 @@ mod_map<R>::display_self () const
     {
       printf ("  %d ", i);
       impl->from->show_generator (i);
+      printf (" ");
+      show (impl->from->generator_grading (i));
       printf (": ");
       show (column (i));
       newline ();
+    }
+}
+
+// ??? io
+
+template<class R> void
+writer::write_mod (ptr<const module<R> > m)
+{
+  pair<unsigned &, bool> p = aw->id_io_id.find (m->id);
+  if (p.second)
+    {
+      write_int ((int)p.first);
+    }
+  else
+    {
+      ++ aw->io_id_counter;
+      unsigned io_id = aw->io_id_counter;
+      
+      p.first = io_id;
+      
+      write_int (- (int)io_id);
+      
+      unsigned n = m->dim (),
+	r = m->free_rank ();
+      write_unsigned (n);
+      write_unsigned (r);
+      for (unsigned i = 1; i <= n; i ++)
+	write (*this, m->generator_grading (i));
+      for (unsigned i = r + 1; i <= n; i ++)
+	write (*this, m->generator_ann (i));
+    }
+}
+
+template<class R> ptr<const module<R> > 
+reader::read_mod ()
+{
+  int io_id = read_int ();
+  if (io_id < 0)
+    {
+      unsigned n = read_unsigned ();
+      unsigned r = read_unsigned ();
+      basedvector<grading, 1> gr (n);
+      for (unsigned i = 1; i <= n; i ++)
+	gr[i] = grading (*this);
+      basedvector<R, 1> ann (n - r);
+      for (unsigned i = r + 1; i <= n; i ++)
+	ann[i - r] = R (*this);
+      
+      ptr<const module<R> > m = new explicit_module<R> (r, ann, gr);
+      ar->io_id_id.push ((unsigned)(-io_id), m->id);
+      module<R>::reader_id_module.push (m->id, m);
+      
+      return m;
+    }
+  else
+    {
+      unsigned id = ar->io_id_id(io_id);
+      return module<R>::reader_id_module(id);
     }
 }

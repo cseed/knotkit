@@ -13,10 +13,8 @@ in knotkit/
    deepcopy
 
 in lib/
- - add hashset
  - between interoperation between sets that require bounds (bitset,
    ullmanset) and those that don't (set, hashset)
- - add make_pair, etc.
 
 in algebra/
  - linear_combnation can be more efficient (eg no searching when
@@ -25,3 +23,73 @@ in algebra/
  - cleaner interface for gcd, etc. in fraction_field
  - support kernel, cokernel of torsion modules
  - change gcd et al so gcd is always positive
+ - split linear_combination into internal and external versions
+
+git:
+ - fix bug in Josh's version
+ - make this master, merge into Josh's version
+ - merge in square to master => then write paper!
+ - merge in other improvements (sped up linear algebra?  multivariate (laurent) polynomial?)
+ - should exponents on polynomials be Z or unsigned?
+
+general:
+ - unify simplify_chain_complex, sseq, kernel/image/homology (as much as possible)
+ - sseq over Z
+ - quadratic linear solver (enumerator?)
+ - classes should either COPY or fully SHARE, but not some of each
+   (e.g. knot_diagram, resolution_diagram, etc.)  -- this is the right
+   semantics.
+ - clean up/delete setcommon, mapcommon
+ - incorporate sage dump into standard classes
+ - update use of tuples in steenrod square
+
+ - test mutation invariance, other questions of Robert and Sucharit
+ - write paper
+
+c++11:
+ - make vector wrap std::vector (probably faster)
+ 
+ - use tuple instead of pair, triple; and use tie, a great idiom
+ - standardize ring, field interface so test_ring works for everything
+ - get clear on default semantics: prefer default when possible
+ 
+ - standardize use of {} for initializers
+ - initializer_list for container types
+ - support for iterator
+
+ - compress Steenrod square data
+ - get mpimain running again, run 15 xing mutants
+
+ - simplifications to run (5, 8) with symmetries.
+
+notes:
+
+all rings (R): multivariate_laurentpoly<R>
+
+fields (F): Z2 Zp Q fraction_field<E> (for just pids?)
+
+euclidean domains (E): Z polynomial<F>
+
+euclidean domain interface:
+
+num/demon : denom must be a unit
+ = num.operator / (denom)
+
+denom.divides (num)
+denom | num
+
+  num.divide_exact (denom)
+
+(q, r) = num.divide_with_remainder (denom)
+  (q, r) = num / denom
+  (q, r) = num.operator / (denom)
+satisfies r = 0 or f(r) < f(denom) and num = q*denom + r
+
+ gcd (a, b)
+ lcm (a, b)
+ r = num.mod (denom)
+satisfies r = 0 or f(r) < f(denom)
+
+
+(d, s, t) = a.extended_gcd (b)
+ satifies d is the gcd and d = a*s + b*t

@@ -55,6 +55,7 @@ class multivariate_laurent_monomial
 #endif
     return m == e.m;
   }
+  bool operator != (const multivariate_laurent_monomial &e) const { return !operator == (e); }
   
   bool operator == (int x) const
   {
@@ -204,6 +205,12 @@ class multivariate_laurentpoly
       coeffs.push (monomial (VARIABLE, i), c);
   }
   
+  multivariate_laurentpoly (T c, variable, unsigned i, int e)
+  {
+    if (c != 0)
+      coeffs.push (monomial (VARIABLE, i, e), c);
+  }
+  
   multivariate_laurentpoly (T c, const monomial &m)
   {
     if (c != 0)
@@ -212,7 +219,8 @@ class multivariate_laurentpoly
   
   multivariate_laurentpoly (const multivariate_laurentpoly &p) : coeffs(p.coeffs) { }
   multivariate_laurentpoly (copy, const multivariate_laurentpoly &p)
-    : coeffs(COPY2, p.coeffs)
+    // ??? COPY2?
+    : coeffs(COPY, p.coeffs)
   {
   }
 
@@ -243,6 +251,7 @@ class multivariate_laurentpoly
 #endif
     return coeffs == p.coeffs;
   }
+  bool operator != (const multivariate_laurentpoly &p) const { return !operator == (p); }
   
   bool operator == (int x) const
   {

@@ -5,7 +5,7 @@
 template<unsigned n>
 class multivariate_monomial
 {
- private:
+ public:
   unsigned v[n];
   
  public:
@@ -56,6 +56,7 @@ class multivariate_monomial
       }
     return 1;
   }
+  bool operator != (const multivariate_monomial &e) const { return !operator == (e); }
   
   bool operator < (const multivariate_monomial &e) const
   {
@@ -199,7 +200,7 @@ public:
   
   bool is_unit () const;
   
-  bool operator == (multivariate_polynomial p) const
+  bool operator == (const multivariate_polynomial &p) const
   {
 #ifndef NDEBUG
     check ();
@@ -207,6 +208,7 @@ public:
 #endif
     return coeffs == p.coeffs;
   }
+  bool operator != (const multivariate_polynomial &p) const { return !operator == (p); }
   
   bool operator == (int x) const
   {
@@ -262,6 +264,12 @@ public:
   multivariate_polynomial operator * (const multivariate_polynomial &p) const;
   
   monomial common_monomial () const;
+  
+  multivariate_polynomial gcd (const multivariate_polynomial &b) const
+  {
+    // ???
+    return multivariate_polynomial (1);
+  }
   
   pair<multivariate_polynomial, multivariate_polynomial>
     uncommon_factors (multivariate_polynomial b, basedvector<multivariate_polynomial, 1> ds);

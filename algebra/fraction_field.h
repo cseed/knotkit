@@ -36,6 +36,7 @@ template<class T> class fraction_field
   fraction_field &operator = (int x) { num = x; denom = 1; return *this; }
   
   bool operator == (const fraction_field &q) const { return num * q.denom == q.num * denom; }
+  bool operator != (const fraction_field &q) const { return !operator == (q); }
   
   bool operator == (int x) const { return num == denom * T (x); }
   bool operator != (int x) const { return !operator == (x); }
@@ -64,6 +65,11 @@ template<class T> class fraction_field
     new_num -= x.num * e;
     
     return fraction_field (new_num, denom*xe);
+  }
+  
+  fraction_field operator - () const
+  {
+    return fraction_field (-num, denom);
   }
   
   fraction_field operator * (const fraction_field &x) const
@@ -187,12 +193,12 @@ template<class T> class fraction_field
     return fraction_field (1);
   }
   
-  triple<fraction_field, fraction_field, fraction_field> extended_gcd (const fraction_field &x) const
+  tuple<fraction_field, fraction_field, fraction_field> extended_gcd (const fraction_field &x) const
   {
     if (*this != 0)
-      return triple<fraction_field, fraction_field, fraction_field> (*this, 1, 0);
+      return make_tuple (*this, fraction_field (1), fraction_field (0));
     else
-      return triple<fraction_field, fraction_field, fraction_field> (x, 0, 1);
+      return make_tuple (x, fraction_field (0), fraction_field (1));
   }
   
   static void show_ring () { printf ("fraction_field("); T::show_ring (); printf (")"); }
@@ -210,7 +216,6 @@ fraction_field<T>::reduce ()
     }
   
   T d = num.gcd (denom);
-  
   num = num.divide_exact (d);
   denom = denom.divide_exact (d);
 }
@@ -220,7 +225,6 @@ fraction_field<T>::check ()
 {
   if (num == 0)
     return;
-  // check denom == 1
   
   // assert (num.gcd (denom) == 1);
 }

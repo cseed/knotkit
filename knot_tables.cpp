@@ -402,7 +402,7 @@ htw_knot (unsigned n, bool alternating, unsigned k)
 	before += htw_alternating[i];
       off = 8 * (before + k - 1);
       
-      file = HOME "alternating";
+      file = HOME "/alternating";
     }
   else
     {
@@ -411,7 +411,7 @@ htw_knot (unsigned n, bool alternating, unsigned k)
 	before += htw_nonalternating[i];
       off = 10 * (before + k - 1);
       
-      file = HOME "nonalternating";
+      file = HOME "/nonalternating";
     }
   FILE *fp = fopen (file, "r");
   if (fp == 0)
@@ -499,6 +499,13 @@ mt_links (unsigned n, bool alternating)
     return mt_nonalternating[n - 1];
 }
 
+unsigned
+mt_links (unsigned n)
+{
+  assert (between (1, n, 14));
+  return mt_alternating[n - 1] + mt_nonalternating[n - 1];
+}
+
 dt_code
 mt_link (unsigned n, bool alternating, unsigned k)
 {
@@ -507,7 +514,7 @@ mt_link (unsigned n, bool alternating, unsigned k)
   
   char buf[1000];
   
-  sprintf (buf, HOME "mtlinks/hyperbolic_data_%02d%c", n, alternating ? 'a' : 'n');
+  sprintf (buf, HOME "/mtlinks/hyperbolic_data_%02d%c", n, alternating ? 'a' : 'n');
   FILE *fp = fopen (buf, "r");
   if (fp == 0)
     {
@@ -533,6 +540,19 @@ mt_link (unsigned n, bool alternating, unsigned k)
   sprintf (buf2, "L%d%c%d", n, alternating ? 'a' : 'n', k);
   
   return dt_code (buf2, buf);
+}
+
+dt_code
+mt_link (unsigned n, unsigned k)
+{
+  assert (between (1, n, 16));
+  assert (k >= 1);
+  
+  unsigned na = mt_links (n, 1);
+  if (k <= na)
+    return mt_link (n, 1, k);
+  else
+    return mt_link (n, 0, k - na);
 }
 
 planar_diagram
@@ -594,7 +614,7 @@ torus_knot (unsigned n_strands, unsigned n_shifts)
   return planar_diagram (std::string (buf), crossings);
 }
 
-planar_diagram
+knot_diagram
 braid (unsigned n_strands, unsigned n_twists, int twists_ar[])
 {
   basedvector<int, 1> twists (n_twists);
@@ -603,10 +623,9 @@ braid (unsigned n_strands, unsigned n_twists, int twists_ar[])
   return braid (n_strands, twists);
 }
 
-planar_diagram
+knot_diagram
 braid (unsigned n_strands, const basedvector<int, 1> &twists)
 {
-  unsigned n_crossings = twists.size ();
   unsigned e = 0;
   
   basedvector<unsigned, 1> final_strands (n_strands);
@@ -622,22 +641,44 @@ braid (unsigned n_strands, const basedvector<int, 1> &twists)
     last_twist[i] = 0;
   for (unsigned i = 1; i <= twists.size (); i ++)
     {
-      unsigned t = std::abs (twists[i]);
+      unsigned t = abs (twists[i]);
       last_twist[t] = i;
       last_twist[t + 1] = i;
     }
-#ifndef NDEBUG
-  for (unsigned i = 1; i <= n_strands; i ++)
-    assert (last_twist[i] != 0);
-#endif
   
-  basedvector<basedvector<int, 1>, 1> crossings (n_crossings);
+  unsigned n_crossings = twists.size ();
+  for (unsigned i = 1; i <= n_strands; i ++)
+    {
+      if (last_twist[i] == 0)
+	n_crossings ++;
+    }
+  
+  basedvector<basedvector<unsigned, 1>, 1> crossings (n_crossings);
   for (unsigned i = 1; i <= n_crossings; i ++)
-    crossings[i] = basedvector<int, 1> (4);
+    crossings[i] = basedvector<unsigned, 1> (4);
+  
+  unsigned c = twists.size ();
+  for (unsigned i = 1; i <= n_strands; i ++)
+    {
+      if (last_twist[i] == 0)
+	{
+	  ++ c;
+	  unsigned e1 = strands[i];
+	  unsigned e2 = ++ e;
+	  
+	  strands[i] = final_strands[i] = 0;
+	  
+	  crossings[c][1] = edge_from_ept (e1);
+	  crossings[c][2] = edge_to_ept (e2);
+	  crossings[c][3] = edge_from_ept (e2);
+	  crossings[c][4] = edge_to_ept (e1);
+	}
+    }
+  assert (c == n_crossings);
   
   for (unsigned i = 1; i <= twists.size (); i ++)
     {
-      unsigned t = std::abs (twists[i]);
+      unsigned t = abs (twists[i]);
       unsigned e1 = strands[t],
 	e4 = strands[t + 1];
       unsigned e2, e3;
@@ -668,27 +709,30 @@ braid (unsigned n_strands, const basedvector<int, 1> &twists)
       
       if (twists[i] > 0)
 	{
-	  crossings[i][1] = e1;
-	  crossings[i][2] = e2;
-	  crossings[i][3] = e3;
-	  crossings[i][4] = e4;
+	  crossings[i][1] = edge_to_ept (e1);
+	  crossings[i][2] = edge_from_ept (e2);
+	  crossings[i][3] = edge_from_ept (e3);
+	  crossings[i][4] = edge_to_ept (e4);
 	}
       else
 	{
-	  crossings[i][1] = e2;
-	  crossings[i][2] = e3;
-	  crossings[i][3] = e4;
-	  crossings[i][4] = e1;
+	  crossings[i][1] = edge_from_ept (e2);
+	  crossings[i][2] = edge_from_ept (e3);
+	  crossings[i][3] = edge_to_ept (e4);
+	  crossings[i][4] = edge_to_ept (e1);
 	}
     }
   
   assert (e == n_crossings * 2);
 #ifndef NDEBUG
   for (unsigned i = 1; i <= n_strands; i ++)
-    assert (final_strands[i] == 0);
+    {
+      assert (strands[i] == 0);
+      assert (final_strands[i] == 0);
+    }
 #endif
   
-  return planar_diagram ("abraid", crossings);
+  return knot_diagram ("abraid", crossings);
 }
 
 basedvector<basedvector<unsigned, 1>, 1> 
@@ -697,7 +741,7 @@ mutant_knot_groups (unsigned n)
   assert (11 <= n && n <= 15);
   
   char buf[1000];
-  sprintf (buf, HOME "mutant_knot_groups/dat%d", n);
+  sprintf (buf, HOME "/mutant_knot_groups/dat%d", n);
   
   FILE *fp = fopen (buf, "r");
   if (fp == 0)
@@ -727,4 +771,139 @@ mutant_knot_groups (unsigned n)
     }
   
   return r;
+}
+
+knot_diagram
+knot_desc::diagram () const
+{
+  switch (t)
+    {
+    case ROLFSEN:
+      return knot_diagram (rolfsen_knot (i, j));
+      
+    case HTW:
+      return knot_diagram (htw_knot (i, j));
+    case HTW_ALT:
+      return knot_diagram (htw_knot (i, 1, j));
+    case HTW_NONALT:
+      return knot_diagram (htw_knot (i, 0, j));
+
+    case MT:
+      return knot_diagram (mt_link (i, j));
+    case MT_ALT:
+      return knot_diagram (mt_link (i, 1, j));
+    case MT_NONALT:
+      return knot_diagram (mt_link (i, 0, j));
+      
+    case TORUS:
+      return knot_diagram (torus_knot (i, j));
+      
+    default: abort ();
+    }
+}
+  
+std::string
+knot_desc::name () const
+{
+  char buf[1000];
+
+#if 0
+  sprintf (buf, "knot_desc(%d, %d, %d)", (int)t, i, j);
+  return buf;
+#endif
+  
+  switch (t)
+    {
+    case ROLFSEN:
+      sprintf (buf, "%d_%d", i, j);
+      break;
+      
+    case HTW:
+      {
+	unsigned na = htw_knots (i, 1);
+	if (j <= na)
+	  sprintf (buf, "%da%d", i, j);
+	else
+	  sprintf (buf, "%dn%d", i, j - na);
+      }
+      break;
+      
+    case HTW_ALT:
+      sprintf (buf, "%da%d", i, j);
+      break;
+
+    case HTW_NONALT:
+      sprintf (buf, "%dn%d", i, j);
+      break;
+
+    case MT:
+      {
+	unsigned na = mt_links (i, 1);
+	if (j <= na)
+	  sprintf (buf, "L%da%d", i, j);
+	else
+	  sprintf (buf, "L%dn%d", i, j - na);
+      }
+      break;
+      
+    case MT_ALT:
+      sprintf (buf, "L%da%d", i, j);
+      break;
+
+    case MT_NONALT:
+      sprintf (buf, "L%dn%d", i, j);
+      break;
+      
+    case TORUS:
+      sprintf (buf, "T(%d, %d)", i, j);
+      break;
+      
+    default: abort ();
+    }
+  
+  return buf;
+}
+
+unsigned
+knot_desc::table_crossing_knots () const
+{
+  switch (t)
+    {
+    case ROLFSEN:
+      return rolfsen_crossing_knots (i);
+      
+    case HTW:
+      return htw_knots (i);
+    case HTW_ALT:
+      return htw_knots (i, 1);
+    case HTW_NONALT:
+      return htw_knots (i, 0);
+
+    case MT:
+      return mt_links (i);
+    case MT_ALT:
+      return mt_links (i, 1);
+    case MT_NONALT:
+      return mt_links (i, 0);
+      
+    default: abort ();
+    }
+}
+
+knot_desc::knot_desc (reader &r)
+{
+  int x;
+  read (r, x);
+  t = (table)x;
+  
+  read (r, i);
+  read (r, j);
+}
+
+void
+knot_desc::write_self (writer &w) const
+{
+  write (w, (int)t);
+  write (w, i);
+  write (w, j);
 }

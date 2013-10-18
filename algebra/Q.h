@@ -31,16 +31,16 @@ class Q
     Q_impl (reader &r)
     {
       mpq_init (x);
-      mpz_inp_raw (mpq_numref (x), r.fp);
-      mpz_inp_raw (mpq_denref (x), r.fp);
+      r.read_mpz (mpq_numref (x));
+      r.read_mpz (mpq_denref (x));
     }
     
     ~Q_impl () { mpq_clear (x); }
     
     void write_self (writer &w) const
     {
-      mpz_out_raw (w.fp, mpq_numref (x));
-      mpz_out_raw (w.fp, mpq_denref (x));
+      w.write_mpz (mpq_numref (x));
+      w.write_mpz (mpq_denref (x));
     }
   };
   
@@ -163,12 +163,12 @@ class Q
   
   Q div (const Q &d) const { return operator / (d); }
   
-  triple<Q, Q, Q> extended_gcd (const Q &q) const
+  tuple<Q, Q, Q> extended_gcd (const Q &q) const
   {
     if (*this != 0)
-      return triple<Q, Q, Q> (*this, 1, 0);
+      return tuple<Q, Q, Q> (*this, 1, 0);
     else
-      return triple<Q, Q, Q> (q, 0, 1);
+      return tuple<Q, Q, Q> (q, 0, 1);
   }
   
   Q gcd (const Q &q) const

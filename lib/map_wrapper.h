@@ -1,5 +1,5 @@
 
-/* wrapper for stl maps */
+/* wrapper for STL maps */
 
 template<class M, class K, class V> class map_wrapper_iter;
 template<class M, class K, class V> class map_wrapper_const_iter;
@@ -7,14 +7,23 @@ template<class M, class K, class V> class map_wrapper_const_iter;
 template<class M, class K, class V>
 class map_wrapper
 {
- private:
   friend class map_wrapper_iter<M, K, V>;
   friend class map_wrapper_const_iter<M, K, V>;
-  
+
+ protected:
   class map_impl : public refcounted
   {
   public:
     M t;
+    
+  public:
+    map_impl () = default;
+    map_impl (const map_impl &) = delete;
+    map_impl (const M &t_) : t(t_) { }
+    map_impl (initializer_list<std::pair<const K, V> > il) : t(il) { }
+    ~map_impl () = default;
+    
+    map_impl &operator = (const map_impl &) = delete;
   };
   
   ptr<map_impl> impl;
@@ -25,14 +34,24 @@ class map_wrapper
   
  public:
   map_wrapper () : impl(new map_impl) { }
-  map_wrapper (unsigned dummy_size) : impl(new map_impl) { }
   map_wrapper (const map_wrapper &m) : impl(m.impl) { }
-  map_wrapper (copy, const map_wrapper &m) : impl(new map_impl) { impl->t = M (m.impl->t); }
-  map_wrapper (copy2, const map_wrapper &m);
+  map_wrapper (copy, const map_wrapper &m) : impl(new map_impl (m.impl->t)) { }
+  map_wrapper (initializer_list<std::pair<const K, V> > il)
+    : impl(new map_impl (il))
+  { }
   map_wrapper (reader &r);
   ~map_wrapper () { }
   
   map_wrapper &operator = (const map_wrapper &m) { impl = m.impl; return *this; }
+  map_wrapper &operator = (initializer_list<std::pair<const K, V> > il)
+  {
+    impl->t = il;
+    return *this;
+  }
+  
+  // range-based for
+  typename M::const_iterator begin () const { return impl->t.begin (); }
+  typename M::const_iterator end () const { return impl->t.end (); }
   
   /* returns the pair associated to the smallest key */
   pair<K, V> head () const
@@ -130,19 +149,11 @@ class map_wrapper
   }
   
   bool operator == (const map_wrapper &m) const;
+  bool operator != (const map_wrapper &m) const { return !operator == (m); }
   bool operator < (const map_wrapper &m) const;
   
   void write_self (writer &w) const;
 };
-
-template<class M, class K, class V>
-map_wrapper<M, K, V>::map_wrapper (copy2, const map_wrapper &m)
-  : impl(new map_impl)
-{
-  /* Keys are immutable.  Just copy the values. */
-  for (const_iter i = m; i; i ++)
-    push (i.key (), V (COPY, i.val ()));
-}
 
 template<class M, class K, class V>
 map_wrapper<M, K, V>::map_wrapper (reader &r)
@@ -222,19 +233,19 @@ template<class M, class K, class V>
 class map_wrapper_iter
 {
  private:
-  map_wrapper<M, K, V> &m;
+  ptr<typename map_wrapper<M, K, V>::map_impl> impl;
   typename M::iterator i, end;
   bool deleted;
   
  public:
-  map_wrapper_iter (map_wrapper<M, K, V> &m_) : m(m_), i(m_.impl->t.begin ()), end(m_.impl->t.end ()), deleted(0) { }
+  map_wrapper_iter (map_wrapper<M, K, V> &m) : impl(m.impl), i(m.impl->t.begin ()), end(m.impl->t.end ()), deleted(0) { }
   ~map_wrapper_iter () { }
   
   void del ()
   {
     assert (!deleted);
     typename M::iterator iprev = i ++;
-    m.impl->t.erase (iprev);
+    impl->t.erase (iprev);
     deleted = 1;
   }
   
@@ -249,10 +260,11 @@ template<class M, class K, class V>
 class map_wrapper_const_iter
 {
  private:
+  ptr<const typename map_wrapper<M, K, V>::map_impl> impl;
   typename M::const_iterator i, end;
   
  public:
-  map_wrapper_const_iter (const map_wrapper<M, K, V> &m) : i(m.impl->t.begin ()), end(m.impl->t.end ()) { }
+  map_wrapper_const_iter (const map_wrapper<M, K, V> &m) : impl(m.impl), i(m.impl->t.begin ()), end(m.impl->t.end ()) { }
   ~map_wrapper_const_iter () { }
   
   const K &key () const { return i->first; }

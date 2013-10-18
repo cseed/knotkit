@@ -22,7 +22,7 @@ knot_diagram::knot_diagram (const planar_diagram &pd)
       crossings[c] = basedvector<unsigned, 1> (4);
     }
 
-  smallbitset done (num_edges ());
+  set<unsigned> done;
   for (unsigned c0 = 1; c0 <= n_crossings; c0 ++)
     {
       for (unsigned i0 = 1; i0 <= 2; i0 ++)
@@ -82,10 +82,10 @@ public:
   
 public:
   dt_layout (const dt_code &dt, knot_diagram &kd_);
-  dt_layout (const dt_layout &); //  doesn't exist
+  dt_layout (const dt_layout &) = delete;
   ~dt_layout () { }
 
-  dt_layout &operator = (const dt_layout &); // doesn't exist
+  dt_layout &operator = (const dt_layout &) = delete;
   
   unsigned find_crossing (unsigned prevc, unsigned previ, unsigned target,
 			  bool under, unsigned dir);
@@ -454,6 +454,60 @@ knot_diagram::knot_diagram (sublink,
   calculate_nminus_nplus ();
 }
 
+knot_diagram::knot_diagram (disjoint_union,
+			    const knot_diagram &kd1,
+			    const knot_diagram &kd2)
+  : name(kd1.name + "+" + kd2.name),
+    n_crossings(kd1.n_crossings + kd2.n_crossings),
+    marked_edge(0),
+    crossings(n_crossings),
+    nminus(kd1.nminus + kd2.nminus),
+    nplus(kd1.nplus + kd2.nplus)
+{
+  assert (kd1.marked_edge == 0);
+  assert (kd2.marked_edge == 0);
+  
+  for (unsigned i = 1; i <= n_crossings; i ++)
+    crossings[i] = basedvector<unsigned, 1> (4);
+  
+  for (unsigned i = 1; i <= kd1.n_crossings; i ++)
+    for (unsigned j = 1; j <= 4; j ++)
+      crossings[i][j] = kd1.crossings[i][j];
+  
+  for (unsigned e = 1; e <= kd1.num_edges (); e ++)
+    {
+      if (kd1.edge_smoothing_oriented % e)
+	edge_smoothing_oriented.push (e);
+    }
+  
+  for (unsigned i = 1; i <= kd2.n_crossings; i ++)
+    for (unsigned j = 1; j <= 4; j ++)
+      crossings[kd1.n_crossings + i][j] = kd1.num_epts () + kd2.crossings[i][j];
+  
+  for (unsigned e = 1; e <= kd2.num_edges (); e ++)
+    {
+      if (kd2.edge_smoothing_oriented % e)
+	edge_smoothing_oriented.push (kd1.num_edges () + e);
+    }
+  
+  // ?? break this out into aux function
+  ept_crossing = basedvector<unsigned, 1> (num_epts ());
+  ept_index = basedvector<unsigned, 1> (num_epts ());
+  for (unsigned i = 1; i <= n_crossings; i ++)
+    {
+      for (unsigned j = 1; j <= 4; j ++)
+	{
+	  unsigned p = crossings[i][j];
+	  ept_crossing[p] = i;
+	  ept_index[p] = j;
+	}
+    }
+  
+#ifndef NDEBUG
+  check_crossings ();
+#endif
+}
+
 knot_diagram::knot_diagram (mirror, const knot_diagram &kd)
   : name("mirror(" + kd.name + ")"),
     n_crossings(kd.n_crossings),
@@ -519,6 +573,63 @@ knot_diagram::rotate_crossing (unsigned c)
       unsigned p = crossings[c][j];
       ept_index[p] = j;
     }
+}
+
+unsigned
+knot_diagram::total_linking_number () const
+{
+  unionfind<1> u (num_edges ());
+  
+  for (unsigned i = 1; i <= n_crossings; i ++)
+    {
+      u.join (ept_edge (crossings[i][1]),
+	      ept_edge (crossings[i][3]));
+      u.join (ept_edge (crossings[i][2]),
+	      ept_edge (crossings[i][4]));
+    }
+  unsigned n = u.num_sets ();
+  
+  map<unsigned, unsigned> root_comp;
+  unsigned t = 0;
+  for (unsigned i = 1; i <= num_edges (); i ++)
+    {
+      if (u.find (i) == i)
+	{
+	  ++ t;
+	  root_comp.push (i, t);
+	}
+    }
+  assert (t == n);
+  
+  unsigned total_lk = 0;
+  
+  for (unsigned i = 1; i <= n; i ++)
+    for (unsigned j = i + 1; j <= n; j ++)
+      {
+	if (i == j)
+	  continue;
+	
+	int lk = 0;
+	for (unsigned x = 1; x <= n_crossings; x ++)
+	  {
+	    unsigned r1 = root_comp(u.find (ept_edge (crossings[x][1]))),
+	      r2 = root_comp(u.find (ept_edge (crossings[x][2])));
+	    if (((r1 == i) && (r2 == j))
+		|| ((r2 == i) && (r1 == j)))
+	      {	
+		if (is_to_ept (crossings[x][1]) == is_to_ept (crossings[x][4]))
+		  lk ++;
+		else
+		  lk --;
+	      }
+	  }
+	assert (is_even (lk));
+	lk /= 2;
+	
+	total_lk += abs (lk);
+      }
+  
+  return total_lk;
 }
 
 knot_diagram::knot_diagram (connect_sum,

@@ -9,7 +9,7 @@ public:
   khC_generators (const cube<R> &c_) : c(c_) { }
   ~khC_generators () { }
   
-  khC_generators &operator = (const khC_generators &); // doesn't exist
+  khC_generators &operator = (const khC_generators &) = delete;
   
   unsigned dim () const { return c.n_generators; }
   unsigned free_rank () const { return c.n_generators; }
@@ -166,7 +166,7 @@ cube<R>::compute_map (unsigned dh, unsigned max_n,
 			continue;
 		      assert (!unsigned_bittest (v_to, p));
 		    }
-
+		  
 		  b[generator (fromstate, v_from)].muladd
 		    (sign, generator (tostate, v_to));
 		}
@@ -187,10 +187,10 @@ class d_rules : public map_rules
 {
 public:
   d_rules () { }
-  d_rules (const d_rules &); // doesn't exist
+  d_rules (const d_rules &) = delete;
   ~d_rules () { }
   
-  d_rules &operator = (const d_rules &); // doesn't exist
+  d_rules &operator = (const d_rules &) = delete;
   
   void map (basedvector<pair<unsigned, unsigned>, 1> &out,
 	    resolution_diagram_builder &rdb) const
@@ -214,10 +214,10 @@ class twin_arrows_P_rules : public map_rules
 {
 public:
   twin_arrows_P_rules () { }
-  twin_arrows_P_rules (const twin_arrows_P_rules &); // doesn't exist
+  twin_arrows_P_rules (const twin_arrows_P_rules &) = delete;
   ~twin_arrows_P_rules () { }
   
-  twin_arrows_P_rules &operator = (const twin_arrows_P_rules &); // doesn't exist
+  twin_arrows_P_rules &operator = (const twin_arrows_P_rules &) = delete;
   
   void map (basedvector<pair<unsigned, unsigned>, 1> &out,
 	    resolution_diagram_builder &rdb) const
@@ -302,7 +302,7 @@ cube<R>::compute_X (unsigned p) const
 template<class R> mod_map<R>
 cube<R>::H_i (unsigned c)
 {
-  mod_map<R> b (khC, 0);
+  map_builder<R> b (khC, 0);
   for (unsigned i = 0; i < n_resolutions; i ++)
     {
       if (unsigned_bittest (i, c))
@@ -319,8 +319,23 @@ cube<R>::H_i (unsigned c)
       
       unsigned from = from_s.crossing_from_circle (kd, c),
 	to = from_s.crossing_to_circle (kd, c);
+      
+      int sign = 1;
+      for (unsigned j = 1; j < c; j ++)
+        {
+          if (unsigned_bittest (i, j))
+            sign *= -1;
+        }
+      
       for (unsigned j = 0; j < from_s.num_monomials (); j ++)
 	{
+	  if (markedp_only)
+	    {
+	      unsigned p = from_s.edge_circle[kd.marked_edge];
+	      if (unsigned_bittest (j, p))
+		continue;
+	    }
+	  
 	  unsigned j2 = 0;
 	  for (unsigned_const_iter k = j; k; k ++)
 	    {
@@ -336,7 +351,7 @@ cube<R>::H_i (unsigned c)
 				    to_s.crossing_from_circle (kd, c));
 	      j2 = unsigned_bitset (j2,
 				    to_s.crossing_to_circle (kd, c));
-	      v.muladd (1, generator (i2, j2));
+	      v.muladd (-sign, generator (i2, j2));
 	    }
 	  else if (from != to
 		   && !unsigned_bittest (j, from)
@@ -344,7 +359,7 @@ cube<R>::H_i (unsigned c)
 	    {
 	      assert (! unsigned_bittest (j2,
 					  to_s.crossing_from_circle (kd, c)));
-	      v.muladd (1, generator (i2, j2));
+	      v.muladd (sign, generator (i2, j2));
 	    }
 	}
     }
@@ -354,6 +369,110 @@ cube<R>::H_i (unsigned c)
   H_c.check_grading (grading (1, 2));
   
   return H_c;
+}
+
+template<class R> mod_map<R>
+cube<R>::compute_dinv (unsigned c)
+{
+  map_builder<R> p (khC);
+  for (unsigned i = 0; i < n_resolutions; i ++)
+    {
+      if (!unsigned_bittest (i, c))
+	continue;
+      
+      int sign = 1;
+      for (unsigned j = 1; j < c; j ++)
+	{
+	  if (unsigned_bittest (i, j))
+	    sign *= -1;
+	}
+      
+      smoothing from_s (kd, smallbitset (n_crossings, i));
+      
+      unsigned i2 = unsigned_bitclear (i, c);
+      smoothing to_s (kd, smallbitset (n_crossings, i2));
+      
+      basedvector<unsigned, 1> from_circle_edge_rep (from_s.n_circles);
+      for (unsigned j = 1; j <= kd.num_edges (); j ++)
+	from_circle_edge_rep[from_s.edge_circle[j]] = j;
+      
+      unsigned a = from_s.crossing_from_circle (kd, c),
+	b = from_s.crossing_to_circle (kd, c);
+      unsigned x = to_s.crossing_from_circle (kd, c),
+	y = to_s.crossing_to_circle (kd, c);
+      for (unsigned j = 0; j < from_s.num_monomials (); j ++)
+	{
+	  if (markedp_only)
+	    {
+	      unsigned p = from_s.edge_circle[kd.marked_edge];
+	      if (unsigned_bittest (j, p))
+		continue;
+	    }
+	  
+	  unsigned j2 = 0;
+	  for (unsigned_const_iter k = j; k; k ++)
+	    {
+	      unsigned s = k.val ();
+	      j2 = unsigned_bitset (j2, to_s.edge_circle[from_circle_edge_rep[s]]);
+	    }
+	  
+	  if (a == b)
+	    {
+	      // split
+	      assert (x != y);
+	      
+	      if (unsigned_bittest (j, a))
+		{
+		  // 1 -> x + y
+		  j2 = unsigned_bitset (j2, x);
+		  j2 = unsigned_bitclear (j2, y);
+		  
+		  p[generator (i, j)].muladd (sign, generator (i2, j2));
+		  
+		  j2 = unsigned_bitclear (j2, x);
+		  j2 = unsigned_bitset (j2, y);
+		  
+		  p[generator (i, j)].muladd (sign, generator (i2, j2));
+		}
+	      else
+		{
+		  // a -> xy
+		  j2 = unsigned_bitclear (j2, x);
+		  j2 = unsigned_bitclear (j2, y);
+		  
+		  p[generator (i, j)].muladd (sign, generator (i2, j2));
+		}
+	    }
+	  else
+	    {
+	      // join
+	      assert (x == y);
+	      
+	      if (unsigned_bittest (j, a)
+		  && unsigned_bittest (j, b))
+		{
+		  // 1 -> 1
+		  j2 = unsigned_bitset (j2, x);
+		  
+		  p[generator (i, j)].muladd (sign, generator (i2, j2));
+		}
+	      else if ((unsigned_bittest (j, a)
+			&& !unsigned_bittest (j, b))
+		       || (!unsigned_bittest (j, a)
+			   && unsigned_bittest (j, b)))
+		{
+		  // a, b -> x
+		  j2 = unsigned_bitclear (j2, x);
+		  
+		  p[generator (i, j)].muladd (sign, generator (i2, j2));
+		}
+	    }
+	}
+    }
+  
+  mod_map<R> dinv (p);
+  dinv.check_grading (grading (-1, -2));
+  return dinv;
 }
 
 template<class R> void
@@ -415,6 +534,50 @@ cube<R>::cube (knot_diagram &kd_, bool markedp_only_)
     {
       smallbitset state (n_crossings, i);
       s.init (kd, state);
+      
+#if 1
+      unsigned fromstate = i;
+      smoothing &from_s = s;
+      
+      unsigned n_zerocrossings = n_crossings - unsigned_bitcount (fromstate);
+      unsigned n_cobordisms = ((unsigned)1) << n_zerocrossings;
+      for (unsigned j = 0; j < n_cobordisms; j ++)
+	{
+	  unsigned tostate = unsigned_pack (n_crossings, fromstate, j);
+	  unsigned crossings = tostate & ~fromstate;
+	  
+	  smoothing to_s (kd, smallbitset (n_crossings, tostate));
+	  
+	  set<unsigned> starting_circles,
+	    ending_circles;
+	  for (unsigned_const_iter k = crossings; k; k ++)
+	    {
+	      unsigned c = k.val ();
+	      
+	      unsigned starting_from = s.ept_circle (kd, kd.crossings[c][2]),
+		starting_to = s.ept_circle (kd, kd.crossings[c][4]);
+	      starting_circles += starting_from;
+	      starting_circles += starting_to;
+	      
+	      unsigned ending_from = to_s.ept_circle (kd, kd.crossings[c][2]),
+		ending_to = to_s.ept_circle (kd, kd.crossings[c][4]);
+	      ending_circles += ending_from;
+	      ending_circles += ending_to;
+	    }
+	  if (starting_circles.card () == 1
+	      && ending_circles.card () == 1)
+	    {
+	      unsigned k = unsigned_bitcount (crossings);
+	      
+#if 0
+	      s.show_self (kd, state);
+	      printf (" crossings ");  show (smallbitset (n_crossings, crossings));
+	      newline ();
+#endif
+	    }
+	}
+#endif
+      
       resolution_circles[i] = s.n_circles;
       resolution_generator1[i] = n_generators + 1;
       n_generators += s.num_generators (markedp_only);
@@ -676,10 +839,10 @@ class twisted_barE_rules : public twisted_map_rules
 {
 public:
   twisted_barE_rules () { }
-  twisted_barE_rules (const twisted_barE_rules &); // doesn't exist
+  twisted_barE_rules (const twisted_barE_rules &) = delete;
   ~twisted_barE_rules () { }
   
-  twisted_barE_rules &operator = (const twisted_barE_rules &); // doesn't exist
+  twisted_barE_rules &operator = (const twisted_barE_rules &) = delete;
   
   void map (basedvector<triple<unsigned, unsigned, set<unsigned> >, 1> &out,
 	    resolution_diagram_builder &rdb) const
