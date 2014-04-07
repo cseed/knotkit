@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 2.6.5.  */
+/* A Bison parser, made by GNU Bison 2.7.  */
 
 /* Locations for Bison parsers in C++
    
@@ -42,7 +42,7 @@
 
 
 namespace yy {
-/* Line 164 of location.cc  */
+/* Line 166 of location.cc  */
 #line 47 "knot_parser/location.hh"
 
   /// Abstract a location.
@@ -156,7 +156,9 @@ namespace yy {
    **
    ** Avoid duplicate information.
    */
-  inline std::ostream& operator<< (std::ostream& ostr, const location& loc)
+  template <typename YYChar>
+  inline std::basic_ostream<YYChar>&
+  operator<< (std::basic_ostream<YYChar>& ostr, const location& loc)
   {
     position last = loc.end - 1;
     ostr << loc.begin;
@@ -173,7 +175,7 @@ namespace yy {
 
 
 } // yy
-/* Line 292 of location.cc  */
-#line 178 "knot_parser/location.hh"
+/* Line 296 of location.cc  */
+#line 180 "knot_parser/location.hh"
 
 #endif /* !YY_YY_KNOT_PARSER_LOCATION_HH_INCLUDED  */

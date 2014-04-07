@@ -1,5 +1,5 @@
 
-devel = 0
+devel = 1
 
 BISON = bison
 FLEX = flex

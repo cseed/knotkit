@@ -539,6 +539,39 @@ compute_sq2 ()
   sage_show_khsq (outfp, H, sq1, sq2);
 }
 
+
+
+unsigned
+kh_rk (knot_diagram kd)
+{
+	cube<Z2> c (kd);
+  mod_map<Z2> d = c.compute_d (1, 0, 0, 0, 0);
+  
+  chain_complex_simplifier<Z2> s (c.khC, d, maybe<int> (1), maybe<int> (0));
+  assert (s.new_d == 0);
+	return s.new_C->free_rank();
+}
+
+void
+run_demo ()
+{
+	printf ("Link \t\t L1 \t L2 \t L \n");
+	for (unsigned i = 10; i <= 11; i ++)
+	{
+    for (unsigned j = 90; j <= fmin(mt_links (i, 0), 230); j ++)
+    {
+	
+			knot_diagram kd (mt_link (i, 0, j));
+			if (kd.num_components () != 2)
+				continue;
+			knot_diagram L1 (SUBLINK, smallbitset (2, 1), kd);
+			knot_diagram L2 (SUBLINK, smallbitset (2, 2), kd);
+	
+			printf ("%s  \t %d \t %d \t %d \n", kd.name.c_str(), kh_rk(L1), kh_rk(L2), kh_rk(kd));	
+		}
+	}
+}
+
 int
 main (int argc, char **argv)
 {
@@ -557,6 +590,11 @@ main (int argc, char **argv)
 	      usage ();
 	      exit (EXIT_SUCCESS);
 	    }
+		else if (strcmp (argv[i], "-demo") == 0)
+    {
+      run_demo();
+      exit (EXIT_SUCCESS);
+    }	  
 	  else if (!strcmp (argv[i], "-v"))
 	    verbose = 1;
 	  else if (!strcmp (argv[i], "-f"))
@@ -626,6 +664,23 @@ main (int argc, char **argv)
   kd = parse_knot (knot);
   kd.marked_edge = 1;
   
+	if (!strcmp (invariant, "gauss"))
+		{
+	   basedvector<basedvector<int, 1>, 1> gc = kd.as_gauss_code ();
+	   for (unsigned i = 1; i <= gc.size (); i ++)
+	 {
+	   if (i > 1)
+	     printf (":");
+	   for (unsigned j = 1; j <= gc[i].size (); j ++)
+	     {
+	       if (j > 1)
+	     printf (",");
+	       printf ("%d", gc[i][j]);
+	     }
+	 }
+	   newline ();
+	 }
+	
   if (!strcmp (invariant, "sq2"))
     {
       if (strcmp (field, "Z2"))

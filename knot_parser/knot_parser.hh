@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 2.6.5.  */
+/* A Bison parser, made by GNU Bison 2.7.  */
 
 /* Skeleton interface for Bison LALR(1) parsers in C++
    
@@ -41,13 +41,13 @@
 # define YY_YY_KNOT_PARSER_KNOT_PARSER_HH_INCLUDED
 
 /* "%code requires" blocks.  */
-/* Line 36 of lalr1.cc  */
+/* Line 33 of lalr1.cc  */
 #line 11 "knot_parser/knot_parser.yy"
 
 #include <knotkit.h>
 
 
-/* Line 36 of lalr1.cc  */
+/* Line 33 of lalr1.cc  */
 #line 52 "knot_parser/knot_parser.hh"
 
 
@@ -63,7 +63,7 @@
 
 
 namespace yy {
-/* Line 36 of lalr1.cc  */
+/* Line 33 of lalr1.cc  */
 #line 68 "knot_parser/knot_parser.hh"
 
   /// A Bison parser.
@@ -74,7 +74,7 @@ namespace yy {
 #ifndef YYSTYPE
     union semantic_type
     {
-/* Line 36 of lalr1.cc  */
+/* Line 33 of lalr1.cc  */
 #line 21 "knot_parser/knot_parser.yy"
 
   int integer;
@@ -85,7 +85,7 @@ namespace yy {
   knot_diagram *kd;
 
 
-/* Line 36 of lalr1.cc  */
+/* Line 33 of lalr1.cc  */
 #line 90 "knot_parser/knot_parser.hh"
     };
 #else
@@ -254,6 +254,7 @@ namespace yy {
 
     /// \brief Reclaim the memory associated to a symbol.
     /// \param yymsg        Why this token is reclaimed.
+    ///                     If null, do not display the symbol, just free it.
     /// \param yytype       The symbol type.
     /// \param yyvaluep     Its semantic value.
     /// \param yylocationp  Its location.
@@ -283,8 +284,8 @@ namespace yy {
   };
 
 } // yy
-/* Line 36 of lalr1.cc  */
-#line 288 "knot_parser/knot_parser.hh"
+/* Line 33 of lalr1.cc  */
+#line 289 "knot_parser/knot_parser.hh"
 
 
 

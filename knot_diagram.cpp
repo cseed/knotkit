@@ -1040,6 +1040,59 @@ knot_diagram::planar_diagram_crossings () const
   return r;
 }
 
+basedvector<basedvector<int, 1>, 1>
+knot_diagram::as_gauss_code () const
+{
+  set<unsigned> visited;
+  unsigned m = num_components ();
+  
+  basedvector<basedvector<int, 1>, 1> gc (m);
+  
+  unsigned k = 0;  // index component
+  for (unsigned i = 1; i <= num_edges (); i ++)
+    {
+      if (visited % i)
+    continue;
+      
+      basedvector<int, 1> comp_gc;
+      
+      unsigned p = edge_to_ept (i);
+      for (unsigned j = i;;)
+    {
+      visited.push (j);
+      
+      unsigned c = ept_crossing[p];
+      
+      int t = (is_over_ept (p)
+           ? -c
+           : c);
+      comp_gc.append (t);
+      
+      p = crossings[c][add_base1_mod4 (ept_index[p], 2)];
+      p = edge_other_ept (p);
+      assert (is_to_ept (p));
+      
+      j = ept_edge (p);
+      
+      if (j == i)
+        break;
+    }
+      
+      ++ k;
+      gc[k] = comp_gc;
+    }
+  assert (visited.card () == num_edges ());
+
+#ifndef NDEBUG
+  unsigned n = 0;
+  for (unsigned i = 1; i <= m; i ++)
+    n += gc[i].size ();
+  assert (n == 2*n_crossings);
+#endif
+  
+  return gc;
+}
+
 hash_t
 knot_diagram::hash_self () const
 {
