@@ -133,8 +133,8 @@ set<T>::head () const
 template<class T> const T &
 set<T>::tail () const
 {
-  typename std::set<T>::const_reverse_iterator i = impl->t.rbegin ();
-  assert (i != impl->t.rend ());
+  typename std::set<T>::const_reverse_iterator i = impl->t.crbegin ();
+  assert (i != impl->t.crend ());
   return *i;
 }  
 

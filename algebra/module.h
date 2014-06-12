@@ -988,7 +988,7 @@ free_submodule<R>::restrict_submodule (ptr<const free_submodule<R> > m) const
     span[i] = restrict (m->inject_generator (i));
   
   mod_span<R> span2 (this, span);
-  return submodule (span2);
+  return this->submodule (span2);
 }
 
 template<class R>

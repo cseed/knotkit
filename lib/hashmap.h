@@ -8,9 +8,9 @@ struct hasher : public std::unary_function<K, hash_t>
 };
 
 template<class K, class V>
-class hashmap : public map_wrapper<std::tr1::unordered_map<K, V, hasher<K> >, K, V>
+class hashmap : public map_wrapper<std::unordered_map<K, V, hasher<K> >, K, V>
 {
-  typedef map_wrapper<std::tr1::unordered_map<K, V, hasher<K> >, K, V> base;
+  typedef map_wrapper<std::unordered_map<K, V, hasher<K> >, K, V> base;
   
  public:
   hashmap () { }

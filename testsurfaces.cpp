@@ -1,17 +1,6 @@
 #include <surfacekit.h>
 #include <iostream>
 
-void test_mvd()
-{
-    for(unsigned i = 1; i <= 4; i++)
-    {
-        marked_vertex_diagram mvd(sample_mvd(i));
-        mvd.display_bohua();
-        mvd.print_knot_sequence();
-    }
-}
-
-
 /* option flags */
 static bool opt_batch = 0;
 static theory opt_theory = KHOVANOV_HOMOLOGY;

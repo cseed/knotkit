@@ -55,6 +55,7 @@ class multivariate_laurent_monomial
 #endif
     return m == e.m;
   }
+  bool operator != (const multivariate_laurent_monomial &e) const { return !operator == (e); }
   
   bool operator == (int x) const
   {
@@ -243,6 +244,7 @@ class multivariate_laurentpoly
 #endif
     return coeffs == p.coeffs;
   }
+  bool operator != (const multivariate_laurentpoly &p) const { return !operator == (p); }
   
   bool operator == (int x) const
   {

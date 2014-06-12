@@ -3,35 +3,10 @@
 extern uint64 allocations, deallocations;
 #endif
 
-inline void *operator new (size_t size)
-{
-#ifndef NDEBUG
-  allocations ++;
-#endif
-  return malloc (size);
-}
-inline void *operator new [] (size_t size)
-{
-#ifndef NDEBUG
-  allocations ++;
-#endif
-  return malloc (size);
-}
-
-inline void operator delete (void *p)
-{
-#ifndef NDEBUG
-  deallocations ++;
-#endif
-  free (p);
-}
-inline void operator delete [] (void *p)
-{
-#ifndef NDEBUG
-  deallocations ++;
-#endif
-  free (p);
-}
+void *operator new (size_t size) throw(std::bad_alloc);
+void *operator new [] (size_t size) throw(std::bad_alloc);
+void operator delete (void *p) throw();
+void operator delete [] (void *p) throw();
 
 class refcounted
 {

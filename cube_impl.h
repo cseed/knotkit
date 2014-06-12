@@ -248,7 +248,7 @@ cube<R>::compute_nu () const
   assert (!markedp_only);
   
   mod_map<R> nu (khC);
-  for (unsigned i = 0, j = 1; i < n_resolutions; i ++)
+  for (unsigned i = 0; i < n_resolutions; i ++)
     {
       smoothing s (kd, smallbitset (n_crossings, i));
       for (unsigned j = 0; j < s.num_monomials (); j ++)
@@ -276,7 +276,7 @@ cube<R>::compute_X (unsigned p) const
   
   /* define Khovanov's map X */
   mod_map<R> X (khC);
-  for (unsigned i = 0, j = 1; i < n_resolutions; i ++)
+  for (unsigned i = 0; i < n_resolutions; i ++)
     {
       smoothing r (kd, smallbitset (n_crossings, i));
       for (unsigned j = 0; j < r.num_monomials (); j ++)
@@ -578,7 +578,7 @@ cube<R>::show_state_monomial (unsigned state, unsigned monomial) const
 template<class R> void
 cube<R>::display_self () const
 {
-  for (unsigned i = 0, j = 1; i < n_resolutions; i ++)
+  for (unsigned i = 0; i < n_resolutions; i ++)
     {
       smoothing s (kd, smallbitset (n_crossings, i));
 
@@ -767,7 +767,7 @@ template<class F> mod_map<typename twisted_cube<F>::R>
 twisted_cube<F>::twisted_d0 (basedvector<int, 1> edge_weight) const
 {
   mod_map<R> d0 (c.khC);
-  for (unsigned i = 0, j = 1; i < c.n_resolutions; i ++)
+  for (unsigned i = 0; i < c.n_resolutions; i ++)
     {
       smoothing r (c.kd, smallbitset (c.n_crossings, i));
       

@@ -709,7 +709,6 @@ knot_diagram::planar_diagram_crossings () const
   basedvector<basedvector<int, 1>, 1> r (n_crossings);
   unsigned k = 0;
   
-  bool first = 1;
   for (unsigned i = 1; i <= n_edges; i ++)
     {
       unsigned e = edges.nth (i - 1);
@@ -737,9 +736,9 @@ knot_diagram::planar_diagram_crossings () const
       unsigned j2 = add_base1_mod4 (j, 2);
       assert (is_from_ept (crossings[c][j2]));
       
+#if 0
       unsigned e2 = ept_edge (crossings[c][j2]);
       unsigned i2 = edges.position (e2) + 1;
-#if 0
       assert ((i == n_edges && i2 == 1)
 	      || i2 == i + 1);
 #endif

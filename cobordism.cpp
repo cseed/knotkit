@@ -816,9 +816,6 @@ resolution_diagram::reverse_orientation ()
 knot_diagram
 resolution_diagram::as_knot_diagram () const
 {
-  unsigned n_edges = num_cpts ();
-  unsigned n_epts = n_edges * 2;
-  
   basedvector<basedvector<unsigned, 1>, 1> crossings (n_crossings);
   for (unsigned i = 1; i <= n_crossings; i ++)
     {
@@ -832,7 +829,6 @@ resolution_diagram::as_knot_diagram () const
       unsigned c = cpt_crossing (pt);
       
       unsigned prev_pt = prev[pt];
-      unsigned prev_c = cpt_crossing (prev_pt);
       
       if (is_to_cpt (pt))
 	{
@@ -1139,7 +1135,6 @@ resolution_diagram::twisted_barE (basedvector<triple<unsigned, unsigned, set<uns
 	{
 	  assert (n_ending_circles == 2);
 
-	  unsigned a = crossing_from (1);
 	  unsigned x = crossing_ending_left (1),
 	    y = crossing_ending_right (1);
 	  
@@ -1167,7 +1162,6 @@ resolution_diagram::twisted_barE (basedvector<triple<unsigned, unsigned, set<uns
 	  
 	  unsigned a = crossing_from (1),
 	    b = crossing_to (1);
-	  unsigned x = crossing_ending_left (1);
 	  
 	  /* 1 -> 1 */
 	  out.append (triple<unsigned, unsigned, set<unsigned> >

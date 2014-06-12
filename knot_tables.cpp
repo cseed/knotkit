@@ -513,8 +513,6 @@ mt_link (unsigned n, bool alternating, unsigned k)
       exit (EXIT_FAILURE);
     }
   
-  char *p;
-  
   for (unsigned i = 1; i <= k; i ++)
     {
       if (fgets (buf, 1000, fp) == 0)

@@ -36,6 +36,7 @@ class grading
   }
   
   bool operator == (const grading &gr) const { return h == gr.h && q == gr.q; }
+  bool operator != (const grading &gr) const { return !operator == (gr); }
   bool operator < (const grading &gr) const
   {
     return h < gr.h

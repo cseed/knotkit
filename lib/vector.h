@@ -38,6 +38,7 @@ public:
   
   bool operator < (const vector &v) const;
   bool operator == (const vector &v) const;
+  bool operator != (const vector &v) const { return !operator == (v); }
   
   bool operator % (unsigned i) { return d && i < d->n; }
   

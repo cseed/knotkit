@@ -59,7 +59,6 @@ class smoothing : public refcounted
   bool crossing_to_inside (const knot_diagram &d, smallbitset state, unsigned c) const
   {
     unsigned p = d.crossings[c][4];
-    unsigned e = d.ept_edge (p);
     return (state % c) == is_to_ept (d, p);
   }
   

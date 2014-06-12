@@ -424,7 +424,7 @@ mvd_playoffs::compute_big_chain_map()
 {
   /*construct projectors. eg, four saddles. then proj 2 hits xxxx0011, using the lowest bits for our purposes */
 
-  unsigned n_surfaces = 2;
+  // unsigned n_surfaces = 2;
   mod_map<R> proj_1;
   mod_map<R> proj_2;
   mod_map<R> proj_target;

@@ -1,20 +1,27 @@
 
-BISON = /opt/local/bin/bison
-FLEX = /opt/local/bin/flex
+BISON = bison
+FLEX = flex
 
 CXX = g++
 
-INCLUDES = -I/opt/local/include -I.
+GMPROOT = 
 
-# OPTFLAGS = -g
+INCLUDES = -I.
+
+OhPTFLAGS = -g
 # OPTFLAGS = -O2 -g
-OPTFLAGS = -O2 -DNDEBUG
+# OPTFLAGS = -O2 -DNDEBUG
 
-LDFLAGS = -L/opt/local/lib
-# LDFLAGS = -pg -L/opt/local/lib
+LDFLAGS = 
 
 LIBS = -lgmp
 
+ifneq ($(GMPROOT),)
+INCLUDES += -I$(GMPROOT)/include
+LDFLAGS += -L$(GMPROOT)/lib
+endif
+
+# 
 CXXFLAGS = $(OPTFLAGS) -DHOME="\"`pwd`\"" -Wall -Wno-unused $(INCLUDES)
 
 LIB_OBJS = lib/refcount.o \
@@ -44,7 +51,7 @@ KNOTKIT_HEADERS = knotkit.h planar_diagram.h dt_code.h knot_diagram.h \
 
 SURFACES_HEADERS = marked_vertex_diagram.h surfacekit.h  knot_detector.h chain_map.h
 
-all: gss
+all: gss testsurfaces
 
 %.o : %.cc
 	$(CXX) -c $(CXXFLAGS) $< -o $@

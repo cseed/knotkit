@@ -1,8 +1,10 @@
 
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
+#include <cstdlib>
+
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
 
 #include <sys/stat.h>
 #include <sys/errno.h>
@@ -13,11 +15,10 @@
 #include <queue>
 #include <algorithm>
 
-#include <tr1/functional>
-#include <tr1/unordered_map>
+#include <functional>
+#include <unordered_map>
 
 /* just need to implement ==, < */
-template<class T> bool operator != (const T &a, const T &b) { return ! (a == b); }
 template<class T> bool operator <= (const T &a, const T &b) { return (a < b) || (a == b); }
 template<class T> bool operator > (const T &a, const T &b) { return ! (a <= b); }
 template<class T> bool operator >= (const T &a, const T &b) { return ! (a < b); }

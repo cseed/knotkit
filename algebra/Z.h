@@ -48,6 +48,7 @@ class Z
   Z &operator = (int x) { impl = new Z_impl (x); return *this; }
   
   bool operator == (const Z &z) const { return mpz_cmp (impl->x, z.impl->x) == 0; }
+  bool operator != (const Z &z) const { return !operator == (z); }
   
   bool operator == (int y) const { return mpz_cmp_si (impl->x, y) == 0; }
   bool operator != (int y) const { return !operator == (y); }

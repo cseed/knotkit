@@ -55,6 +55,7 @@ class linear_combination
     lc3 -= lc2;
     return lc3 == 0;
   }
+  bool operator != (const linear_combination &lc2) const { return !operator == (lc2); }
   
   bool operator == (int x) const
   {
@@ -392,6 +393,7 @@ class linear_combination<Z2>
   }
   
   bool operator == (const linear_combination &lc) const { assert (m == lc.m); return v == lc.v; }
+  bool operator != (const linear_combination &lc) const { return !operator == (lc); }
   
   bool operator == (int x) const { assert (x == 0); return v.is_empty (); }
   bool operator != (int x) const { return !operator == (x); }

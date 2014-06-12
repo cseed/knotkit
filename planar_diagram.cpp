@@ -110,6 +110,5 @@ planar_diagram::is_oriented()
 void
 planar_diagram::orient()
 {
-  unsigned n_edges = crossings.size()*2;
-
+  abort();
 }

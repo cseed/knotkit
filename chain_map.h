@@ -30,7 +30,6 @@ class chain_map_helper
   
   void map_info_from_bigq (chain_map<R> &cm);
   void map_info_from_simplifier(chain_map<R> &cm);
-  mod_map<R> induced_map_on_homology_q (chain_map<R> &cm);
   mod_map<R> induced_map_on_homology_s (chain_map<R> &cm);
   int compare_images_bigq (chain_map<R> &cm1, chain_map<R> &cm2);
 
@@ -38,33 +37,12 @@ class chain_map_helper
 
 
 template<class R> 
-mod_map<R> chain_map_helper<R>::induced_map_on_homology_q(chain_map<R> &cm)
-{
-  cm.test_validity();
-  
-  ptr<const free_submodule<R> > d1_ker = cm.d1.kernel (),
-  d1_im = cm.d1.image (); //image as part of whole cube
-  ptr<const free_submodule<R> > d1_im2 = d1_ker->restrict_submodule (d1_im); //image as part of kernel
-  ptr<const quotient_module<R> > H1 = d1_ker->quotient (d1_im2); //quotient gives homology
-
-  ptr<const free_submodule<R> > d2_ker = cm.d2.kernel (),
-  d2_im = cm.d2.image (); //image as part of whole cube
-  ptr<const free_submodule<R> > d2_im2 = d2_ker->restrict_submodule (d2_im); //image as part of kernel
-  ptr<const quotient_module<R> > H2 = d2_ker->quotient (d2_im2); //quotient gives homology
-
-  mod_map<R> chain_map_ker_to_ker = cm.f.restrict (d1_ker,d2_ker); 
-  mod_map<R> h_map = chain_map_ker_to_ker.induced_map(H1, H2);
-  
-  return h_map;
-}
-
-
-template<class R> 
 mod_map<R> chain_map_helper<R>::induced_map_on_homology_s(chain_map<R> &cm)
 {
   cm.test_validity();
   
-#if 1
+#if 0
+  // ??? I think this was for gss.
   chain_complex_simplifier<R> s1a (cm.C1, cm.d1, 0, 1);
   chain_complex_simplifier<R> s1b (s1a.new_C, s1a.new_d, 2, 1);
   assert (s1b.new_d == 0);
@@ -80,7 +58,7 @@ mod_map<R> chain_map_helper<R>::induced_map_on_homology_s(chain_map<R> &cm)
 			 (s1b.iota)))));
 #endif
   
-#if 0
+#if 1
   chain_complex_simplifier<R> s1 (cm.C1, cm.d1, 1, 1);
   assert (s1.new_d == 0);
   

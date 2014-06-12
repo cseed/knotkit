@@ -34,6 +34,7 @@ class sseq_bounds
     && minq == b.minq
     && maxq == b.maxq;
   }
+  bool operator != (const sseq_bounds &b) const { return !operator == (b); }
 };
 
 class sseq_page
@@ -52,6 +53,7 @@ class sseq_page
   ~sseq_page () { }
   
   bool operator == (const sseq_page &pg) const { return rank == pg.rank && im_rank == pg.im_rank; }
+  bool operator != (const sseq_page &pg) const { return !operator == (pg); }
   bool equal_as_spaces (const sseq_page &pg) const { return rank == pg.rank; }
   
   unsigned total_rank () const;
