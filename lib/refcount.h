@@ -1,12 +1,14 @@
 
+#include <new>
+
 #ifndef NDEBUG
 extern uint64 allocations, deallocations;
 #endif
 
-void *operator new (size_t size) throw(std::bad_alloc);
-void *operator new [] (size_t size) throw(std::bad_alloc);
-void operator delete (void *p) throw();
-void operator delete [] (void *p) throw();
+extern void *operator new (size_t size);
+extern void *operator new [] (size_t size);
+extern void operator delete (void *p) noexcept;
+extern void operator delete [] (void *p) noexcept;
 
 class refcounted
 {

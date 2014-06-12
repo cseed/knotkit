@@ -131,6 +131,7 @@ bool knot_detector::is_unlink()
   
   //basedvector<modulinear_combination,1> img_alg_action;
   
+  abort();
 }
 
 

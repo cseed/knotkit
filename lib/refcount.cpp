@@ -1,14 +1,14 @@
 
 #include <lib/lib.h>
 
-void *operator new (size_t size) throw(std::bad_alloc)
+void *operator new (size_t size)
 {
 #ifndef NDEBUG
   allocations ++;
 #endif
   return malloc (size);
 }
-void *operator new [] (size_t size) throw(std::bad_alloc)
+void *operator new [] (size_t size)
 {
 #ifndef NDEBUG
   allocations ++;
@@ -16,14 +16,14 @@ void *operator new [] (size_t size) throw(std::bad_alloc)
   return malloc (size);
 }
 
-void operator delete (void *p) throw()
+void operator delete (void *p) noexcept
 {
 #ifndef NDEBUG
   deallocations ++;
 #endif
   free (p);
 }
-void operator delete [] (void *p) throw()
+void operator delete [] (void *p) noexcept
 {
 #ifndef NDEBUG
   deallocations ++;

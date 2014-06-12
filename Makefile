@@ -2,13 +2,13 @@
 BISON = bison
 FLEX = flex
 
-CXX = g++
+CXX = g++ -std=c++11
 
 GMPROOT = 
 
 INCLUDES = -I.
 
-OhPTFLAGS = -g
+OPTFLAGS = -g
 # OPTFLAGS = -O2 -g
 # OPTFLAGS = -O2 -DNDEBUG
 
