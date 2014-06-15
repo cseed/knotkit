@@ -31,7 +31,7 @@ KNOTKIT_OBJS = planar_diagram.o dt_code.o knot_diagram.o cube.o spanning_tree_co
   smoothing.o cobordism.o knot_tables.o sseq.o \
   knot_parser/knot_parser.o knot_parser/knot_scanner.o \
   rd_parser/rd_parser.o rd_parser/rd_scanner.o
-SURFACES_OBJS = marked_vertex_diagram.o mvd_tables.o knot_detector.o
+SURFACES_OBJS = marked_vertex_diagram.o mvd_tables.o
 
 COMMON_OBJS = $(KNOTKIT_OBJS) $(ALGEBRA_OBJS) $(LIB_OBJS) 
 
@@ -49,7 +49,7 @@ ALGEBRA_HEADERS = algebra/algebra.h algebra/grading.h algebra/module.h \
 KNOTKIT_HEADERS = knotkit.h planar_diagram.h dt_code.h knot_diagram.h \
   smoothing.h cobordism.h cube.h spanning_tree_complex.h cube_impl.h sseq.h
 
-SURFACES_HEADERS = marked_vertex_diagram.h surfacekit.h  knot_detector.h chain_map.h
+SURFACES_HEADERS = marked_vertex_diagram.h surfacekit.h chain_map.h
 
 all: gss testsurfaces
 

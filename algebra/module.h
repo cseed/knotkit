@@ -243,7 +243,7 @@ class mod_map
   { }
 
   mod_map (copy, const mod_map &m)
-    : from(m.from), to(m.to), columns(COPY, m.columns)
+    : from(m.from), to(m.to), columns(COPY2, m.columns)
   { }
   
   mod_map (copy2, const mod_map &m)
@@ -298,6 +298,7 @@ class mod_map
   void check_grading (grading delta) const;
   
 	ptr<const Rmod> domain () const {return from;}
+	ptr<const Rmod> codomain () const {return to;}
 	ptr<const Rmod> range () const {return to;}
 
   // inj : ker -> from

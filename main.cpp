@@ -27,38 +27,6 @@ main ()
 
 #if 0
 void
-test_knot_detector()
-{  
-  int crossing_ar1[3][4] = { {4,2,1,1},{3,5,4,6},{2,5,3,6} };
-  planar_diagram pd1("two_comp_unlink", 3, crossing_ar1);
-  knot_diagram kd1(pd1);
-  knot_detector detector1(kd1);
-  detector1.compute_component_polys();
-  detector1.show_self();
-
-  int crossing_ar2[5][4] = { {1,6,5,4},{4,5,3,2},{2,3,7,1},{6,10,9,8},{8,9,10,7}};
-  planar_diagram pd2("tref_plus_hopf", 5, crossing_ar2);
-  knot_diagram kd2(pd2);
-  knot_detector detector2(kd2);
-  detector2.compute_component_polys();
-  detector2.show_self();
-
-  int crossing_ar3[5][4] = { {1,6,5,4},{4,5,3,2},{2,3,7,1},{10,9,8,6},{8,9,10,7}};
-  planar_diagram pd3("tref_plus_u_notwist", 5, crossing_ar3);
-  knot_diagram kd3(pd3);
-  knot_detector detector3(kd3);
-  detector3.compute_component_polys();
-  detector3.show_self();
-
-  int crossing_ar4[6][4] = {  {1,6,5,4},{4,5,3,2},{2,3,7,1},{6,10,9,8},{8,9,12,7},{11,11,12,10} };
-  planar_diagram pd4("tref_plus_u_twist", 6, crossing_ar4);
-  knot_diagram kd4(pd4);
-  knot_detector detector4(kd4);
-  detector4.compute_component_polys();
-  detector4.show_self();
-}
-
-void
 test_alg_action()
 {
   knot_diagram kd (rolfsen_knot (8, 19));
@@ -176,7 +144,7 @@ test_projector_in_series()
   mod_map<R> big_d = p2.compose(d);
   mod_map<R> f = big_d2.restrict(dom, range);
 
-  chain_map<R> cm(dom,range, d1, d2, f);
+  chain_map<R> cm(d1, d2, f);
   chain_map_helper<R> helper;
   helper.map_info_from_bigq(cm);
   
@@ -345,7 +313,7 @@ main ()
 	//populate_p_poly_table(8);
 	//test_p_poly_table();
 	
-#if 1
+#if 0
 	mvd_helper h;
 	planar_diagram the_pd = rolfsen_knot(8,19);
 	marked_vertex_diagram mvd = h.pinch_xing(the_pd, 1, 0);
