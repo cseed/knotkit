@@ -207,7 +207,7 @@ mvd_cube<R, th>::display_self() const
   for (unsigned i = 1; i <= H2->dim(); i ++)
     {
       printf ("  %d ", i);
-      show (H2->generator_grading (i) + initial_adjust);
+      show (H2->generator_grading (i) + final_adjust);
       printf (" ");
       H2->show_generator (i);
       
@@ -233,6 +233,7 @@ mvd_cube<R, th>::display_self() const
   
   display("Kh(S) : Kh(K1) -> Kh(K2):\n", cob_map);
   
+#if 0
   printf("The map, in h/q grading:\n");
   for (unsigned i = 1; i <= H1->dim(); i++)
     {
@@ -282,4 +283,5 @@ mvd_cube<R, th>::display_self() const
 	printf("x");
       newline ();
     }
+#endif
 }

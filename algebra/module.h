@@ -2115,8 +2115,7 @@ mod_map<R>::display_self () const
   show_self (); newline ();
   for (unsigned i = 1; i <= impl->from->dim (); i ++)
     {
-      printf ("  %d ", i);
-      printf (": ");
+      printf ("  %d -> ", i);
       show (column (i));
       newline ();
     }
