@@ -17,6 +17,7 @@ class pair
   pair &operator = (const pair &p) { first = p.first; second = p.second; return *this; }
   
   bool operator == (const pair &p) const { return first == p.first && second == p.second; }
+  bool operator != (const pair &p) const { return !operator == (p); }
   bool operator < (const pair &p) const { return (first < p.first
 						  || (first == p.first && second < p.second)); }
   
@@ -53,8 +54,9 @@ public:
   triple (const F &first_, const S &second_, const T &third_)
     : first(first_), second(second_), third(third_)
   { }
+  triple (reader &r);
   ~triple () { }
-
+  
   triple &operator = (const triple &t)
   {
     first = t.first;
@@ -67,6 +69,8 @@ public:
   {
     return first == t.first && second == t.second && third == t.third;
   }
+  bool operator != (const triple &t) const { return !operator == (t); }
+  
   bool operator < (const triple &t) const
   {
     if (first < t.first)
@@ -78,13 +82,11 @@ public:
       return 1;
     else if (second > t.second)
       return 0;
-
-    if (third < t.third)
-      return 1;
-    else if (third > t.third)
-      return 0;
+    
+    return third < t.third;
   }
   
+  void write_self (writer &w) const;
   hash_t hash_self () const
   {
     hash_t h = hash (first);
@@ -92,3 +94,19 @@ public:
     return hash_combine (h, hash (third));
   }
 };
+
+template <class F, class S, class T>
+triple<F, S, T>::triple (reader &r)
+{
+  read (r, first);
+  read (r, second);
+  read (r, third);
+}
+
+template<class F, class S, class T> void
+triple<F, S, T>::write_self (writer &w) const
+{
+  write (w, first);
+  write (w, second);
+  write (w, third);
+}

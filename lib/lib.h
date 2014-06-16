@@ -1,6 +1,5 @@
 
 #include <cstdlib>
-
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -9,6 +8,10 @@
 #include <sys/stat.h>
 #include <sys/errno.h>
 
+#include <gmp.h>
+#include <zlib.h>
+
+#include <initializer_list>
 #include <set>
 #include <map>
 #include <string>
@@ -16,15 +19,18 @@
 #include <algorithm>
 
 #include <functional>
+#include <unordered_set>
 #include <unordered_map>
 
-/* just need to implement ==, < */
+/* just need to implement ==, !=, < */
 template<class T> bool operator <= (const T &a, const T &b) { return (a < b) || (a == b); }
 template<class T> bool operator > (const T &a, const T &b) { return ! (a <= b); }
 template<class T> bool operator >= (const T &a, const T &b) { return ! (a < b); }
 
 typedef enum copy { COPY, COPY1 } copy;
 typedef enum copy2 { COPY2 } copy2;
+
+typedef unsigned char uint8;
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
@@ -34,7 +40,14 @@ typedef unsigned long ulong;
 typedef long long int64;
 typedef unsigned long long uint64;
 
+inline int64 abs64 (int64 x) { return llabs (x); }
+
 typedef size_t hash_t;
+
+static const unsigned uint8_bits = 8;
+static const unsigned char_bits = 8;
+static const unsigned uchar_bits = 8;
+static const unsigned int_bits = 32;
 
 inline hash_t hash (bool x) { return (hash_t)x; }
 inline hash_t hash (char x) { return (hash_t)x; }
@@ -148,13 +161,24 @@ void stderror (const char *fmt, ...);
 
 int alpha_to_int (char c);
 
-#include <lib/io.h>
+using std::tuple;
+using std::get;
+using std::make_tuple;
+using std::tie;
+using std::ignore;
+using std::initializer_list;
 
 #include <lib/show.h>
 #include <lib/refcount.h>
+
+#include <lib/io.h>
+
 #include <lib/pair.h>
+
 #include <lib/maybe.h>
 #include <lib/vector.h>
+
+#include <lib/set_wrapper.h>
 #include <lib/set.h>
 
 class bitset;
@@ -173,12 +197,40 @@ inline int random_int (int from, int to)
 #include <lib/bitset.h>
 #include <lib/ullmanset.h>
 #include <lib/setcommon.h>
-
 #include <lib/map_wrapper.h>
 #include <lib/map.h>
+
+template<class K>
+struct hasher : public std::unary_function<K, hash_t>
+{
+  hash_t operator () (const K &k) const { return hash (k); }
+};
+
 #include <lib/hashmap.h>
+#include <lib/hashset.h>
+
 #include <lib/ullmanmap.h>
 #include <lib/mapcommon.h>
 #include <lib/unionfind.h>
 #include <lib/priority_queue.h>
 #include <lib/directed_multigraph.h>
+
+// ??? io
+
+class algebra_writer
+{
+public:
+  // modules
+  unsigned io_id_counter;
+  map<unsigned, unsigned> id_io_id;
+  
+  algebra_writer () : io_id_counter(0) { }
+  ~algebra_writer () { }
+};
+
+class algebra_reader
+{
+public:
+  map<unsigned, unsigned> io_id_id;
+  
+};

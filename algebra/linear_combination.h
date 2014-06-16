@@ -39,8 +39,15 @@ class linear_combination
     for (typename map<unsigned, R>::const_iter i = lc.v; i; i ++)
       v.push (i.key (), R (COPY, i.val ()));
   }
+  
+  linear_combination (reader &r)
+  {
+    m = r.read_mod<R> ();
+    v = map<unsigned, R> (r);
+  }
+  
   ~linear_combination () { }
-
+  
   linear_combination &operator = (const linear_combination &lc)
   {
     m = lc.m;
@@ -176,6 +183,17 @@ class linear_combination
     return v.card ();
   }
   
+  linear_combination<R> tensor (const linear_combination<R> &lc) const
+  {
+    linear_combination<R> r (m->tensor (lc.m));
+    for (linear_combination_const_iter<R> i = *this; i; i ++)
+      for (linear_combination_const_iter<R> j = lc; j; j ++)
+	{
+	  r.muladd (i.val () * j.val (), m->tensor_generators (i.key (), lc.m, j.key ()));
+	}
+    return r;
+  }
+  
 #ifndef NDEBUG
   void check () const
   {
@@ -183,6 +201,12 @@ class linear_combination
       assert (!m->is_zero (i.val (), i.key ()));
   }
 #endif
+
+  void write_self (writer &w) const
+  {
+    write (w, *m);
+    write (w, v);
+  }
   
   void show_self () const;
   void display_self () const { show_self (); newline (); }
@@ -353,7 +377,8 @@ linear_combination<R>::show_self () const
 	printf (" + ");
       show (i.val ());
       printf ("*");
-      m->show_generator (i.key ());
+      // m->show_generator (i.key ());
+      printf ("%d", i.key());
     }
 }
 
@@ -383,6 +408,12 @@ class linear_combination<Z2>
   linear_combination (ptr<const Z2mod> m_) : m(m_) { }
   linear_combination (const linear_combination &lc) : m(lc.m), v(lc.v) { }
   linear_combination (copy, const linear_combination &lc) : m(lc.m), v(COPY, lc.v) { }
+  linear_combination (reader &r)
+  {
+    m = r.read_mod<Z2> ();
+    v = set<unsigned> (r);
+  }
+  
   ~linear_combination () { }
   
   linear_combination &operator = (const linear_combination &lc)
@@ -493,6 +524,12 @@ class linear_combination<Z2>
   void check () const;
 #endif
   
+  void write_self (writer &w) const
+  {
+    write (w, *m);
+    write (w, v);
+  }
+  
   void show_self () const;
   void display_self () const { show_self (); newline (); }
 };
@@ -507,8 +544,8 @@ linear_combination<Z2>::show_self () const
 	first = 0;
       else
 	printf ("+");
-      m->show_generator(i.val ());
-      //printf ("%d", );
+      // printf ("%d", i.val ());
+      m->show_generator (i.val ());
     }
 }
 

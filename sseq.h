@@ -7,6 +7,27 @@ class sseq_bounds
   
  public:
   sseq_bounds () { }
+  
+  template<class R, class M> sseq_bounds (ptr<const module<R> > C, M m)
+  {
+    grading hq1 = m(C->generator_grading (1));
+    minh = maxh = hq1.h;
+    minq = maxq = hq1.q;
+    
+    for (unsigned i = 2; i <= C->dim (); i ++)
+      {
+	grading hq = m(C->generator_grading (i));
+	if (hq.h < minh)
+	  minh = hq.h;
+	if (hq.h > maxh)
+	  maxh = hq.h;
+	if (hq.q < minq)
+	  minq = hq.q;
+	if (hq.q > maxq)
+	  maxq = hq.q;
+      }
+  }
+  
   sseq_bounds (int minh_, int maxh_, int minq_, int maxq_)
     : minh(minh_), maxh(maxh_), minq(minq_), maxq(maxq_)
   { }
@@ -41,20 +62,35 @@ class sseq_page
 {
  public:
   /* bounds come from sseq */
+  unsigned k;
+  grading dk_gr;
   vector<vector<unsigned> > rank,
     im_rank;
   
  public:
   sseq_page () { }
   sseq_page (const sseq_bounds &b);
+  template<class R, class M> sseq_page (const sseq_bounds &b,
+					unsigned k_,
+					grading dk_gr_,
+					mod_map<R> d,
+					M m);
   sseq_page (const sseq_page &pg)
-    : rank(pg.rank), im_rank(pg.im_rank)
+    : k(pg.k), dk_gr(pg.dk_gr), rank(pg.rank), im_rank(pg.im_rank)
   { }
   ~sseq_page () { }
   
-  bool operator == (const sseq_page &pg) const { return rank == pg.rank && im_rank == pg.im_rank; }
-  bool operator != (const sseq_page &pg) const { return !operator == (pg); }
   bool equal_as_spaces (const sseq_page &pg) const { return rank == pg.rank; }
+
+  bool operator == (const sseq_page &pg) const
+  {
+    return k == pg.k
+    && dk_gr == pg.dk_gr
+    && rank == pg.rank
+    && im_rank == pg.im_rank;
+  }
+
+  bool operator != (const sseq_page &pg) const { return !operator == (pg); }
   
   unsigned total_rank () const;
   multivariate_laurentpoly<Z> poincare_polynomial (const sseq_bounds &b) const;
@@ -66,7 +102,7 @@ class sseq_page
 		     const sseq_bounds &b1, const sseq_page &pg1,
 		     const sseq_bounds &b2, const sseq_page &pg2);
   
-  void texshow (FILE *fp, const sseq_bounds &b, unsigned dh, bool last);
+  template<class M> void texshow (FILE *fp, const sseq_bounds &b, const char *label, M m);
 };
 
 class sseq
@@ -77,8 +113,10 @@ class sseq
   
  public:
   sseq () { }
-  sseq (const sseq_bounds &b, const basedvector<sseq_page, 1> &pages_)
-    : bounds(b), pages(pages_)
+  sseq (const sseq_bounds &b,
+	const basedvector<sseq_page, 1> &pages_)
+    : bounds(b),
+      pages(pages_)
   { }
   sseq (const sseq_bounds &b)
     : bounds(b)
@@ -86,7 +124,12 @@ class sseq
   sseq (const sseq &ss) : bounds(ss.bounds), pages(ss.pages) { }
   ~sseq () { }
   
-  sseq &operator = (const sseq &ss) { bounds = ss.bounds; pages = ss.pages; return *this; }
+  sseq &operator = (const sseq &ss)
+  {
+    bounds = ss.bounds;
+    pages = ss.pages;
+    return *this;
+  }
   
   sseq operator + (const sseq &ss2) const;  // direct sum
   sseq otimes (const sseq &ss2) const; // tensor product
@@ -97,280 +140,157 @@ class sseq
   unsigned homological_width () const { return pages[1].homological_width (bounds); }
   
   bool operator == (const sseq &ss) const { return bounds == ss.bounds && pages == ss.pages; }
-  bool equal_as_spaces (const sseq &ss) const;
+  bool operator != (const sseq &ss) const { return !operator == (ss); }
   
-  void texshow (FILE *fp, std::string name);
+  template<class M> void texshow (FILE *fp, M m);
 };
 
-template<class R> class simplified_complex_generators
+template<class R, class M> 
+sseq_page::sseq_page (const sseq_bounds &b,
+		      unsigned k_,
+		      grading dk_gr_,
+		      mod_map<R> dk,
+		      M m)
+  : k(k_),
+    dk_gr(dk_gr_),
+    rank(b.width ()),
+    im_rank(b.width ())
 {
-  unsigned new_n;
-  ptr<const module<R> > C;
-  basedvector<unsigned, 1> new_C_to_C_generator;
+  dk.check_grading (dk_gr);
   
-public:
-  simplified_complex_generators (const simplified_complex_generators &g)
-    : new_n(g.new_n),
-      C(g.C),
-      new_C_to_C_generator(g.new_C_to_C_generator)
-  { }
-  simplified_complex_generators (unsigned new_n_,
-				 ptr<const module<R> > C_,
-				 basedvector<unsigned, 1> new_C_to_C_generator_)
-    : new_n(new_n_),
-      C(C_),
-      new_C_to_C_generator(new_C_to_C_generator_)
-  { }
-  ~simplified_complex_generators () { }
+  grading m_dk_gr = m.map_delta(dk_gr);
   
-  simplified_complex_generators &operator = (const simplified_complex_generators &); // doesn't exist
-  
-  unsigned dim () const { return new_n; }
-  unsigned free_rank () const { return new_n; }
-  grading generator_grading (unsigned i) const { return C->generator_grading (new_C_to_C_generator[i]); }
-  void show_generator (unsigned i) const { C->show_generator (new_C_to_C_generator[i]); }
-  R generator_ann (unsigned i) const { abort (); }
-};
-
-template<class R> 
-class chain_complex_simplifier
-{
- public:
-  typedef typename R::linear_combination linear_combination;
-  typedef typename R::linear_combination_const_iter linear_combination_const_iter;
-  
- public:
-  ptr<const module<R> > C;
-  unsigned n; // |C|
-  const mod_map<R> &d;
-  
-  ptr<const module<R> > new_C;
-  mod_map<R> new_d;
-  
-  // chain homotopy equivalences
-  // pi : C -> new_C, iota : new_C -> C
-  mod_map<R> pi, iota;
-  
- private:
-  mod_map<R> new_d0;
-  
-  basedvector<set<unsigned>, 1> preim;
-  
-  bool build_pi_iota;
-  mod_map<R> pi0, iota0;
-  set<unsigned> canceled;
-  
-  void cancel (unsigned i, R b, unsigned j);
-  
- public:
-  chain_complex_simplifier (ptr<const module<R> > C_,
-			    const mod_map<R> &d_,
-			    int dh,
-			    bool build_pi_iota_ = 0);
-  
-};
-
-template<class R> void
-chain_complex_simplifier<R>::cancel (unsigned i, R b, unsigned j)
-{
-  assert (i != j);
-  assert (b.is_unit ());
-  
-  R binv = b.recip ();
-  
-  canceled.push (i);
-  canceled.push (j);
-  
-  new_d0[i].yank (j);
-  preim[j].yank (i);
-  
-  for (linear_combination_const_iter k = new_d0[i]; k; k ++)
-    preim[k.key ()].yank (i);
-  for (set_const_iter<unsigned> k = preim[i]; k; k ++)
-    new_d0[k.val ()].yank (i);
-  for (linear_combination_const_iter k = new_d0[j]; k; k ++)
-    preim[k.key ()].yank (j);
-
-  if (build_pi_iota)
+  for (unsigned i = 0; i < b.width (); i ++)
     {
-      mod_map<R> local_pi0 (C, 1),
-	local_iota0 (C, 1);
+      vector<unsigned> r (b.height ()),
+	im_r (b.height ());
+      for (unsigned j = 0; j < b.height (); j ++)
+	r[j] = im_r[j] = 0;
       
-      local_pi0[i].clear ();
-      local_pi0[j].clear ();
-      
-      local_iota0[i].clear ();
-      local_iota0[j].clear ();
-      
-      for (linear_combination_const_iter ll = new_d0[i]; ll; ll ++)
-	{
-	  R c = ll.val ();
-	  local_pi0[j].mulsub (binv * c, ll.key ());
-	}
-      
-      for (set_const_iter<unsigned> kk = preim[j]; kk; kk ++)
-	{
-	  unsigned k = kk.val ();
-	  R a = new_d0[k](j);
-	  assert (a != 0);
-	  
-	  local_iota0[k].mulsub (a * binv, i);
-	}
-      
-      pi0 = local_pi0.compose (pi0);
-      iota0 = iota0.compose (local_iota0);
+      rank[i] = r;
+      im_rank[i] = im_r;
     }
   
-  for (set_const_iter<unsigned> kk = preim[j]; kk; kk ++)
+  ptr<const module<R> > C = dk.domain ();
+  for (unsigned i = 1; i <= C->dim (); i ++)
     {
-      unsigned k = kk.val ();
-      R a = new_d0[k](j);
-      assert (a != 0);
-      
-      R abinv = a * binv;
-      
-      for (linear_combination_const_iter ll = new_d0[i]; ll; ll ++)
-	{
-	  unsigned ell = ll.key ();
-	  R c = ll.val ();
-	  
-	  assert (! (canceled % k));
-	  assert (! (canceled % ell));
-	  assert (k != i);
-	  assert (k != j);
-	  assert (ell != i);
-	  assert (ell != j);
-	  assert (ell != k);
-	  
-	  new_d0[k].mulsub (abinv * c, ell);
-	  if (new_d0[k] % ell)
-	    preim[ell] += k;
-	  else
-	    preim[ell] -= k;
-	}
+      grading gr = m(C->generator_grading (i));
+      rank[(unsigned)(gr.h - b.minh)][(unsigned)(gr.q - b.minq)] ++;
     }
   
-  for (set_const_iter<unsigned> k = preim[j]; k; k ++)
-    new_d0[k.val ()].yank (j);
-  
-  new_d0[i].clear ();
-  preim[i].clear ();
-  new_d0[j].clear ();
-  preim[j].clear ();
-  
-#if 0  // expensive
-  if (build_pi_iota)
+  ptr<const free_submodule<R> > im = dk.image ();
+  for (unsigned i = 1; i <= im->dim (); i ++)
     {
-      assert (pi0.compose (d) == new_d0.compose (pi0));
-      assert (iota0.compose (new_d0) == d.compose (iota0));
+      grading gr = m(im->generator_grading (i));
+      im_rank[(unsigned)(gr.h - m_dk_gr.h - b.minh)][(unsigned)(gr.q - m_dk_gr.q - b.minq)] ++;
     }
-#endif
 }
 
-template<class R>
-chain_complex_simplifier<R>::chain_complex_simplifier (ptr<const module<R> > C_,
-						       const mod_map<R> &d_,
-						       int dh,
-						       bool build_pi_iota_)
-  : C(C_), n(C_->dim ()), d(d_),
-    new_d0(COPY2, d),
-    preim(C_->dim ()),
-    build_pi_iota(build_pi_iota_)
+
+template<class M> void
+sseq_page::texshow (FILE *fp, const sseq_bounds &b, const char *label, M m)
 {
+  grading m_dk_gr = m.map_delta(dk_gr);
+  
+  unsigned dh = m_dk_gr.h,
+    dq = m_dk_gr.q;
+  
+  fprintf (fp, "\
+\\begin{tikzpicture}[scale=.66]\n\
+  \\draw[->] (0,0) -- (%d.5,0) node[right] {$t$};\n\
+  \\draw[->] (0,0) -- (0,%d.5) node[above] {$q$};\n\
+  \\draw[step=1] (0,0) grid (%d,%d);\n",
+	   b.width (), b.height (), b.width (), b.height ());
+  
+  fprintf (fp, "  \\draw (%.3f,-0.8) node[below] {%s};\n",
+	   ((double)b.width () + 0.5) / 2, label);
+  
+  /* label axes */
+  for (int x = b.minh; x <= b.maxh; x ++)
+    {
+      fprintf (fp, "\
+  \\draw (%d.5,-.2) node[below] {$",
+	       x - b.minh);
+      m.x_label (fp, x);
+      fprintf (fp, "$};\n");
+    }
+  for (int y = b.minq; y <= b.maxq; y ++)
+    {
+      fprintf (fp, "\
+  \\draw (-.2,%d.5) node[left] {$",
+	       y - b.minq);
+      m.y_label (fp, y);
+      fprintf (fp, "$};\n");
+    }
+  
+  for (unsigned i = 0; i < b.width (); i ++)
+    for (unsigned j = 0; j < b.height (); j ++)
+      {
+	int r = rank[i][j];
+	if (r == 1)
+	  {
+	    fprintf (fp, "\
+  \\fill (%d.5, %d.5) circle (.15);\n",
+		     i, j);
+	  }
+	else if (r > 1)
+	  {
+	    fprintf (fp, "\
+  \\draw (%d.5, %d.5) node {$%d$};\n",
+		    i, j, r);
+	  }
+      }
+  
+  for (unsigned i = 0; i < b.width (); i ++)
+    for (unsigned j = 0; j < b.height (); j ++)
+      {
+	unsigned r = im_rank[i][j];
+	if (r == 0)
+	  continue;
+	
+	int dx = dh,
+	  dy = dq;  // in "boxes"
+	
+	double h = sqrt ((double)(dx * dx + dy * dy));
+	double xadj = (double)dx / h * 0.3;
+	double yadj = (double)dy / h * 0.3;
+	
+	fprintf (fp, "  \\draw[->] (%.3f, %.3f) -- ",
+		(double)i + 0.5 + xadj, (double)j + 0.5 + yadj);
+	if (r > 1)
+	  fprintf (fp, "node[color=red!75!black] {$%d$} ", r);
+	fprintf (fp, "(%.3f, %.3f);\n",
+		 (double)((int)i + dx) + 0.5 - xadj, (double)((int)j + dy) + 0.5 - yadj);
+      }
+  
+  fprintf (fp, "\
+\\end{tikzpicture}\n");
+  
+  fflush (fp);
+}
+
+template<class M> void
+sseq::texshow (FILE *fp, M m)
+{
+  unsigned n = pages.size ();
   for (unsigned i = 1; i <= n; i ++)
     {
-      for (linear_combination_const_iter j = d[i]; j; j ++)
-	preim[j.key ()].push (i);
+      if (i == n)
+	fprintf (fp, "$\\rank E_\\infty = \\rank E_%d = %d$ \\\\\n",
+		 pages[i].k, pages[i].total_rank ());
+      else
+	fprintf (fp, "$\\rank E_%d = %d$ \\\\\n",
+		 pages[i].k, pages[i].total_rank ());
     }
   
-  if (build_pi_iota)
+  for (unsigned i = 1; i <= n; i ++)
     {
-      pi0 = mod_map<R> (C, 1);
-      iota0 = mod_map<R> (C, 1);
-      
-#if 0 // expensive
-      assert (pi0.compose (d) == new_d0.compose (pi0));
-      assert (iota0.compose (new_d0) == d.compose (iota0));
-#endif
-    }
-  
- Lretry:
-  for (unsigned i = n; i >= 1; i --)
-    {
-      if (canceled % i)
-	continue;
-      
-      grading igr = C->generator_grading (i);
-      for (linear_combination_const_iter j = new_d0[i]; j; j ++)
-	{
-	  grading jgr = C->generator_grading (j.key ());
-	  assert (jgr.h >= igr.h);
-	  if (j.val ().is_unit ()
-	      && jgr.h - igr.h == dh)
-	    {
-	      cancel (i, j.val (), j.key ());
-	      goto Lretry;
-	    }
-	}
-    }
-  
-  unsigned new_n = n - canceled.card ();
-  basedvector<unsigned, 1> new_C_to_C_generator (new_n),
-    C_to_new_C_generator (n);
-  for (unsigned i = 1, j = 1; i <= n; i ++)
-    {
-      if (canceled % i)
-	{
-	  C_to_new_C_generator[i] = 0;
-	  continue;
-	}
-      
-      C_to_new_C_generator[i] = j;
-      new_C_to_C_generator[j] = i;
-      j ++;
-    }
-  
-  new_C = (new base_module<R, simplified_complex_generators<R> >
-	   (simplified_complex_generators<R> (new_n, C, new_C_to_C_generator)));
-  new_d = mod_map<R> (new_C);
-  
-  for (unsigned i = 1; i <= new_n; i ++)
-    {
-      unsigned i0 = new_C_to_C_generator[i];
-	  
-      for (linear_combination_const_iter j0 = new_d0[i0]; j0; j0 ++)
-	{
-	  unsigned j = C_to_new_C_generator[j0.key ()];
-	  assert (j != 0);
-	  
-	  new_d[i].muladd (j0.val (), j);
-	}
-    }
-  
-  if (build_pi_iota)
-    {
-      pi = mod_map<R> (C, new_C);
-      iota = mod_map<R> (new_C, C);
-      
-      for (unsigned i0 = 1; i0 <= n; i0 ++)
-	{
-	  for (linear_combination_const_iter j0 = pi0[i0]; j0; j0 ++)
-	    {
-	      unsigned j = C_to_new_C_generator[j0.key ()];
-	      pi[i0].muladd (j0.val (), j);
-	    }
-	}
-      
-      for (unsigned i = 1; i <= new_n; i ++)
-	{
-	  unsigned i0 = new_C_to_C_generator[i];
-	  iota[i] = iota0[i0];
-	}
-      
-#if 0  // expensive
-      assert (pi.compose (d) == new_d.compose (pi));
-      assert (d.compose (iota) == iota.compose (new_d));
-#endif
+      char buf[1000];
+      if (i == n)
+	sprintf (buf, "$E_\\infty = E_{%d}$", pages[i].k);
+      else
+	sprintf (buf, "$E_{%d}$", pages[i].k);
+      pages[i].texshow (fp, bounds, buf, m);
     }
 }
 

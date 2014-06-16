@@ -163,16 +163,81 @@ mvd_cube<R, th>::compute_cob_map()
 template<class R, theory th> void 
 mvd_cube<R, th>::display_self() const
 {
-  printf("Source rank: %d\nTarget rank: %d\n",cob_map.from_dim(),cob_map.to_dim());
+  printf("Source rank: %d\nTarget rank: %d\n",
+	 cob_map.domain()->dim(),
+	 cob_map.codomain()->dim());
   
-  // FIXME adjust grading
-  display("Kh(S):\n", cob_map);
+  printf("Kh(K1):\n");
+  ptr<const module<R>> H1 = cob_map.domain();
+  show(*H1);  newline();
+  printf ("  dim = %d\n", H1->dim());
+  printf ("  free_rank = %d\n", H1->free_rank ());
+  for (unsigned i = 1; i <= H1->dim(); i ++)
+    {
+      printf ("  %d ", i);
+      show (H1->generator_grading (i) + initial_adjust);
+      printf (" ");
+      H1->show_generator (i);
+      
+      if (i > H1->free_rank ())
+	{
+	  printf (": ");
+	  R iann = H1->generator_ann (i);
+	  if (iann.is_unit ())
+	    printf ("0\n");
+	  else
+	    {
+	      R::show_ring ();
+	      if (iann != 0)
+		{
+		  printf ("/(");
+		  show (iann);
+		  printf (")");
+		}
+	    }
+	}
+      newline ();
+    }
+  
+  printf("Kh(K2):\n");
+  ptr<const module<R>> H2 = cob_map.codomain();
+  show(*H2);  newline();
+  printf ("  dim = %d\n", H2->dim());
+  printf ("  free_rank = %d\n", H2->free_rank ());
+  for (unsigned i = 1; i <= H2->dim(); i ++)
+    {
+      printf ("  %d ", i);
+      show (H2->generator_grading (i) + initial_adjust);
+      printf (" ");
+      H2->show_generator (i);
+      
+      if (i > H2->free_rank ())
+	{
+	  printf (": ");
+	  R iann = H2->generator_ann (i);
+	  if (iann.is_unit ())
+	    printf ("0\n");
+	  else
+	    {
+	      R::show_ring ();
+	      if (iann != 0)
+		{
+		  printf ("/(");
+		  show (iann);
+		  printf (")");
+		}
+	    }
+	}
+      newline ();
+    }
+  
+  display("Kh(S) : Kh(K1) -> Kh(K2):\n", cob_map);
   
   printf("The map, in h/q grading:\n");
-  for (unsigned i = 1; i <= cob_map.from_dim(); i++)
+  for (unsigned i = 1; i <= H1->dim(); i++)
     {
       printf ("  %d: ", i);
-      show (cob_map.domain()->generator_grading(i) + initial_adjust);
+      show (H1->generator_grading(i) + initial_adjust);
       //show (columns[i]);
       if(cob_map[i] != 0)
 	{
@@ -185,10 +250,10 @@ mvd_cube<R, th>::display_self() const
     }
 
   printf("The map, in tau/e grading:\n");
-  for (unsigned i = 1; i <= cob_map.from_dim(); i ++)
+  for (unsigned i = 1; i <= H1->dim(); i ++)
     {
       printf ("  %d: ", i);
-      grading source_hq = cob_map.domain()->generator_grading(i) + initial_adjust;
+      grading source_hq = H1->generator_grading(i) + initial_adjust;
       printf("(%d,%d)",source_hq.tau(),source_hq.e());
       if(cob_map[i] != 0)
 	{
@@ -202,10 +267,10 @@ mvd_cube<R, th>::display_self() const
     }
 	
   printf("The map, in delta grading:\n");
-  for (unsigned i = 1; i <= cob_map.from_dim(); i ++)
+  for (unsigned i = 1; i <= H1->dim(); i ++)
     {
       printf ("  %d: ", i);
-      grading source_hq = cob_map.domain()->generator_grading(i) + initial_adjust;
+      grading source_hq = H1->generator_grading(i) + initial_adjust;
       printf("(%d)",source_hq.delta());
       if(cob_map[i] != 0)
 	{

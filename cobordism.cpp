@@ -19,10 +19,10 @@ public:
   
 public:
   rd_unify ();
-  rd_unify (const rd_unify &); // doesn't exist
+  rd_unify (const rd_unify &) = delete;
   ~rd_unify () { }
   
-  rd_unify &operator = (const rd_unify &); // doesn't exist
+  rd_unify &operator = (const rd_unify &) = delete;
   
   bool unify (const resolution_diagram &rd1, const resolution_diagram &rd2);
   unsigned map_starting_monomial (unsigned m);

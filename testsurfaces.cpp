@@ -17,11 +17,12 @@ usage ()
   printf ("usage: %s [-v] [-m] [-k|-z|-c] <surface>\n", program_name);
   printf ("  compute map induced by surface in knot homology theory\n");
   printf ("options:\n");
-  printf ("  -h        : help: print this message\n");
-  printf ("  -m        : mirror\n");
-  printf ("  -k|-z|-c  : homology theory: Khovanov (-k),\n");
-  printf ("                Szabo's geometric geometric spectral sequence (-z),\n");
-  printf ("                twisted geometric geometric spectral sequence (-c)\n");
+  printf ("  -h           : help: print this message\n");
+  printf ("  -m           : mirror\n");
+  printf ("  -k|-l|-z|-c  : homology theory: Khovanov (-k),\n");
+  printf ("                 Lee's spectral sequence (-l),\n");
+  printf ("                 Szabo's geometric geometric spectral sequence (-z),\n");
+  printf ("                 twisted geometric geometric spectral sequence (-c)\n");
 }
 
 void
@@ -35,6 +36,8 @@ parse_options (int argc, char **argv)
 	    opt_mirror = 1;
 	  else if (strcmp (argv[i], "-k") == 0)
 	    opt_theory = KHOVANOV_HOMOLOGY;
+	  else if (strcmp (argv[i], "-l") == 0)
+	    opt_theory = LEE_HOMOLOGY;
 	  else if (strcmp (argv[i], "-z") == 0)
 	    opt_theory = GEOMETRIC_SSEQ;
 	  else if (strcmp (argv[i], "-c") == 0)
@@ -100,6 +103,7 @@ main (int argc, char **argv)
   
   typedef Z2 DefaultF;
   // typedef Z DefaultF;
+  // typedef Q DefaultF;
   // typedef Zp<3> DefaultF;
   
   switch (opt_theory)
@@ -107,6 +111,12 @@ main (int argc, char **argv)
     case KHOVANOV_HOMOLOGY:
       {
 	mvd_cube<DefaultF, KHOVANOV_HOMOLOGY> cc (mvd);
+      }
+      break;
+      
+    case LEE_HOMOLOGY:
+      {
+	mvd_cube<DefaultF, LEE_HOMOLOGY> cc (mvd);
       }
       break;
       

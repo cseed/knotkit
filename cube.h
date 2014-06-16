@@ -3,10 +3,10 @@ class map_rules
 {
  public:
   map_rules () { }
-  map_rules (const map_rules &); // doesn't exist
+  map_rules (const map_rules &) = delete;
   virtual ~map_rules () { }
   
-  map_rules &operator = (const map_rules &);  // doesn't exist
+  map_rules &operator = (const map_rules &) = delete;
   
   virtual void map (basedvector<pair<unsigned, unsigned>, 1> &out,
 		    resolution_diagram_builder &rdb) const = 0;
@@ -16,8 +16,8 @@ template<class R>
 class cube /* of resolutions */
 {
 public:
-  typedef typename R::linear_combination linear_combination;
-  typedef typename R::linear_combination_const_iter linear_combination_const_iter;
+  typedef ::linear_combination<R> linear_combination;
+  typedef ::linear_combination_const_iter<R> linear_combination_const_iter;
   
  public:
   bool markedp_only;
@@ -47,12 +47,12 @@ public:
 				    bool reverse_orientation,
 				    unsigned to_reverse) const;
   
-  mod_map<R> H_i (unsigned c);
+  mod_map<R> compute_dinv (unsigned c);
+  mod_map<R> H_i (unsigned c) const;
   
   mod_map<R> compute_nu () const;
   mod_map<R> compute_X (unsigned p) const;
   
-  mod_map<R> compute_alg_action(unsigned e);  
   mod_map<R> compute_projector(basedvector<unsigned,1> which_proj);
     
   void check_reverse_crossings ();
@@ -80,10 +80,10 @@ class twisted_map_rules
 {
  public:
   twisted_map_rules () { }
-  twisted_map_rules (const twisted_map_rules &); // doesn't exist
+  twisted_map_rules (const twisted_map_rules &) = delete;
   virtual ~twisted_map_rules () { }
   
-  map_rules &operator = (const twisted_map_rules &);  // doesn't exist
+  map_rules &operator = (const twisted_map_rules &) = delete;
   
   virtual void map (basedvector<triple<unsigned, unsigned, set<unsigned> >, 1> &out,
 		    resolution_diagram_builder &rdb) const = 0;
@@ -103,10 +103,10 @@ class twisted_cube
     : c(c_)
   { }
   
-  twisted_cube (const twisted_cube &); // doesn't exist
+  twisted_cube (const twisted_cube &) = delete;
   ~twisted_cube () { }
   
-  twisted_cube &operator = (const twisted_cube &); // doesn't exist
+  twisted_cube &operator = (const twisted_cube &) = delete;
   
   mod_map<R> compute_twisted_map (basedvector<int, 1> edge_weight,
 				  unsigned dh,
@@ -121,7 +121,7 @@ class twisted_cube
 extern mod_map<fraction_field<polynomial<Z2> > >
   twisted_differential (const cube<fraction_field<polynomial<Z2> > > &c);
 
-enum theory { KHOVANOV_HOMOLOGY, GEOMETRIC_SSEQ, TWISTED_GEOMETRIC_SSEQ };
+enum theory { KHOVANOV_HOMOLOGY, LEE_HOMOLOGY, GEOMETRIC_SSEQ, TWISTED_GEOMETRIC_SSEQ };
 
 template<class R, theory th>
 class differential_helper
@@ -133,6 +133,15 @@ class differential_helper
       {
       case KHOVANOV_HOMOLOGY:
 	return c.compute_d (1, 0, 0, 0, 0);
+	
+      case LEE_HOMOLOGY:
+	{
+	  mod_map<R> d = c.compute_d (1, 0, 0, 0, 0);
+	  for (unsigned i = 1; i <= c.kd.n_crossings; i ++)
+	    d = d + c.H_i (i);
+	  assert (d.compose (d) == 0);
+	  return d;
+	}
 	
       case GEOMETRIC_SSEQ:
 	return c.compute_d (0, 0, 0, 0, 0);

@@ -55,7 +55,8 @@ chain_map<R>::induced_map_on_homology_q() const
   ptr<const free_submodule<R> > d2_im2 = d2_ker->restrict_submodule (d2_im); //image as part of kernel
   ptr<const quotient_module<R> > H2 = d2_ker->quotient (d2_im2); //quotient gives homology
   
-  mod_map<R> chain_map_ker_to_ker = f.restrict (d1_ker,d2_ker); 
+  mod_map<R> chain_map_ker_to_ker = f.restrict (d1_ker,d2_ker);
+  
   mod_map<R> h_map = chain_map_ker_to_ker.induced_map(H1, H2);
   
   return h_map;

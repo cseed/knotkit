@@ -1,10 +1,10 @@
 *~
 *.bak
 *.o
-/gss
+/kk
 /main
 /testsurfaces
-/sandbox
-/serial.cmd*
+/serial.cmd.[eo]*
+/parallel.cmd.[eo]*
 /save
 */save

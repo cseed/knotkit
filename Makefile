@@ -1,4 +1,6 @@
 
+devel = 1
+
 BISON = bison
 FLEX = flex
 
@@ -8,26 +10,26 @@ GMPROOT =
 
 INCLUDES = -I.
 
-OPTFLAGS = -g
-# OPTFLAGS = -O2 -g
+# OPTFLAGS = -g
+OPTFLAGS = -O2 -g
 # OPTFLAGS = -O2 -DNDEBUG
 
 LDFLAGS = 
 
-LIBS = -lgmp
+LIBS = -lgmp -lz
 
 ifneq ($(GMPROOT),)
 INCLUDES += -I$(GMPROOT)/include
 LDFLAGS += -L$(GMPROOT)/lib
 endif
 
-# 
 CXXFLAGS = $(OPTFLAGS) -DHOME="\"`pwd`\"" -Wall -Wno-unused $(INCLUDES)
 
 LIB_OBJS = lib/refcount.o \
   lib/lib.o lib/smallbitset.o lib/bitset.o lib/setcommon.o lib/io.o lib/directed_multigraph.o
 ALGEBRA_OBJS = algebra/algebra.o algebra/grading.o algebra/polynomial.o
-KNOTKIT_OBJS = planar_diagram.o dt_code.o knot_diagram.o cube.o spanning_tree_complex.o \
+KNOTKIT_OBJS = planar_diagram.o dt_code.o knot_diagram.o cube.o steenrod_square.o \
+  spanning_tree_complex.o \
   smoothing.o cobordism.o knot_tables.o sseq.o \
   knot_parser/knot_parser.o knot_parser/knot_scanner.o \
   rd_parser/rd_parser.o rd_parser/rd_scanner.o
@@ -36,7 +38,8 @@ SURFACES_OBJS = marked_vertex_diagram.o mvd_tables.o
 COMMON_OBJS = $(KNOTKIT_OBJS) $(ALGEBRA_OBJS) $(LIB_OBJS) 
 
 LIB_HEADERS = lib/lib.h lib/show.h lib/refcount.h lib/pair.h lib/maybe.h lib/vector.h \
-  lib/set.h lib/ullmanset.h lib/bitset.h lib/smallbitset.h lib/setcommon.h \
+  lib/set_wrapper.h lib/set.h lib/hashset.h \
+  lib/ullmanset.h lib/bitset.h lib/smallbitset.h lib/setcommon.h \
   lib/map_wrapper.h lib/map.h lib/hashmap.h lib/ullmanmap.h lib/mapcommon.h \
   lib/unionfind.h lib/priority_queue.h lib/io.h \
   lib/directed_multigraph.h
@@ -47,11 +50,12 @@ ALGEBRA_HEADERS = algebra/algebra.h algebra/grading.h algebra/module.h \
   algebra/multivariate_laurentpoly.h algebra/fraction_field.h
 
 KNOTKIT_HEADERS = knotkit.h planar_diagram.h dt_code.h knot_diagram.h \
-  smoothing.h cobordism.h cube.h spanning_tree_complex.h cube_impl.h sseq.h
+  smoothing.h cobordism.h cube.h steenrod_square.h \
+  spanning_tree_complex.h cube_impl.h sseq.h simplify_chain_complex.h
 
 SURFACES_HEADERS = marked_vertex_diagram.h surfacekit.h chain_map.h
 
-all: gss testsurfaces
+all: kk testsurfaces
 
 %.o : %.cc
 	$(CXX) -c $(CXXFLAGS) $< -o $@
@@ -59,14 +63,11 @@ all: gss testsurfaces
 %.o : %.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
-gss: gss.o $(COMMON_OBJS)
-	$(CXX) $(LDFLAGS) -o gss $^ $(LIBS)
+kk: kk.o $(COMMON_OBJS)
+	$(CXX) $(LDFLAGS) -o kk $^ $(LIBS)
 
 main: main.o $(COMMON_OBJS) $(SURFACES_OBJS)
 	$(CXX) $(LDFLAGS) -o main $^ $(LIBS)
-
-sandbox: sandbox.o $(COMMON_OBJS) $(SURFACES_OBJS)
-	$(CXX) $(LDFLAGS) -o sandbox $^ $(LIBS)
 
 testsurfaces: testsurfaces.o $(COMMON_OBJS) $(SURFACES_OBJS)
 	$(CXX) $(LDFLAGS) -o testsurfaces $^ $(LIBS)
@@ -74,6 +75,7 @@ testsurfaces: testsurfaces.o $(COMMON_OBJS) $(SURFACES_OBJS)
 testlib: testlib.o $(COMMON_OBJS)
 	$(CXX) $(LDFLAGS) -o testlib $^
 
+ifeq ($(devel),1)
 knot_parser/knot_parser.cc knot_parser/knot_parser.hh: knot_parser/knot_parser.yy
 	$(BISON) knot_parser/knot_parser.yy -o knot_parser/knot_parser.cc
 
@@ -91,6 +93,7 @@ rd_parser/rd_parser.cc rd_parser/rd_parser.hh: rd_parser/rd_parser.yy
 
 rd_parser/rd_scanner.cc: rd_parser/rd_scanner.ll
 	$(FLEX) -o rd_parser/rd_scanner.cc rd_parser/rd_scanner.ll
+endif
 
 .PHONY: parser_files
 parser_files: \
@@ -104,7 +107,7 @@ parser_files: \
 .PHONY: clean
 clean:
 	rm -f *.o lib/*.o algebra/*.o knot_parser/*.o rd_parser/*.o
-	rm -f main gss testsurfaces
+	rm -f main kk testsurfaces
 	rm -f gmon.out
 
 .PHONY: realclean
@@ -120,6 +123,6 @@ realclean: clean
 	rm -f rd_parser/location.hh rd_parser/position.hh rd_parser/stack.hh
 
 $(LIB_OBJS): $(LIB_HEADERS)
-$(ALGEBRA_OBJS) testlib.o: $(ALGEBRA_HEADERS) $(LIB_HEADERS)
-$(KNOTKIT_OBJS) gss.o: $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)
-$(SURFACES_OBJS) main.o testsurfaces.o sandbox.o: $(SURFACES_HEADERS) $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)
+$(ALGEBRA_OBJS): $(ALGEBRA_HEADERS) $(LIB_HEADERS)
+$(KNOTKIT_OBJS) kk.o: $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)
+$(SURFACES_OBJS) main.o testsurfaces.o: $(SURFACES_HEADERS) $(KNOTKIT_HEADERS) $(ALGEBRA_HEADERS) $(LIB_HEADERS)

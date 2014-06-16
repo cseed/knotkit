@@ -205,6 +205,12 @@ class multivariate_laurentpoly
       coeffs.push (monomial (VARIABLE, i), c);
   }
   
+  multivariate_laurentpoly (T c, variable, unsigned i, int e)
+  {
+    if (c != 0)
+      coeffs.push (monomial (VARIABLE, i, e), c);
+  }
+  
   multivariate_laurentpoly (T c, const monomial &m)
   {
     if (c != 0)
@@ -213,7 +219,8 @@ class multivariate_laurentpoly
   
   multivariate_laurentpoly (const multivariate_laurentpoly &p) : coeffs(p.coeffs) { }
   multivariate_laurentpoly (copy, const multivariate_laurentpoly &p)
-    : coeffs(COPY2, p.coeffs)
+    // ??? COPY2?
+    : coeffs(COPY, p.coeffs)
   {
   }
 

@@ -21,8 +21,9 @@ public:
   { }
   ~planar_diagram () { }
   
-  void display_bohua () const;
-
+  void show_knottheory () const;
+  void display_knottheory () const { show_knottheory (); newline (); }
+  
   void show_self () const { printf ("planar_diagram %s", name.c_str ()); }
   void display_self () const;
   
