@@ -156,8 +156,8 @@ mvd_cube<R, th>::compute_cob_map()
   mod_map<R> f = big_f.restrict(dom, range);
   
   chain_map<R> cm(d1, d2, f);
-  // cob_map = cm.induced_map_on_homology();
-  cob_map = cm.induced_map_on_homology_q();
+  cob_map = cm.induced_map_on_homology();
+  // cob_map = cm.induced_map_on_homology_q();
 }
 
 template<class R, theory th> void 
